@@ -1,0 +1,12 @@
+module examples.types_and_checked_math
+
+newtype UserId = U64
+
+fn next_id(current: UserId) -> UserId {
+    UserId(current.value.checked_add(1))
+}
+
+fn percentage(part: Int, total: Int) -> Result<Float, MathError> {
+    ensure total != 0 else MathError.division_by_zero
+    ok(part.to_f64() / total.to_f64() * 100.0)
+}

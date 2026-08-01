@@ -1,0 +1,17 @@
+module examples.errors
+
+use std.fs
+use std.json
+
+enum ConfigError {
+    io(IoError)
+    invalid_json(JsonError)
+    missing_field(String)
+}
+
+fn load_config(path: Path) -> Result<Config, ConfigError> {
+    let text = try fs.read_text(path)
+    let value = try json.parse(text)
+    ensure value.has("endpoint") else ConfigError.missing_field("endpoint")
+    Config.decode(value)
+}

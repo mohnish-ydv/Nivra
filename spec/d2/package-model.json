@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "manifest": "nivra.toml",
+  "lockfile": "nivra.lock",
+  "application_lockfile_committed": true,
+  "arbitrary_install_scripts": false,
+  "content_hash_verification": true,
+  "features_additive": true,
+  "workspace_shared_lockfile": true,
+  "commands": [
+    "new",
+    "init",
+    "check",
+    "run",
+    "build",
+    "test",
+    "fmt",
+    "lint",
+    "fix",
+    "doc",
+    "add",
+    "remove",
+    "update",
+    "tree",
+    "audit",
+    "clean",
+    "doctor"
+  ]
+}

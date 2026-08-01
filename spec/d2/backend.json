@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "reference_backend": "C11",
+  "native_driver": "Clang",
+  "optimized_backend": "LLVM",
+  "mir_backend_neutral": true,
+  "safety_same_all_standard_profiles": true,
+  "target_order": [
+    "termux-aarch64",
+    "linux-x86_64",
+    "android-ndk",
+    "windows-x86_64",
+    "macos",
+    "wasm-wasi",
+    "embedded"
+  ]
+}

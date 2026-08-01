@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "rules": [
+    {
+      "id": "MM-001",
+      "rule": "single_owner_unless_borrowed_or_shared",
+      "status": "locked"
+    },
+    {
+      "id": "MM-002",
+      "rule": "move_non_copy_values",
+      "status": "locked"
+    },
+    {
+      "id": "MM-003",
+      "rule": "compile_error_use_after_move",
+      "status": "locked"
+    },
+    {
+      "id": "MM-004",
+      "rule": "explicit_clone",
+      "status": "locked"
+    },
+    {
+      "id": "MM-005",
+      "rule": "deterministic_drop",
+      "status": "locked"
+    },
+    {
+      "id": "MM-006",
+      "rule": "reverse_local_drop_order",
+      "status": "locked"
+    },
+    {
+      "id": "MM-007",
+      "rule": "drop_cannot_fail",
+      "status": "locked"
+    },
+    {
+      "id": "MM-008",
+      "rule": "drop_types_not_copy",
+      "status": "locked"
+    },
+    {
+      "id": "MM-009",
+      "rule": "box_unique_heap",
+      "status": "locked"
+    },
+    {
+      "id": "MM-010",
+      "rule": "shared_atomic_arc",
+      "status": "locked"
+    },
+    {
+      "id": "MM-011",
+      "rule": "weak_breaks_cycles",
+      "status": "locked"
+    },
+    {
+      "id": "MM-012",
+      "rule": "shared_borrow_ampersand",
+      "status": "locked"
+    },
+    {
+      "id": "MM-013",
+      "rule": "exclusive_mut_borrow",
+      "status": "locked"
+    },
+    {
+      "id": "MM-014",
+      "rule": "borrow_cannot_outlive_owner",
+      "status": "locked"
+    },
+    {
+      "id": "MM-015",
+      "rule": "no_borrow_across_await",
+      "status": "locked"
+    },
+    {
+      "id": "MM-016",
+      "rule": "no_borrowed_fields_edition_2026",
+      "status": "locked"
+    },
+    {
+      "id": "MM-017",
+      "rule": "single_origin_return_borrow_elision",
+      "status": "locked"
+    },
+    {
+      "id": "MM-018",
+      "rule": "no_user_lifetime_parameters",
+      "status": "locked"
+    },
+    {
+      "id": "MM-019",
+      "rule": "defer_lifo_normal_exit",
+      "status": "locked"
+    },
+    {
+      "id": "MM-020",
+      "rule": "no_mandatory_tracing_gc",
+      "status": "locked"
+    },
+    {
+      "id": "MM-021",
+      "rule": "raw_pointer_unsafe_memory",
+      "status": "locked"
+    },
+    {
+      "id": "MM-022",
+      "rule": "named_unsafe_capabilities",
+      "status": "locked"
+    },
+    {
+      "id": "MM-023",
+      "rule": "send_sync_auto_traits",
+      "status": "locked"
+    },
+    {
+      "id": "MM-024",
+      "rule": "safe_code_prevents_lifetime_alias_and_race_bugs",
+      "status": "locked"
+    }
+  ],
+  "unsafe_capabilities": [
+    "memory",
+    "ffi",
+    "concurrency",
+    "platform"
+  ],
+  "ownership_types": [
+    "Box",
+    "Shared",
+    "Weak"
+  ]
+}

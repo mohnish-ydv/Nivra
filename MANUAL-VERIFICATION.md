@@ -1,19 +1,17 @@
 # Manual Verification After GitHub Actions Is Green
 
-D1 is a design delivery, so the manual check confirms that the specification is
-complete, readable, and internally consistent. There is no compiler to run yet.
+D2 is still a design delivery, so the manual test checks architecture integrity
+rather than compiling `.nva` programs.
 
-## 1. Open the project in Termux
+## 1. Extract and enter the project
 
 ```bash
 cd ~/storage/downloads
-unzip Trion-D1-Foundation-GitHub-Ready.zip
-cd Trion-D1-Foundation-GitHub-Ready
+unzip Nivra-D2-Architecture-Spec-GitHub-Ready.zip
+cd Nivra-D2-Architecture-Spec-GitHub-Ready
 ```
 
-If the folder already exists, remove or rename the old copy before unzipping.
-
-## 2. Run the golden verifier
+## 2. Run the cumulative golden verifier
 
 ```bash
 bash verify.sh
@@ -22,60 +20,80 @@ bash verify.sh
 Expected ending:
 
 ```text
-Specification integrity: PASS
-Design examples: PASS
-Documentation anchors: PASS
-★★★★★ D1 GOLDEN BUILD
+D1 regression: PASS
+D2 architecture integrity: PASS
+D2 grammar integrity: PASS
+D2 examples: PASS
+★★★★★ D2 GOLDEN BUILD
 ```
 
-## 3. Print the design summary
+## 3. Print the architecture report
 
 ```bash
-python3 tools/spec_report.py
+python3 tools/d2_report.py
 ```
 
 Expected key values:
 
 ```text
-Developer pain points: 30
-P0 pain points: 12
-Constitution articles: 18
-Reserved keywords: 43
-Design examples: 5
-D1 status: PASS
+Architecture decisions: 45
+Type-system rules: 29
+Memory-model rules: 24
+Error-model rules: 18
+Concurrency rules: 24
+Compiler stages: 13
+Grammar productions: 60
+D2 examples: 8
+D2 status: PASS
 ```
 
-## 4. Read the syntax tour
+## 4. Query the locked memory model
 
 ```bash
-sed -n '1,240p' examples/design/05_complete_tour.trn
+python3 tools/decision_query.py memory
 ```
 
-Check manually:
+Confirm it reports:
 
-- `let` means immutable and `var` means mutable.
-- braces are used for blocks.
-- semicolons are not required at line endings.
-- nullable values use `T?` and `none`.
-- recoverable errors use `Result` and `try`.
-- data records do not require constructors/getters/setters.
-- inheritance is absent; behavior uses traits.
-- unsafe operations are visibly contained in `unsafe {}`.
+- deterministic destruction
+- move-by-default for non-copy values
+- `Box<T>`, `Shared<T>`, and `Weak<T>`
+- local borrows through `&T` and `&mut T`
+- no borrowed fields in Edition 2026
+- no borrow crossing an `await`
+- no mandatory tracing garbage collector
+- named unsafe capabilities
 
-## 5. Read the decision gate
+## 5. Read the complete architecture syntax tour
 
 ```bash
-sed -n '1,260p' docs/DECISION-SUMMARY.md
+sed -n '1,300p' examples/d2/08_complete_architecture_tour.nva
 ```
 
-Confirm that the exact memory model, compiler backend, public name, ABI, and
-concurrency semantics are marked deferred rather than silently invented.
+Check that:
+
+- `.nva` and Nivra naming are used
+- `Unit`, not `Void`, represents no useful value
+- integer overflow is checked by default
+- fallible work returns `Result`
+- non-copy values move unless explicitly cloned
+- shared ownership is explicit
+- task creation occurs inside a `task_group`
+- FFI and raw memory are inside named unsafe capabilities
+
+## 6. Read the specification index
+
+```bash
+sed -n '1,320p' docs/16-LANGUAGE-SPEC-DRAFT.md
+```
+
+The document must clearly separate normative Edition 2026 rules from future
+extensions.
 
 ## Pass rule
 
-D1 passes when GitHub Actions is green and all four local checks above match the
-expected results. Then report:
+When GitHub Actions and all checks above pass, report:
 
 ```text
-GG D1 Passed
+GG D2 Passed
 ```

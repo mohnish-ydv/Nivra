@@ -1,0 +1,10 @@
+module examples.structured_concurrency
+
+async fn fetch_all(urls: List<Url>) -> Result<List<Response>, NetError> {
+    task_group group {
+        let tasks = urls.map(|url| group.spawn async {
+            try await http.get(url)
+        })
+        try await Task.all(tasks)
+    }
+}

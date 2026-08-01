@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "decisions": [
+    {
+      "id": "D2-001",
+      "area": "identity",
+      "decision": "Nivra pre-1.0 identity",
+      "status": "locked"
+    },
+    {
+      "id": "D2-002",
+      "area": "identity",
+      "decision": "nivra CLI",
+      "status": "locked"
+    },
+    {
+      "id": "D2-003",
+      "area": "identity",
+      "decision": ".nva source extension",
+      "status": "locked"
+    },
+    {
+      "id": "D2-004",
+      "area": "identity",
+      "decision": "nivra.toml manifest",
+      "status": "locked"
+    },
+    {
+      "id": "D2-005",
+      "area": "identity",
+      "decision": "nivra.lock lockfile",
+      "status": "locked"
+    },
+    {
+      "id": "D2-006",
+      "area": "identity",
+      "decision": "Edition 2026",
+      "status": "locked"
+    },
+    {
+      "id": "D2-007",
+      "area": "governance",
+      "decision": "Apache-2.0 license",
+      "status": "locked"
+    },
+    {
+      "id": "D2-008",
+      "area": "compiler",
+      "decision": "Rust bootstrap",
+      "status": "locked"
+    },
+    {
+      "id": "D2-009",
+      "area": "compiler",
+      "decision": "hand-written lexer",
+      "status": "locked"
+    },
+    {
+      "id": "D2-010",
+      "area": "compiler",
+      "decision": "recursive-descent and Pratt parser",
+      "status": "locked"
+    },
+    {
+      "id": "D2-011",
+      "area": "compiler",
+      "decision": "lossless CST",
+      "status": "locked"
+    },
+    {
+      "id": "D2-012",
+      "area": "compiler",
+      "decision": "backend-neutral HIR and MIR",
+      "status": "locked"
+    },
+    {
+      "id": "D2-013",
+      "area": "backend",
+      "decision": "C11 reference backend",
+      "status": "locked"
+    },
+    {
+      "id": "D2-014",
+      "area": "backend",
+      "decision": "Clang native driver",
+      "status": "locked"
+    },
+    {
+      "id": "D2-015",
+      "area": "backend",
+      "decision": "LLVM future optimized backend",
+      "status": "locked"
+    },
+    {
+      "id": "D2-016",
+      "area": "types",
+      "decision": "static mostly nominal typing",
+      "status": "locked"
+    },
+    {
+      "id": "D2-017",
+      "area": "types",
+      "decision": "local inference explicit public contracts",
+      "status": "locked"
+    },
+    {
+      "id": "D2-018",
+      "area": "types",
+      "decision": "Unit and Never",
+      "status": "locked"
+    },
+    {
+      "id": "D2-019",
+      "area": "types",
+      "decision": "fixed width numeric model",
+      "status": "locked"
+    },
+    {
+      "id": "D2-020",
+      "area": "types",
+      "decision": "checked overflow all profiles",
+      "status": "locked"
+    },
+    {
+      "id": "D2-021",
+      "area": "types",
+      "decision": "explicit numeric conversions",
+      "status": "locked"
+    },
+    {
+      "id": "D2-022",
+      "area": "types",
+      "decision": "Option no null",
+      "status": "locked"
+    },
+    {
+      "id": "D2-023",
+      "area": "types",
+      "decision": "records structs enums and newtypes",
+      "status": "locked"
+    },
+    {
+      "id": "D2-024",
+      "area": "types",
+      "decision": "traits no class inheritance",
+      "status": "locked"
+    },
+    {
+      "id": "D2-025",
+      "area": "types",
+      "decision": "monomorphized generics",
+      "status": "locked"
+    },
+    {
+      "id": "D2-026",
+      "area": "memory",
+      "decision": "move non-copy values",
+      "status": "locked"
+    },
+    {
+      "id": "D2-027",
+      "area": "memory",
+      "decision": "deterministic destruction",
+      "status": "locked"
+    },
+    {
+      "id": "D2-028",
+      "area": "memory",
+      "decision": "Box Shared Weak",
+      "status": "locked"
+    },
+    {
+      "id": "D2-029",
+      "area": "memory",
+      "decision": "borrows without explicit lifetimes",
+      "status": "locked"
+    },
+    {
+      "id": "D2-030",
+      "area": "memory",
+      "decision": "no borrowed fields",
+      "status": "locked"
+    },
+    {
+      "id": "D2-031",
+      "area": "memory",
+      "decision": "no borrow across await",
+      "status": "locked"
+    },
+    {
+      "id": "D2-032",
+      "area": "memory",
+      "decision": "no mandatory tracing GC",
+      "status": "locked"
+    },
+    {
+      "id": "D2-033",
+      "area": "safety",
+      "decision": "named unsafe capabilities",
+      "status": "locked"
+    },
+    {
+      "id": "D2-034",
+      "area": "errors",
+      "decision": "Result and try",
+      "status": "locked"
+    },
+    {
+      "id": "D2-035",
+      "area": "errors",
+      "decision": "aborting non-catchable panic",
+      "status": "locked"
+    },
+    {
+      "id": "D2-036",
+      "area": "concurrency",
+      "decision": "structured task groups",
+      "status": "locked"
+    },
+    {
+      "id": "D2-037",
+      "area": "concurrency",
+      "decision": "cooperative cancellation",
+      "status": "locked"
+    },
+    {
+      "id": "D2-038",
+      "area": "concurrency",
+      "decision": "Send and Sync checking",
+      "status": "locked"
+    },
+    {
+      "id": "D2-039",
+      "area": "concurrency",
+      "decision": "explicit shared mutation",
+      "status": "locked"
+    },
+    {
+      "id": "D2-040",
+      "area": "ffi",
+      "decision": "C ABI only in V1",
+      "status": "locked"
+    },
+    {
+      "id": "D2-041",
+      "area": "packages",
+      "decision": "reproducible committed application lockfile",
+      "status": "locked"
+    },
+    {
+      "id": "D2-042",
+      "area": "packages",
+      "decision": "no arbitrary install scripts",
+      "status": "locked"
+    },
+    {
+      "id": "D2-043",
+      "area": "compatibility",
+      "decision": "edition based evolution",
+      "status": "locked"
+    },
+    {
+      "id": "D2-044",
+      "area": "tooling",
+      "decision": "single official CLI",
+      "status": "locked"
+    },
+    {
+      "id": "D2-045",
+      "area": "platform",
+      "decision": "phone and Termux development path",
+      "status": "locked"
+    }
+  ],
+  "deferred": [
+    "stable_native_abi",
+    "registry_operator",
+    "legal_clearance",
+    "allocator_api",
+    "self_hosting",
+    "advanced_lifetimes",
+    "debugger_protocol"
+  ],
+  "rejected": [
+    "cpp_clone",
+    "mandatory_gc",
+    "ambient_null",
+    "catchable_panic",
+    "borrow_across_await",
+    "borrowed_fields",
+    "arbitrary_install_scripts",
+    "profile_dependent_safety"
+  ]
+}

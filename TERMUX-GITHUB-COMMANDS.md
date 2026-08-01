@@ -1,8 +1,6 @@
 # Exact Termux and GitHub Commands
 
-Replace the repository URL with your own GitHub repository.
-
-## First-time phone setup
+## Install requirements
 
 ```bash
 pkg update -y
@@ -10,42 +8,41 @@ pkg install git python unzip -y
 termux-setup-storage
 ```
 
-## Verify downloaded ZIP
+## Verify the D2 ZIP
 
 ```bash
 cd ~/storage/downloads
-unzip Trion-D1-Foundation-GitHub-Ready.zip
-cd Trion-D1-Foundation-GitHub-Ready
+unzip Nivra-D2-Architecture-Spec-GitHub-Ready.zip
+cd Nivra-D2-Architecture-Spec-GitHub-Ready
 bash verify.sh
 ```
 
-## Push to a new GitHub repository
+## Replace the existing repository with cumulative D2
 
-Create an empty repository on GitHub without README, license, or `.gitignore`,
-then run:
+Run inside the extracted D2 folder. Replace the repository URL only when your
+actual repository uses a different name.
 
 ```bash
-cd ~/storage/downloads/Trion-D1-Foundation-GitHub-Ready
+cd ~/storage/downloads/Nivra-D2-Architecture-Spec-GitHub-Ready
 
 git config --global --add safe.directory "$PWD"
 git init
 git branch -M main
 git add .
-git commit -m "feat: complete Trion D1 foundation"
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+git commit -m "feat: complete Nivra D2 architecture specification"
+git remote add origin https://github.com/mohnish-ydv/Nivra.git
 git push -u origin main
 ```
 
-If Git asks for authentication, use your GitHub username and a Personal Access
-Token instead of your account password.
-
-## Later fixes
+If `origin` already exists:
 
 ```bash
-git add .
-git commit -m "fix: stabilize D1 verification"
-git push
+git remote set-url origin https://github.com/mohnish-ydv/Nivra.git
+git push -u origin main
 ```
 
-After pushing, open the repository's **Actions** tab and check that
-`Verify D1 Foundation` has a green tick. Then follow `MANUAL-VERIFICATION.md`.
+If you are updating the same local Git repository instead of starting from this
+ZIP, copy the D2 contents into it, then commit and push normally.
+
+After pushing, open **Actions** and verify `Verify Nivra D2` is green. Then run
+the steps in `MANUAL-VERIFICATION.md`.

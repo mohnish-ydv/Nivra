@@ -1,0 +1,19 @@
+module examples.ffi
+
+@repr(C)
+struct NativeBuffer {
+    data: *mut U8
+    length: Usize
+}
+
+extern "C" {
+    unsafe fn native_fill(buffer: *mut U8, length: Usize, value: U8) -> I32
+}
+
+fn fill(buffer: &mut ByteBuffer, value: U8) -> Result<Unit, NativeError> {
+    unsafe(ffi, memory) {
+        let code = native_fill(buffer.pointer(), buffer.length(), value)
+        ensure code == 0 else NativeError.code(code)
+    }
+    ok(())
+}

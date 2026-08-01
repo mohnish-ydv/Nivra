@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "implementation_language": "Rust",
+  "lexer": "hand_written",
+  "parser": [
+    "recursive_descent",
+    "pratt"
+  ],
+  "representations": [
+    "CST",
+    "AST",
+    "HIR",
+    "MIR"
+  ],
+  "stages": [
+    {
+      "id": "CP-01",
+      "name": "source_manager",
+      "status": "locked"
+    },
+    {
+      "id": "CP-02",
+      "name": "unicode_and_line_map",
+      "status": "locked"
+    },
+    {
+      "id": "CP-03",
+      "name": "lexer",
+      "status": "locked"
+    },
+    {
+      "id": "CP-04",
+      "name": "lossless_cst_parser",
+      "status": "locked"
+    },
+    {
+      "id": "CP-05",
+      "name": "ast_lowering",
+      "status": "locked"
+    },
+    {
+      "id": "CP-06",
+      "name": "module_and_name_resolution",
+      "status": "locked"
+    },
+    {
+      "id": "CP-07",
+      "name": "type_trait_effect_checking",
+      "status": "locked"
+    },
+    {
+      "id": "CP-08",
+      "name": "hir",
+      "status": "locked"
+    },
+    {
+      "id": "CP-09",
+      "name": "ownership_borrow_sendability",
+      "status": "locked"
+    },
+    {
+      "id": "CP-10",
+      "name": "mir",
+      "status": "locked"
+    },
+    {
+      "id": "CP-11",
+      "name": "target_independent_optimization",
+      "status": "locked"
+    },
+    {
+      "id": "CP-12",
+      "name": "backend_codegen",
+      "status": "locked"
+    },
+    {
+      "id": "CP-13",
+      "name": "native_tool_link_package",
+      "status": "locked"
+    }
+  ],
+  "single_user_cli": "nivra"
+}

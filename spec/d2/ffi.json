@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "v1_abi": "C",
+  "cpp_abi_promised": false,
+  "foreign_calls_require": "unsafe(ffi)",
+  "raw_memory_requires": "unsafe(memory)",
+  "c_layout_annotation": "repr(C)",
+  "direct_string_abi": false,
+  "fixed_width_boundary_types_preferred": true
+}

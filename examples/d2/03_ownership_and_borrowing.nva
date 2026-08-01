@@ -1,0 +1,25 @@
+module examples.ownership_and_borrowing
+
+record Document {
+    title: String
+    body: String
+}
+
+fn title_length(document: &Document) -> Usize {
+    document.title.length()
+}
+
+fn rename(document: &mut Document, name: String) {
+    document.title = name
+}
+
+fn consume(document: Document) {
+    print(document.title)
+}
+
+fn main() {
+    var document = Document(title: "Draft", body: "Text")
+    print(title_length(&document))
+    rename(&mut document, "Final")
+    consume(document)
+}

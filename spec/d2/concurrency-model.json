@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "rules": [
+    {
+      "id": "CC-001",
+      "rule": "structured_concurrency",
+      "status": "locked"
+    },
+    {
+      "id": "CC-002",
+      "rule": "async_fn_and_await",
+      "status": "locked"
+    },
+    {
+      "id": "CC-003",
+      "rule": "spawn_through_task_group",
+      "status": "locked"
+    },
+    {
+      "id": "CC-004",
+      "rule": "group_waits_for_children",
+      "status": "locked"
+    },
+    {
+      "id": "CC-005",
+      "rule": "early_error_cancels_siblings",
+      "status": "locked"
+    },
+    {
+      "id": "CC-006",
+      "rule": "cooperative_cancellation",
+      "status": "locked"
+    },
+    {
+      "id": "CC-007",
+      "rule": "await_checks_cancellation",
+      "status": "locked"
+    },
+    {
+      "id": "CC-008",
+      "rule": "cpu_work_checks_cancellation",
+      "status": "locked"
+    },
+    {
+      "id": "CC-009",
+      "rule": "captures_must_be_owned_or_safely_shared",
+      "status": "locked"
+    },
+    {
+      "id": "CC-010",
+      "rule": "send_checked",
+      "status": "locked"
+    },
+    {
+      "id": "CC-011",
+      "rule": "sync_checked",
+      "status": "locked"
+    },
+    {
+      "id": "CC-012",
+      "rule": "no_borrow_across_await",
+      "status": "locked"
+    },
+    {
+      "id": "CC-013",
+      "rule": "mutex_explicit_shared_mutation",
+      "status": "locked"
+    },
+    {
+      "id": "CC-014",
+      "rule": "rwlock_explicit_shared_mutation",
+      "status": "locked"
+    },
+    {
+      "id": "CC-015",
+      "rule": "atomic_supported_scalars",
+      "status": "locked"
+    },
+    {
+      "id": "CC-016",
+      "rule": "typed_channels",
+      "status": "locked"
+    },
+    {
+      "id": "CC-017",
+      "rule": "explicit_detach_api",
+      "status": "locked"
+    },
+    {
+      "id": "CC-018",
+      "rule": "detached_handle_drop_warning",
+      "status": "locked"
+    },
+    {
+      "id": "CC-019",
+      "rule": "blocking_calls_declared",
+      "status": "locked"
+    },
+    {
+      "id": "CC-020",
+      "rule": "bounded_blocking_pool",
+      "status": "locked"
+    },
+    {
+      "id": "CC-021",
+      "rule": "scheduling_order_unspecified",
+      "status": "locked"
+    },
+    {
+      "id": "CC-022",
+      "rule": "runtime_interface_not_mutable_global",
+      "status": "locked"
+    },
+    {
+      "id": "CC-023",
+      "rule": "deterministic_test_hooks",
+      "status": "locked"
+    },
+    {
+      "id": "CC-024",
+      "rule": "safe_code_data_race_free",
+      "status": "locked"
+    }
+  ],
+  "primitives": [
+    "Task",
+    "TaskGroup",
+    "Mutex",
+    "RwLock",
+    "Atomic",
+    "Channel",
+    "CancellationToken"
+  ]
+}

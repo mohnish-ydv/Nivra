@@ -1,0 +1,10 @@
+module examples.shared_ownership
+
+record Node {
+    name: String
+    parent: Weak<Node>?
+}
+
+fn share_root(name: String) -> Shared<Node> {
+    Shared.new(Node(name: name, parent: none))
+}

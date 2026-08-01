@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "status": "locked_pre_1_0",
+  "language_name": "Nivra",
+  "pronunciation": "NIV-rah",
+  "cli": "nivra",
+  "source_extension": ".nva",
+  "manifest": "nivra.toml",
+  "lockfile": "nivra.lock",
+  "edition": "2026",
+  "tagline": "Power without the pain.",
+  "license": "Apache-2.0",
+  "previous_provisional_identity": {
+    "name": "Trion",
+    "cli": "trion",
+    "extension": ".trn"
+  },
+  "legal_clearance_claimed": false
+}

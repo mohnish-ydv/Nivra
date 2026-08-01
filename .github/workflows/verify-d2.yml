@@ -1,4 +1,4 @@
-name: Verify D1 Foundation
+name: Verify Nivra D2
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   verify:
-    name: D1 specification and examples
+    name: D1 regression and D2 architecture
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -22,16 +22,16 @@ jobs:
       - name: Show Python version
         run: python3 --version
 
-      - name: Run golden verifier
+      - name: Run cumulative golden verifier
         run: bash verify.sh
 
-      - name: Save D1 report
-        run: python3 tools/spec_report.py | tee D1-SPEC-REPORT.txt
+      - name: Generate D2 report
+        run: python3 tools/d2_report.py | tee NIVRA-D2-REPORT.txt
 
-      - name: Upload verification report
+      - name: Upload architecture report
         uses: actions/upload-artifact@v4
         with:
-          name: trion-d1-spec-report
-          path: D1-SPEC-REPORT.txt
+          name: nivra-d2-architecture-report
+          path: NIVRA-D2-REPORT.txt
           if-no-files-found: error
           retention-days: 14

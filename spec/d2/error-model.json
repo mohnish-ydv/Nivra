@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "rules": [
+    {
+      "id": "ER-001",
+      "rule": "recoverable_failure_uses_result",
+      "status": "locked"
+    },
+    {
+      "id": "ER-002",
+      "rule": "absence_uses_option",
+      "status": "locked"
+    },
+    {
+      "id": "ER-003",
+      "rule": "try_propagates_error",
+      "status": "locked"
+    },
+    {
+      "id": "ER-004",
+      "rule": "from_required_for_error_conversion",
+      "status": "locked"
+    },
+    {
+      "id": "ER-005",
+      "rule": "ensure_validation_sugar",
+      "status": "locked"
+    },
+    {
+      "id": "ER-006",
+      "rule": "result_must_use",
+      "status": "locked"
+    },
+    {
+      "id": "ER-007",
+      "rule": "structured_error_types",
+      "status": "locked"
+    },
+    {
+      "id": "ER-008",
+      "rule": "error_trait_source_chain",
+      "status": "locked"
+    },
+    {
+      "id": "ER-009",
+      "rule": "explicit_context_attachment",
+      "status": "locked"
+    },
+    {
+      "id": "ER-010",
+      "rule": "panic_for_program_defect",
+      "status": "locked"
+    },
+    {
+      "id": "ER-011",
+      "rule": "panic_aborts_process",
+      "status": "locked"
+    },
+    {
+      "id": "ER-012",
+      "rule": "panic_not_catchable",
+      "status": "locked"
+    },
+    {
+      "id": "ER-013",
+      "rule": "no_unwinding",
+      "status": "locked"
+    },
+    {
+      "id": "ER-014",
+      "rule": "drop_and_defer_normal_exit_only",
+      "status": "locked"
+    },
+    {
+      "id": "ER-015",
+      "rule": "checked_overflow_traps",
+      "status": "locked"
+    },
+    {
+      "id": "ER-016",
+      "rule": "bounds_violation_traps",
+      "status": "locked"
+    },
+    {
+      "id": "ER-017",
+      "rule": "no_hidden_exception_channel",
+      "status": "locked"
+    },
+    {
+      "id": "ER-018",
+      "rule": "diagnostics_explain_ignored_or_incompatible_results",
+      "status": "locked"
+    }
+  ],
+  "panic_strategy": "abort"
+}

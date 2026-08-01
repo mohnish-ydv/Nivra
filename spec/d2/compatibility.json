@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "first_edition": "2026",
+  "edition_opt_in": true,
+  "compiler_supports_multiple_editions": true,
+  "silent_semantic_change_existing_edition": false,
+  "native_abi_stable": false,
+  "cross_version_binary_boundary": "C ABI or serialized protocol"
+}

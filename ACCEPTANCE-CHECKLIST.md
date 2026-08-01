@@ -1,32 +1,30 @@
-# D1 Acceptance Checklist
-
-D1 passes only when every required item below is satisfied.
+# D2 Acceptance Checklist
 
 ## Automated
 
-- [x] `bash verify.sh` exits with code 0.
-- [x] All machine-readable JSON files parse successfully.
-- [x] Pain IDs, constitution IDs, and keywords are unique.
-- [x] At least 25 real developer pain points are documented.
-- [x] All P0 pain categories required by the mission are present.
-- [x] At least 15 constitutional rules are locked.
-- [x] Syntax examples contain balanced delimiters.
-- [x] No unresolved drafting markers remain.
-- [x] GitHub Actions invokes the same verifier used locally.
+- [x] D1 verification still passes unchanged.
+- [x] Every D2 JSON document is valid.
+- [x] Decision IDs and rule IDs are unique.
+- [x] Locked, deferred, and rejected sets do not overlap.
+- [x] Identity files consistently use Nivra, `nivra`, and `.nva`.
+- [x] The EBNF has unique productions and no undefined nonterminal references.
+- [x] Required type, memory, error, concurrency, compiler, FFI, package, and
+      compatibility rules are present.
+- [x] D2 examples use balanced delimiters and current identity.
+- [x] The complete tour covers safety, errors, traits, generics, structured
+      concurrency, FFI, and explicit unsafe capabilities.
+- [x] Semantic contradiction checks pass.
+- [x] GitHub Actions invokes the same cumulative verifier used in Termux.
 
 ## Manual
 
-- [ ] GitHub Actions shows a green tick.
-- [ ] `bash verify.sh` prints `★★★★★ D1 GOLDEN BUILD`.
-- [ ] `python3 tools/spec_report.py` reports 30 pain points and 18 articles.
-- [ ] The syntax tour is readable on a phone and contains no unexplained construct.
-- [ ] Locked, deferred, and rejected decisions are clearly separated.
-- [ ] The developer agrees that D1 reflects the project mission.
+- [ ] GitHub Actions shows a green check for `Verify Nivra D2`.
+- [ ] `bash verify.sh` ends with `★★★★★ D2 GOLDEN BUILD`.
+- [ ] `python3 tools/d2_report.py` prints the expected architecture counts.
+- [ ] `python3 tools/decision_query.py memory` prints the locked memory summary.
+- [ ] The complete D2 syntax tour is readable and internally coherent.
+- [ ] The user accepts the D2 architecture and reports `GG D2 Passed`.
 
-## Delivery gate
+## Gate
 
-The next delivery should start only after the user reports:
-
-```text
-GG D1 Passed
-```
+D3 starts only after all manual checks pass.

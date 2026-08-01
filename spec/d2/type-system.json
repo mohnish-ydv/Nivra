@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "delivery": "D2",
+  "rules": [
+    {
+      "id": "TY-001",
+      "rule": "static_typing",
+      "status": "locked"
+    },
+    {
+      "id": "TY-002",
+      "rule": "mostly_nominal_typing",
+      "status": "locked"
+    },
+    {
+      "id": "TY-003",
+      "rule": "local_inference",
+      "status": "locked"
+    },
+    {
+      "id": "TY-004",
+      "rule": "explicit_public_signatures",
+      "status": "locked"
+    },
+    {
+      "id": "TY-005",
+      "rule": "unit_type",
+      "status": "locked"
+    },
+    {
+      "id": "TY-006",
+      "rule": "never_type",
+      "status": "locked"
+    },
+    {
+      "id": "TY-007",
+      "rule": "fixed_width_integers",
+      "status": "locked"
+    },
+    {
+      "id": "TY-008",
+      "rule": "pointer_width_index_types",
+      "status": "locked"
+    },
+    {
+      "id": "TY-009",
+      "rule": "f32_f64_ieee754",
+      "status": "locked"
+    },
+    {
+      "id": "TY-010",
+      "rule": "utf8_string",
+      "status": "locked"
+    },
+    {
+      "id": "TY-011",
+      "rule": "unicode_scalar_char",
+      "status": "locked"
+    },
+    {
+      "id": "TY-012",
+      "rule": "contextual_numeric_literals",
+      "status": "locked"
+    },
+    {
+      "id": "TY-013",
+      "rule": "checked_integer_overflow_all_profiles",
+      "status": "locked"
+    },
+    {
+      "id": "TY-014",
+      "rule": "explicit_numeric_conversion",
+      "status": "locked"
+    },
+    {
+      "id": "TY-015",
+      "rule": "no_truthiness",
+      "status": "locked"
+    },
+    {
+      "id": "TY-016",
+      "rule": "option_not_null",
+      "status": "locked"
+    },
+    {
+      "id": "TY-017",
+      "rule": "result_must_use",
+      "status": "locked"
+    },
+    {
+      "id": "TY-018",
+      "rule": "record_value_data",
+      "status": "locked"
+    },
+    {
+      "id": "TY-019",
+      "rule": "struct_layout_data",
+      "status": "locked"
+    },
+    {
+      "id": "TY-020",
+      "rule": "closed_payload_enums",
+      "status": "locked"
+    },
+    {
+      "id": "TY-021",
+      "rule": "zero_cost_newtype",
+      "status": "locked"
+    },
+    {
+      "id": "TY-022",
+      "rule": "transparent_alias",
+      "status": "locked"
+    },
+    {
+      "id": "TY-023",
+      "rule": "traits_no_class_inheritance",
+      "status": "locked"
+    },
+    {
+      "id": "TY-024",
+      "rule": "orphan_rule",
+      "status": "locked"
+    },
+    {
+      "id": "TY-025",
+      "rule": "monomorphized_generics",
+      "status": "locked"
+    },
+    {
+      "id": "TY-026",
+      "rule": "explicit_dyn_dispatch",
+      "status": "locked"
+    },
+    {
+      "id": "TY-027",
+      "rule": "copy_move_clone_distinction",
+      "status": "locked"
+    },
+    {
+      "id": "TY-028",
+      "rule": "exhaustive_match",
+      "status": "locked"
+    },
+    {
+      "id": "TY-029",
+      "rule": "no_specialization_hkt_or_user_variance",
+      "status": "locked"
+    }
+  ],
+  "aliases": {
+    "Int": "I64",
+    "UInt": "U64",
+    "Float": "F64",
+    "Byte": "U8"
+  }
+}
