@@ -1,0 +1,5 @@
+module examples.d6.invalid.binding_mismatch
+
+fn main() {
+    let count: Int = "forty-two"
+}

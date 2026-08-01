@@ -1,0 +1,7 @@
+module examples.d6.invalid.non_bool_condition
+
+fn main() {
+    if 1 {
+        print("not truthy")
+    }
+}

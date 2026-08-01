@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "delivery": "D6",
+  "codes": [
+    {"code": "TYP001", "title": "type mismatch", "severity": "error"},
+    {"code": "TYP002", "title": "unsupported typed operation", "severity": "error"},
+    {"code": "TYP003", "title": "wrong argument count", "severity": "error"},
+    {"code": "TYP004", "title": "argument type mismatch", "severity": "error"},
+    {"code": "TYP005", "title": "return type mismatch", "severity": "error"},
+    {"code": "TYP006", "title": "insufficient inference context", "severity": "error"},
+    {"code": "TYP007", "title": "condition is not Bool", "severity": "error"},
+    {"code": "TYP008", "title": "unknown or malformed type", "severity": "error"},
+    {"code": "TYP009", "title": "heterogeneous array", "severity": "error"},
+    {"code": "TYP010", "title": "immutable assignment", "severity": "error"}
+  ]
+}

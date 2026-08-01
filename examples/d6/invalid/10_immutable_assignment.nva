@@ -1,0 +1,6 @@
+module examples.d6.invalid.immutable_assignment
+
+fn main() {
+    let value = 1
+    value = 2
+}

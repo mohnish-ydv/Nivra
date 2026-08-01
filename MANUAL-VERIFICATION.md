@@ -1,21 +1,13 @@
-# D5 Manual Verification After GitHub Actions Is Green
+# D6 Manual Verification After GitHub Actions Is Green
 
-## 1. Install requirements
-
-```bash
-pkg update -y
-pkg install rust python git -y
-```
-
-## 2. Run the Termux-safe golden verifier
+## 1. Run the Termux-safe cumulative verifier
 
 ```bash
-cd ~/storage/downloads/Nivra-D5-Semantic-Resolution-GitHub-Ready
+cd ~/storage/downloads/Nivra-D6-Type-Checker-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
-The project is copied to `~/nivra-d5-verification` before Cargo runs.
-
+The project is copied to `~/nivra-d6-verification` before Rust compilation.
 Expected ending:
 
 ```text
@@ -23,91 +15,79 @@ D1 regression: PASS
 D2 regression: PASS
 D3 regression: PASS
 D4 regression: PASS
-D5 structure: PASS
+D5 regression: PASS
+D6 structure: PASS
 Rust tests: PASS
-D5 CLI smoke tests: PASS
-★★★★★ D5 GOLDEN BUILD
+D6 CLI smoke tests: PASS
+★★★★★ D6 GOLDEN BUILD
 ```
 
-## 3. Check the CLI identity
+## 2. Confirm CLI identity
 
 ```bash
-cd ~/nivra-d5-verification
+cd ~/nivra-d6-verification
 ./target/debug/nivra --version
 ./target/debug/nivra doctor
 ```
 
-Expected version:
+Expected identity:
 
 ```text
-nivra 0.5.0 (semantic name-resolution foundation D5)
+nivra 0.6.0 (static type-checker foundation D6)
+D6 status: OPERATIONAL
 ```
 
-## 4. Check a valid semantic program
+## 3. Check the complete valid program
 
 ```bash
-./target/debug/nivra check examples/d5/05_complete_semantic_tour.nva
+./target/debug/nivra check examples/d6/05_complete_type_tour.nva
 ```
 
-Expected ending contains:
+Expected ending contains `0 errors`.
 
-```text
-0 errors
-```
-
-## 5. Inspect symbols and scopes
+## 4. Inspect signatures and inferred bindings
 
 ```bash
-./target/debug/nivra resolve \
-  examples/d5/05_complete_semantic_tour.nva \
-  --symbols --scopes | sed -n '1,220p'
+./target/debug/nivra typecheck \
+  examples/d6/05_complete_type_tour.nva \
+  --functions --types | sed -n '1,240p'
 ```
 
-Confirm that the output contains module, function, parameter, local, block, match-arm, closure,
-task-group, and imported names.
+Confirm that `clamp`, `score`, `bounded`, `final_score`, `tags`, `contact`, and
+`attempts` have readable types.
 
-## 6. Test unresolved-name diagnostics
+## 5. Check representative failures
 
 ```bash
-./target/debug/nivra check examples/d5/invalid/03_unresolved_name.nva
+./target/debug/nivra typecheck examples/d6/invalid/01_binding_mismatch.nva
+echo $?
+./target/debug/nivra typecheck examples/d6/invalid/03_wrong_arity.nva
+echo $?
+./target/debug/nivra typecheck examples/d6/invalid/07_non_bool_condition.nva
+echo $?
+./target/debug/nivra typecheck examples/d6/invalid/10_immutable_assignment.nva
 echo $?
 ```
 
-Expected:
+Expected codes are `TYP001`, `TYP003`, `TYP007`, and `TYP010`; each command exits
+with code `1`.
 
-```text
-error[SEM003]
-1
-```
-
-## 7. Test duplicate diagnostics
+## 6. Validate JSON output
 
 ```bash
-./target/debug/nivra check examples/d5/invalid/02_duplicate_local.nva
-echo $?
-```
-
-Expected:
-
-```text
-error[SEM002]
-1
-```
-
-## 8. Decode semantic JSON
-
-```bash
-./target/debug/nivra resolve \
-  examples/d5/01_module_index.nva \
+./target/debug/nivra typecheck \
+  examples/d6/02_functions_and_calls.nva \
   --json | python3 -m json.tool >/dev/null
 
 echo $?
 ```
 
-Expected: `0`.
+Expected exit code: `0`.
 
-When all checks pass, report:
+## Pass message
+
+When Actions and every manual check pass, report:
 
 ```text
-GG D5 Passed
+GG D6 Passed
 ```

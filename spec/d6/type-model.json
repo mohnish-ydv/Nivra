@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "delivery": "D6",
+  "recovery_types": ["Unknown", "Error"],
+  "primitive_families": ["Unit", "Never", "Bool", "Char", "String", "Int", "Float"],
+  "composite_forms": ["Named", "Optional", "Reference", "Pointer", "Tuple", "Function"],
+  "inference_targets": [
+    "integer literals",
+    "floating literals",
+    "strings",
+    "characters",
+    "booleans",
+    "arrays",
+    "function calls",
+    "binary expressions",
+    "bindings"
+  ],
+  "strict_rules": {
+    "implicit_truthiness": false,
+    "implicit_int_to_float": false,
+    "heterogeneous_arrays": false,
+    "assign_to_let": false,
+    "none_without_context": false
+  }
+}

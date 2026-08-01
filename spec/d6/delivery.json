@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "delivery": "D6",
+  "version": "0.6.0",
+  "edition": "2026",
+  "title": "Static Type-Checker Foundation",
+  "builds_on": ["D1", "D2", "D3", "D4", "D5"],
+  "workspace_crates": 8,
+  "external_runtime_dependencies": 0,
+  "type_checking_included": true,
+  "ownership_checking_included": false,
+  "hir_included": false,
+  "code_generation_included": false
+}

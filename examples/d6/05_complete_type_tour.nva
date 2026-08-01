@@ -1,0 +1,43 @@
+module examples.d6.complete_type_tour
+
+const DEFAULT_LIMIT: Int = 10
+
+newtype UserId = Int
+
+record User {
+    id: UserId
+    name: String
+    email: String?
+}
+
+fn clamp(value: Int, minimum: Int, maximum: Int) -> Int {
+    if value < minimum {
+        minimum
+    } else if value > maximum {
+        maximum
+    } else {
+        value
+    }
+}
+
+fn score(active: Bool, base: Int) -> Int {
+    if active {
+        base + DEFAULT_LIMIT
+    } else {
+        base
+    }
+}
+
+fn main() {
+    let bounded = clamp(120, 0, 100)
+    let final_score = score(true, bounded)
+    let tags: List<String> = ["safe", "typed", "native"]
+    let contact: String? = none
+    var attempts = 0
+    attempts = attempts + 1
+
+    print(final_score)
+    print(tags)
+    print(contact)
+    print(attempts)
+}

@@ -1,0 +1,9 @@
+module examples.d6.invalid.wrong_arity
+
+fn add(left: Int, right: Int) -> Int {
+    left + right
+}
+
+fn main() {
+    add(1)
+}

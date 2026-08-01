@@ -1,0 +1,15 @@
+module examples.d6.functions_and_calls
+
+fn add(left: Int, right: Int) -> Int {
+    left + right
+}
+
+fn is_positive(value: Int) -> Bool {
+    value > 0
+}
+
+fn main() {
+    let total = add(20, 22)
+    let positive = is_positive(total)
+    print(positive)
+}

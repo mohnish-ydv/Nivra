@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "delivery": "D6",
+  "pipeline": [
+    "parse",
+    "semantic name resolution",
+    "collect nominal types",
+    "collect function signatures",
+    "collect constants",
+    "check function bodies",
+    "infer local bindings",
+    "validate operators and calls",
+    "validate conditions and returns",
+    "emit typed reports"
+  ],
+  "recovery_policy": "Unknown and Error types suppress cascading diagnostics without hiding the primary error",
+  "cli_commands": ["nivra check", "nivra typecheck"]
+}

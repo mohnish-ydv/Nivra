@@ -1,0 +1,6 @@
+module examples.d6.invalid.heterogeneous_array
+
+fn main() {
+    let values = [1, "two", 3]
+    print(values)
+}

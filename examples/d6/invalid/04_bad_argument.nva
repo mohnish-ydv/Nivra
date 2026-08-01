@@ -1,0 +1,9 @@
+module examples.d6.invalid.bad_argument
+
+fn double(value: Int) -> Int {
+    value * 2
+}
+
+fn main() {
+    double("two")
+}

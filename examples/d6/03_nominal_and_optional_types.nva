@@ -1,0 +1,17 @@
+module examples.d6.nominal_and_optional_types
+
+record User {
+    id: Int
+    name: String
+}
+
+fn keep_user(user: User) -> User {
+    user
+}
+
+fn main() {
+    let email: String? = none
+    let values: List<Int> = [1, 2, 3]
+    print(email)
+    print(values)
+}

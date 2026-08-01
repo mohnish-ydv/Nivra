@@ -10,6 +10,7 @@ use nivra_parser::parse;
 use nivra_sema::{SemanticResult, analyze_parse};
 use nivra_source::{SourceError, SourceManager};
 use nivra_syntax::{SyntaxElement, SyntaxNode};
+use nivra_types::{TypeCheckResult, check as check_types};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -30,7 +31,7 @@ fn run(arguments: Vec<OsString>) -> i32 {
             0
         }
         "version" | "--version" | "-V" => {
-            println!("nivra {VERSION} (semantic name-resolution foundation D5)");
+            println!("nivra {VERSION} (static type-checker foundation D6)");
             0
         }
         "doctor" => doctor(),
@@ -39,9 +40,10 @@ fn run(arguments: Vec<OsString>) -> i32 {
         "lex" => lex_command(&arguments[1..]),
         "parse" => parse_command(&arguments[1..]),
         "resolve" => resolve_command(&arguments[1..]),
+        "typecheck" => typecheck_command(&arguments[1..]),
         unknown => {
             eprintln!("error[CLI001]: unknown command `{unknown}`");
-            eprintln!("  = help: run `nivra help` to list available D5 commands");
+            eprintln!("  = help: run `nivra help` to list available D6 commands");
             2
         }
     }
@@ -56,21 +58,23 @@ USAGE:
     nivra <COMMAND> [OPTIONS]
 
 COMMANDS:
-    check <FILE> [--json]                       Lex, parse, and resolve names
+    check <FILE> [--json]                       Lex, parse, resolve, and type-check
     lex <FILE> [--trivia] [--json]              Print the lossless token stream
     parse <FILE> [--tree] [--trivia] [--json]   Inspect the lossless CST
     resolve <FILE> [--symbols] [--scopes]        Inspect semantic name resolution
                    [--all] [--json]
-    explain <CODE>                               Explain a D5 diagnostic code
+    typecheck <FILE> [--functions] [--types]     Inspect static types
+                     [--json]
+    explain <CODE>                               Explain a D6 diagnostic code
     doctor                                       Show compiler-driver information
     version                                      Print the version
     help                                         Print this help
 
-D5 SCOPE:
-    Source management, diagnostics, lexing, lossless parsing, typed AST accessors,
-    module indexing, lexical scopes, symbol tables, and value-name resolution are
-    implemented. Full type checking, ownership checking, HIR/MIR, code generation,
-    and execution arrive in later deliveries.
+D6 SCOPE:
+    Source management, diagnostics, lexing, lossless parsing, semantic resolution,
+    primitive and nominal types, function signatures, local inference, operators,
+    calls, conditions, assignments, arrays, and return checking are implemented.
+    Ownership checking, HIR/MIR, code generation, and execution arrive later.
 "
     );
 }
@@ -100,7 +104,12 @@ fn doctor() -> i32 {
     println!("Module indexer: PASS");
     println!("Scope and symbol tables: PASS");
     println!("Name resolver: PASS");
-    println!("D5 status: OPERATIONAL");
+    println!("Type representation: PASS");
+    println!("Signature collector: PASS");
+    println!("Local type inference: PASS");
+    println!("Operator and call checker: PASS");
+    println!("Return checker: PASS");
+    println!("D6 status: OPERATIONAL");
     0
 }
 
@@ -133,12 +142,22 @@ fn explain(code: Option<&OsString>) -> i32 {
         "SEM004" => "A source file contains more than one module declaration.",
         "SEM005" => "A parameter or generic parameter is duplicated.",
         "SEM006" => "A field, enum variant, or method is duplicated in its type body.",
-        "CLI001" => "The requested D5 command does not exist.",
+        "TYP001" => "A value is not assignable to the expected static type.",
+        "TYP002" => "An operator or type-directed operation is unsupported for these operands.",
+        "TYP003" => "A function call supplies the wrong number of arguments.",
+        "TYP004" => "A function argument does not match its parameter type.",
+        "TYP005" => "A return expression or function body does not match the declared return type.",
+        "TYP006" => "A binding needs a type annotation because inference has insufficient context.",
+        "TYP007" => "A condition must be Bool; Nivra does not use truthiness.",
+        "TYP008" => "A declared type is malformed, unknown, or not imported.",
+        "TYP009" => "Array elements must have one compatible element type.",
+        "TYP010" => "An immutable `let` binding cannot be assigned a new value.",
+        "CLI001" => "The requested D6 command does not exist.",
         "CLI002" => "A required command argument is missing or an option is invalid.",
         "DRV001" => "The compiler driver could not load the requested source file.",
         _ => {
             eprintln!("error[CLI003]: unknown diagnostic code `{code}`");
-            eprintln!("  = help: D5 codes use the LEX, PAR, SEM, CLI, and DRV prefixes");
+            eprintln!("  = help: D6 codes use the LEX, PAR, SEM, TYP, CLI, and DRV prefixes");
             return 2;
         }
     };
@@ -167,9 +186,16 @@ fn check_command(arguments: &[OsString]) -> i32 {
     };
     let result = parse(source);
     let semantic = analyze_parse(source, &result);
+    let typed = semantic
+        .as_ref()
+        .filter(|semantic_result| !semantic_result.has_errors())
+        .map(|semantic_result| check_types(source, &result.root, semantic_result));
     let mut diagnostics = result.diagnostics.clone();
     if let Some(semantic_result) = &semantic {
         diagnostics.extend(semantic_result.diagnostics.iter().cloned());
+    }
+    if let Some(type_result) = &typed {
+        diagnostics.extend(type_result.diagnostics.iter().cloned());
     }
     let errors = error_count(&diagnostics);
     let warnings = diagnostics.len().saturating_sub(errors);
@@ -178,11 +204,14 @@ fn check_command(arguments: &[OsString]) -> i32 {
     let semantic_symbols = semantic.as_ref().map_or(0, |value| value.user_symbols().count());
     let semantic_scopes = semantic.as_ref().map_or(0, |value| value.scopes.len());
     let resolved_names = semantic.as_ref().map_or(0, SemanticResult::resolved_name_count);
+    let typed_bindings = typed.as_ref().map_or(0, |value| value.bindings.len());
+    let typed_expressions = typed.as_ref().map_or(0, |value| value.expressions.len());
+    let function_signatures = typed.as_ref().map_or(0, |value| value.functions.len());
 
     if parsed.json {
         let rendered = Renderer::new().json_many(&diagnostics, &sources);
         println!(
-            "{{\"path\":{},\"nodes\":{},\"tokens\":{},\"lexical_diagnostics\":{},\"recoveries\":{},\"semantic_symbols\":{},\"semantic_scopes\":{},\"resolved_names\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}}}",
+            "{{\"path\":{},\"nodes\":{},\"tokens\":{},\"lexical_diagnostics\":{},\"recoveries\":{},\"semantic_symbols\":{},\"semantic_scopes\":{},\"resolved_names\":{},\"function_signatures\":{},\"typed_bindings\":{},\"typed_expressions\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}}}",
             json_string(&parsed.path.to_string_lossy()),
             nodes,
             tokens,
@@ -191,6 +220,9 @@ fn check_command(arguments: &[OsString]) -> i32 {
             semantic_symbols,
             semantic_scopes,
             resolved_names,
+            function_signatures,
+            typed_bindings,
+            typed_expressions,
             errors,
             warnings,
             rendered
@@ -201,12 +233,12 @@ fn check_command(arguments: &[OsString]) -> i32 {
         }
         if errors == 0 {
             println!(
-                "Checked {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {warnings} warnings, 0 errors",
+                "Checked {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {typed_bindings} typed bindings, {warnings} warnings, 0 errors",
                 parsed.path.display()
             );
         } else {
             println!(
-                "Check failed for {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {warnings} warnings, {errors} errors",
+                "Check failed for {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {typed_bindings} typed bindings, {warnings} warnings, {errors} errors",
                 parsed.path.display()
             );
         }
@@ -370,6 +402,93 @@ fn resolve_command(arguments: &[OsString]) -> i32 {
     if errors > 0 { 1 } else { 0 }
 }
 
+
+fn typecheck_command(arguments: &[OsString]) -> i32 {
+    let options = match parse_typecheck_options(arguments) {
+        Ok(value) => value,
+        Err(message) => {
+            eprintln!("error[CLI002]: {message}");
+            eprintln!(
+                "  = help: usage: `nivra typecheck <FILE> [--functions] [--types] [--json]`"
+            );
+            return 2;
+        }
+    };
+
+    let (sources, source_id) = match load_source(&options.path) {
+        Ok(value) => value,
+        Err(error) => return print_source_error(error, options.json),
+    };
+    let Some(source) = sources.get(source_id) else {
+        eprintln!("error[DRV999]: loaded source disappeared from the source manager");
+        return 2;
+    };
+    let parsed = parse(source);
+    if parsed.has_errors() {
+        if options.json {
+            println!(
+                "{{\"path\":{},\"phase\":\"parse\",\"diagnostics\":{}}}",
+                json_string(&options.path.to_string_lossy()),
+                Renderer::new().json_many(&parsed.diagnostics, &sources)
+            );
+        } else {
+            eprint!("{}", Renderer::new().human_many(&parsed.diagnostics, &sources));
+            eprintln!("Type checking skipped because parsing failed.");
+        }
+        return 1;
+    }
+
+    let semantic = nivra_sema::analyze(source, &parsed.root);
+    if semantic.has_errors() {
+        if options.json {
+            println!(
+                "{{\"path\":{},\"phase\":\"semantic\",\"diagnostics\":{}}}",
+                json_string(&options.path.to_string_lossy()),
+                Renderer::new().json_many(&semantic.diagnostics, &sources)
+            );
+        } else {
+            eprint!("{}", Renderer::new().human_many(&semantic.diagnostics, &sources));
+            eprintln!("Type checking skipped because name resolution failed.");
+        }
+        return 1;
+    }
+
+    let typed = check_types(source, &parsed.root, &semantic);
+    let errors = error_count(&typed.diagnostics);
+    let warnings = typed.diagnostics.len().saturating_sub(errors);
+
+    if options.json {
+        println!("{}", typecheck_json(&options.path, &typed, &sources));
+    } else {
+        println!("TYPECHECK SUMMARY");
+        println!("=================");
+        println!("Path: {}", options.path.display());
+        println!("Function signatures: {}", typed.functions.len());
+        println!("Typed bindings: {}", typed.bindings.len());
+        println!("Typed expressions: {}", typed.expressions.len());
+        println!("Errors: {errors}");
+        println!("Warnings: {warnings}");
+
+        if options.functions {
+            println!();
+            println!("FUNCTION SIGNATURES");
+            println!("===================");
+            print!("{}", typed.function_report());
+        }
+        if options.types {
+            println!();
+            println!("INFERRED AND DECLARED BINDINGS");
+            println!("==============================");
+            print!("{}", typed.binding_report());
+        }
+        if !typed.diagnostics.is_empty() {
+            eprint!("{}", Renderer::new().human_many(&typed.diagnostics, &sources));
+        }
+    }
+
+    if errors > 0 { 1 } else { 0 }
+}
+
 fn lex_command(arguments: &[OsString]) -> i32 {
     let parsed = match parse_file_options(arguments, OptionMode::Lex) {
         Ok(value) => value,
@@ -473,6 +592,47 @@ struct ResolveOptions {
     all: bool,
 }
 
+
+#[derive(Debug)]
+struct TypecheckOptions {
+    path: PathBuf,
+    json: bool,
+    functions: bool,
+    types: bool,
+}
+
+fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, String> {
+    let mut path = None;
+    let mut json = false;
+    let mut functions = false;
+    let mut types = false;
+
+    for argument in arguments {
+        if argument.as_os_str() == OsStr::new("--json") {
+            json = true;
+        } else if argument.as_os_str() == OsStr::new("--functions") {
+            functions = true;
+        } else if argument.as_os_str() == OsStr::new("--types") {
+            types = true;
+        } else if argument.to_string_lossy().starts_with('-') {
+            return Err(format!("unknown option `{}`", argument.to_string_lossy()));
+        } else if path.replace(PathBuf::from(argument.as_os_str())).is_some() {
+            return Err("only one source file may be supplied".to_owned());
+        }
+    }
+
+    if json && (functions || types) {
+        return Err("`--json` already includes functions and types; remove display flags".to_owned());
+    }
+
+    Ok(TypecheckOptions {
+        path: path.ok_or_else(|| "a source file path is required".to_owned())?,
+        json,
+        functions,
+        types,
+    })
+}
+
 fn parse_resolve_options(arguments: &[OsString]) -> Result<ResolveOptions, String> {
     let mut path = None;
     let mut json = false;
@@ -568,6 +728,88 @@ fn print_source_error(error: SourceError, json: bool) -> i32 {
         eprintln!("  = help: check the path, file permissions, and UTF-8 encoding");
     }
     2
+}
+
+
+fn typecheck_json(
+    path: &Path,
+    typed: &TypeCheckResult,
+    sources: &SourceManager,
+) -> String {
+    let mut output = String::new();
+    output.push('{');
+    let _ = write!(
+        output,
+        "\"path\":{},\"functions\":[",
+        json_string(&path.to_string_lossy())
+    );
+    for (index, signature) in typed.functions.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let _ = write!(
+            output,
+            "{{\"name\":{},\"return_type\":{},\"async\":{},\"extern\":{},\"parameters\":[",
+            json_string(&signature.name),
+            json_string(&signature.return_type.display_name()),
+            signature.is_async,
+            signature.is_extern
+        );
+        for (parameter_index, parameter) in signature.parameters.iter().enumerate() {
+            if parameter_index > 0 {
+                output.push(',');
+            }
+            let _ = write!(
+                output,
+                "{{\"name\":{},\"type\":{},\"start\":{},\"end\":{}}}",
+                json_string(&parameter.name),
+                json_string(&parameter.ty.display_name()),
+                parameter.span.start(),
+                parameter.span.end()
+            );
+        }
+        output.push_str("]}");
+    }
+    output.push_str("],\"bindings\":[");
+    for (index, binding) in typed.bindings.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let _ = write!(
+            output,
+            "{{\"name\":{},\"type\":{},\"mutable\":{},\"start\":{},\"end\":{}}}",
+            json_string(&binding.name),
+            json_string(&binding.ty.display_name()),
+            binding.mutable,
+            binding.span.start(),
+            binding.span.end()
+        );
+    }
+    output.push_str("],\"expressions\":[");
+    for (index, expression) in typed.expressions.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let _ = write!(
+            output,
+            "{{\"kind\":{},\"type\":{},\"start\":{},\"end\":{}}}",
+            json_string(expression.kind.name()),
+            json_string(&expression.ty.display_name()),
+            expression.span.start(),
+            expression.span.end()
+        );
+    }
+    let errors = error_count(&typed.diagnostics);
+    let warnings = typed.diagnostics.len().saturating_sub(errors);
+    let _ = write!(
+        output,
+        "],\"errors\":{},\"warnings\":{},\"diagnostics\":{}",
+        errors,
+        warnings,
+        Renderer::new().json_many(&typed.diagnostics, sources)
+    );
+    output.push('}');
+    output
 }
 
 fn semantic_json(

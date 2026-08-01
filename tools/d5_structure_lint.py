@@ -66,10 +66,10 @@ required_members = {
     "crates/nivra-sema",
     "crates/nivra-cli",
 }
-if members != required_members:
-    fail(f"workspace members mismatch: {sorted(members ^ required_members)}")
-if workspace["workspace"]["package"].get("version") != "0.5.0":
-    fail("workspace version is not 0.5.0")
+if not required_members.issubset(members):
+    fail(f"workspace missing D5 crates: {sorted(required_members - members)}")
+if workspace["workspace"]["package"].get("version") != "0.6.0":
+    fail("workspace version is not 0.6.0")
 if workspace["workspace"]["package"].get("rust-version") != "1.74":
     fail("workspace minimum Rust version changed unexpectedly")
 toolchain = tomllib.loads((ROOT / "rust-toolchain.toml").read_text(encoding="utf-8"))
@@ -98,8 +98,8 @@ for package in [
 ]:
     if f'name = "{package}"' not in lock:
         fail(f"Cargo.lock missing {package}")
-if lock.count('version = "0.5.0"') != 7:
-    fail("Cargo.lock does not contain seven 0.5.0 packages")
+if lock.count('version = "0.6.0"') < 7:
+    fail("Cargo.lock does not retain the D5 package set at 0.6.0")
 print("D5 Cargo lock: PASS")
 
 syntax = (ROOT / "crates/nivra-syntax/src/lib.rs").read_text(encoding="utf-8")

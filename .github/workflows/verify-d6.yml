@@ -1,6 +1,9 @@
-name: Verify D5 Semantic Resolution
+name: Verify D6 Type Checker
 
 on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -8,21 +11,24 @@ permissions:
 
 jobs:
   verify:
-    name: Specs, semantic tests, CLI, release
+    name: Specs, type tests, CLI, release
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install stable Rust toolchain
+      - name: Install pinned Rust toolchain
         run: |
           rustup toolchain install 1.74.0 --profile minimal --component rustfmt
           rustup default 1.74.0
           rustc --version
           cargo --version
           rustfmt --version
+
+      - name: Run Rust test suite
+        run: cargo test --workspace --all-targets --locked
 
       - name: Run cumulative golden verifier
         env:
@@ -33,34 +39,36 @@ jobs:
       - name: Build release workspace
         run: cargo build --workspace --release --locked
 
-      - name: Run release CLI semantic smoke
+      - name: Run release type-checker smoke
         env:
           NIVRA_BIN: ${{ github.workspace }}/target/release/nivra
-        run: bash scripts/d5-smoke.sh
+        run: bash scripts/d6-smoke.sh
 
-      - name: Generate reports
+      - name: Generate D6 reports
         run: |
           python3 tools/d2_report.py > D2-ARCHITECTURE-REPORT.txt
           python3 tools/d3_report.py > D3-COMPILER-FOUNDATION-REPORT.txt
           python3 tools/d4_report.py > D4-PARSER-AST-REPORT.txt
           python3 tools/d5_report.py > D5-SEMANTIC-REPORT.txt
-          ./target/release/nivra doctor > D5-NIVRA-DOCTOR.txt
-          ./target/release/nivra resolve examples/d5/05_complete_semantic_tour.nva --symbols --scopes > D5-SYMBOL-SCOPE-REPORT.txt
-          ./target/release/nivra resolve examples/d5/01_module_index.nva --json > D5-SEMANTIC-GRAPH.json
+          python3 tools/d6_report.py > D6-TYPE-CHECKER-REPORT.txt
+          ./target/release/nivra doctor > D6-NIVRA-DOCTOR.txt
+          ./target/release/nivra typecheck examples/d6/05_complete_type_tour.nva --functions --types > D6-TYPE-REPORT.txt
+          ./target/release/nivra typecheck examples/d6/02_functions_and_calls.nva --json > D6-TYPE-GRAPH.json
 
-      - name: Upload D5 Linux artifact and reports
+      - name: Upload D6 Linux artifact and reports
         uses: actions/upload-artifact@v4
         with:
-          name: nivra-d5-linux-x86_64
+          name: nivra-d6-linux-x86_64
           path: |
             target/release/nivra
             D2-ARCHITECTURE-REPORT.txt
             D3-COMPILER-FOUNDATION-REPORT.txt
             D4-PARSER-AST-REPORT.txt
             D5-SEMANTIC-REPORT.txt
-            D5-NIVRA-DOCTOR.txt
-            D5-SYMBOL-SCOPE-REPORT.txt
-            D5-SEMANTIC-GRAPH.json
+            D6-TYPE-CHECKER-REPORT.txt
+            D6-NIVRA-DOCTOR.txt
+            D6-TYPE-REPORT.txt
+            D6-TYPE-GRAPH.json
             MANUAL-VERIFICATION.md
           if-no-files-found: error
           retention-days: 14

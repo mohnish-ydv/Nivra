@@ -19,7 +19,7 @@ fn temporary_source(name: &str, content: &str) -> PathBuf {
 }
 
 #[test]
-fn version_reports_d5_foundation() {
+fn version_reports_d6_foundation() {
     let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
         .arg("--version")
         .output()
@@ -27,8 +27,8 @@ fn version_reports_d5_foundation() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("nivra 0.5.0"));
-    assert!(stdout.contains("D5"));
+    assert!(stdout.contains("nivra 0.6.0"));
+    assert!(stdout.contains("D6"));
 }
 
 #[test]
@@ -238,4 +238,106 @@ fn explain_describes_semantic_error() {
 
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("not visible"));
+}
+
+
+#[test]
+fn typecheck_reports_functions_and_bindings() {
+    let path = temporary_source(
+        "types.nva",
+        "module demo\nfn add(a: Int, b: Int) -> Int { a + b }\nfn main() { let total = add(1, 2)\n print(total) }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("typecheck")
+        .arg(&path)
+        .args(["--functions", "--types"])
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("TYPECHECK SUMMARY"));
+    assert!(stdout.contains("fn add(a: Int, b: Int) -> Int"));
+    assert!(stdout.contains("let total: Int"));
+}
+
+#[test]
+fn check_rejects_static_type_mismatch() {
+    let path = temporary_source(
+        "mismatch.nva",
+        "module demo\nfn main() { let count: Int = \"two\"\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("TYP001"));
+}
+
+#[test]
+fn typecheck_rejects_wrong_arity() {
+    let path = temporary_source(
+        "arity.nva",
+        "module demo\nfn add(a: Int, b: Int) -> Int { a + b }\nfn main() { add(1) }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("typecheck")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("TYP003"));
+}
+
+#[test]
+fn typecheck_rejects_non_bool_condition() {
+    let path = temporary_source(
+        "condition.nva",
+        "module demo\nfn main() { if 7 { print(7) } }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("typecheck")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("TYP007"));
+}
+
+#[test]
+fn typecheck_json_contains_static_type_graph() {
+    let path = temporary_source(
+        "types_json.nva",
+        "module demo\nfn identity(value: String) -> String { value }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("typecheck")
+        .arg(&path)
+        .arg("--json")
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.starts_with('{'));
+    assert!(stdout.contains("\"functions\":["));
+    assert!(stdout.contains("\"return_type\":\"String\""));
+    assert!(stdout.contains("\"bindings\":["));
+    assert!(stdout.contains("\"expressions\":["));
+}
+
+#[test]
+fn explain_describes_type_error() {
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .args(["explain", "TYP004"])
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("parameter type"));
 }

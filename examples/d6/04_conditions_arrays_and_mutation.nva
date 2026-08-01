@@ -1,0 +1,19 @@
+module examples.d6.conditions_arrays_and_mutation
+
+fn sum_pair(values: List<Int>) -> Int {
+    values[0] + values[1]
+}
+
+fn main() {
+    let values = [10, 32]
+    let total = sum_pair(values)
+    var label = "small"
+
+    if total > 40 {
+        label = "large"
+    } else {
+        label = "small"
+    }
+
+    print(label)
+}

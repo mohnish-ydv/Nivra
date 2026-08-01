@@ -1,34 +1,25 @@
-# D5 Acceptance Checklist
+# D6 Acceptance Checklist
 
 ## Automated
 
-- [x] D1–D4 structural regressions remain checked.
-- [x] Seven local-only Rust crates are present.
-- [x] Workspace version and lockfile are 0.5.0.
-- [x] No registry dependency exists.
-- [x] Semantic scope, symbol, and resolution models exist.
-- [x] Six unique `SEM` diagnostics exist and are explained by the CLI.
-- [x] `nivra check` invokes semantics only after a clean parse.
-- [x] `nivra resolve` supports summary, symbols, scopes, and JSON.
-- [x] Five valid and five invalid D5 fixtures exist.
-- [x] Cumulative Rust test inventory exceeds 50 tests.
-- [x] Fixed `/tmp` paths and unresolved drafting markers are prohibited.
-- [x] GitHub Actions builds/tests debug and release binaries.
+- [x] D1 specification regression retained.
+- [x] D2 architecture regression retained.
+- [x] D3 compiler-foundation regression retained.
+- [x] D4 parser regression retained.
+- [x] D5 semantic regression retained.
+- [x] Eight local-only Rust crates are declared.
+- [x] `nivra-types` implementation and tests are present.
+- [x] Ten unique `TYP` diagnostics are implemented and explained.
+- [x] Five valid and ten invalid D6 fixtures are present.
+- [x] GitHub Actions runs formatting, all tests, debug/release builds, and D6 smoke.
+- [x] Fixed `/tmp` output paths remain forbidden.
 
 ## Manual
 
-- [ ] GitHub Actions shows a green check for `Verify D5 Semantic Resolution`.
-- [ ] `bash scripts/termux-verify.sh` prints `★★★★★ D5 GOLDEN BUILD`.
-- [ ] `nivra doctor` reports D5 semantic components as PASS.
-- [ ] All valid D5 examples report zero errors.
-- [ ] Invalid fixtures emit expected `SEM` codes.
-- [ ] Symbol and scope output is readable on a phone.
-- [ ] JSON resolution output decodes with Python.
-
-## Gate
-
-Proceed to D6 only after the user reports:
-
-```text
-GG D5 Passed
-```
+- [ ] GitHub Actions `Verify D6 Type Checker` is green.
+- [ ] Termux verifier prints `★★★★★ D6 GOLDEN BUILD`.
+- [ ] Valid complete tour reports zero errors.
+- [ ] Type/function reports are readable.
+- [ ] `TYP001`, `TYP003`, `TYP007`, and `TYP010` manual checks return exit code 1.
+- [ ] Typecheck JSON parses through `python3 -m json.tool`.
+- [ ] User reports `GG D6 Passed`.

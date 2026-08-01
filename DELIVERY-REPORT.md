@@ -1,45 +1,45 @@
-# D5 Delivery Report
+# D6 Delivery Report
 
 ## Delivery
 
-- Delivery: D5
-- Version: 0.5.0
-- Builds on: verified D1, D2, D3, and D4
-- Status: READY FOR GITHUB/TERMUX VERIFICATION
-- Compiler stage: semantic indexing and lexical name resolution
-- Type checker included: No
-- External Rust dependencies: 0
-
-## Fixed regression
-
-The old fixed `/tmp/nivra-d1-lint.txt` path remains prohibited by cumulative
-verification. Termux verification copies the project into app-owned home storage.
+- Delivery: D6
+- Builds on: user-verified D1–D5
+- Version: 0.6.0
+- Edition: 2026
+- Status before user verification: CANDIDATE
+- New crate: `nivra-types`
+- Total workspace crates: 8
+- Third-party Rust runtime dependencies: 0
 
 ## Implemented
 
-1. Added the `nivra-sema` crate.
-2. Added stable `SymbolId` and `ScopeId` values.
-3. Added separate value and type namespaces.
-4. Added module, import, declaration, extern, field, variant, method, parameter,
-   local, closure, loop, match-arm, and task-group indexing.
-5. Added parent-linked lexical scope trees.
-6. Added module-first declaration indexing and declaration-order locals.
-7. Added value-name resolution and source-span resolution records.
-8. Added nearby-name suggestions for unresolved values.
-9. Added six `SEM` diagnostics with primary and related labels.
-10. Added `nivra resolve`, symbol reports, scope reports, and JSON output.
-11. Upgraded `nivra check` to run the semantic pass after a clean parse.
-12. Added semantic regression fixtures and tests.
+1. static `Type` representation with recovery, primitive, nominal, optional,
+   reference, pointer, tuple, and function forms
+2. nominal/imported/builtin type inventory
+3. module-wide function and extern signature collection
+4. parameter and return-type parsing
+5. lexical local type environments
+6. literal, array, name, operator, call, block, and control-flow inference
+7. binding annotation validation and inference
+8. function call arity and argument validation
+9. Bool-only conditions
+10. expression-body and explicit-return validation
+11. immutable-assignment rejection
+12. diagnostics `TYP001`–`TYP010`
+13. `nivra typecheck` human and JSON reports
+14. `nivra check` upgraded through the type phase
+15. five valid and ten invalid D6 conformance fixtures
+16. cumulative D1–D6 CI and Termux verification
 
 ## Deliberate boundaries
 
-- Member lookup is deferred.
-- Full unknown-type diagnostics are deferred.
-- Type inference and type compatibility are deferred.
-- Cross-file package loading and authoritative privacy checks are deferred.
-- Ownership, borrowing, HIR/MIR, native code generation, and execution are later.
+D6 does not claim complete type-system conformance. Member lookup, trait solving,
+generic substitution, overload selection, ownership/borrow checking, exhaustiveness,
+HIR/MIR, native code generation, and execution remain later deliveries.
 
-## Next delivery
+## Verification truthfulness
 
-D6 implements the first type checker: primitive/nominal types, function
-signatures, local inference, operator and call checking, and type mismatch errors.
+The packaging environment does not contain Rust/Cargo. Static repository integrity,
+TOML/JSON/shell validation, test inventory, source-delimiter checks, and fresh ZIP
+extraction are performed here. GitHub Actions and the user's Termux run are the
+authoritative Rust compilation and test verdicts.

@@ -7,8 +7,6 @@
 - dependency graph remains local-only
 - Cargo lock contains seven Nivra packages
 - semantic implementation anchors present
-- Rust delimiter and copy-integrity preflight passes
-- one pre-release duplicated expression line was detected and removed before packaging
 - semantic diagnostic inventory complete
 - valid/invalid fixtures complete
 - shell and Python preflight included

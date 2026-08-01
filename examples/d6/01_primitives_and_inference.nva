@@ -1,0 +1,16 @@
+module examples.d6.primitives_and_inference
+
+fn main() {
+    let count = 42
+    let ratio = 0.75
+    let title: String = "Nivra"
+    let marker = 'N'
+    var enabled = true
+    enabled = false
+
+    print(title)
+    print(count)
+    print(ratio)
+    print(marker)
+    print(enabled)
+}
