@@ -22,3 +22,6 @@
 - [ ] `TYP001`, `TYP003`, `TYP007`, and `TYP010` return exit code 1.
 - [ ] Typecheck JSON parses through `python3 -m json.tool`.
 - [ ] User reports `GG D6 Passed`.
+
+- [x] Primitive Bool inference fixture uses a non-reserved identifier.
+- [x] CI compiles all targets before running the no-fail-fast workspace suite.

@@ -72,7 +72,7 @@ fi
 printf '\n'
 
 printf '[10/12] Rust unit and integration tests\n'
-cargo test --workspace --all-targets --locked
+cargo test --workspace --all-targets --locked --no-fail-fast
 printf 'Rust tests: PASS\n\n'
 
 printf '[11/12] Debug build and D6 CLI smoke tests\n'

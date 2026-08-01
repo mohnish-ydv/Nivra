@@ -338,13 +338,27 @@ for forbidden in [
 print("D6 release hygiene: PASS")
 
 
+
+type_source = (ROOT / "crates/nivra-types/src/lib.rs").read_text(encoding="utf-8")
+if "let ok = true" in type_source:
+    fail("D6 primitive inference test uses reserved keyword `ok` as a binding name")
+for required in [
+    "let enabled = true",
+    'binding.name == "enabled" && binding.ty == Type::Bool',
+]:
+    if required not in type_source:
+        fail(f"D6 primitive Bool inference regression guard missing {required!r}")
+print("D6 reserved-keyword fixture regression: PASS")
+
+
 workflow = (ROOT / ".github/workflows/verify-d6.yml").read_text(encoding="utf-8")
 for anchor in [
     "bash verify.sh",
     "rustup toolchain install 1.74.0",
     "python3 tools/d6_dependency_lint.py",
     "cargo metadata --locked --format-version 1 --no-deps",
-    "cargo test --workspace --all-targets --locked",
+    "cargo check --workspace --all-targets --locked",
+    "cargo test --workspace --all-targets --locked --no-fail-fast",
     "cargo build --workspace --release --locked",
     "bash scripts/d6-smoke.sh",
     "actions/upload-artifact@v4",

@@ -62,3 +62,7 @@ Expected final marker after actual Rust compilation and tests:
 
 Read `D6-BUILD-FIX-REPORT.md` for the exact root cause and
 `MANUAL-VERIFICATION.md` for post-Actions checks.
+
+## Final build-fix evidence
+
+See `D6-FINAL-BUILD-FIX-REPORT.md` for the reserved-keyword test failure, correction, and hardened CI sequence.

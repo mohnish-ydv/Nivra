@@ -1,5 +1,20 @@
 # Changelog
 
+## D6 Final Build Fix — 2026-08-02
+
+### Fixed
+
+- replaced invalid primitive-inference test binding `ok` with `enabled`
+- corrected the corresponding Bool type assertion
+- preserved the prior `nivra-parser` test dev-dependency and lockfile fix
+
+### Hardened
+
+- compile every workspace target before tests
+- run the complete Rust suite with `--no-fail-fast`
+- reject the reserved-keyword fixture through the D6 structure validator
+- document both GitHub Actions root causes in `D6-FINAL-BUILD-FIX-REPORT.md`
+
 ## D6 Build Fix — 2026-08-02
 
 ### Fixed

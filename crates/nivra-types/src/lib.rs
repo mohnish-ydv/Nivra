@@ -1690,12 +1690,12 @@ mod tests {
     #[test]
     fn infers_primitive_bindings() {
         let result = check_text(
-            "module test\nfn main() { let count = 2\n let ratio = 1.5\n let ok = true\n }\n",
+            "module test\nfn main() { let count = 2\n let ratio = 1.5\n let enabled = true\n }\n",
         );
         assert!(!result.has_errors(), "{:?}", result.diagnostics);
         assert!(result.bindings.iter().any(|binding| binding.name == "count" && binding.ty == Type::Int));
         assert!(result.bindings.iter().any(|binding| binding.name == "ratio" && binding.ty == Type::Float));
-        assert!(result.bindings.iter().any(|binding| binding.name == "ok" && binding.ty == Type::Bool));
+        assert!(result.bindings.iter().any(|binding| binding.name == "enabled" && binding.ty == Type::Bool));
     }
 
     #[test]

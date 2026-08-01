@@ -32,11 +32,11 @@ jobs:
           python3 tools/d6_dependency_lint.py
           cargo metadata --locked --format-version 1 --no-deps > /dev/null
 
-      - name: Compile and run D6 type-crate tests
-        run: cargo test -p nivra-types --lib --locked
+      - name: Compile every workspace target
+        run: cargo check --workspace --all-targets --locked
 
-      - name: Run Rust test suite
-        run: cargo test --workspace --all-targets --locked
+      - name: Run complete Rust test suite
+        run: cargo test --workspace --all-targets --locked --no-fail-fast
 
       - name: Run cumulative golden verifier
         env:

@@ -5,7 +5,7 @@ Run these checks only after the corrected GitHub Actions workflow is green.
 ## 1. Run the Termux-safe cumulative verifier
 
 ```bash
-cd ~/storage/downloads/Nivra-D6-Type-Checker-Build-Fix-GitHub-Ready
+cd ~/storage/downloads/Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
@@ -91,4 +91,18 @@ Expected exit code: `0`.
 
 ```text
 GG D6 Passed
+```
+
+## Specific regression check
+
+After the green Action, confirm the corrected primitive-inference test directly:
+
+```bash
+cargo test -p nivra-types infers_primitive_bindings --locked
+```
+
+Expected:
+
+```text
+test tests::infers_primitive_bindings ... ok
 ```

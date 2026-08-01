@@ -40,3 +40,7 @@ checks, manifest/lock consistency, TOML/JSON/Python/shell validation, fixture/te
 inventory, archive integrity, and fresh extraction verification are performed
 before release. GitHub Actions and Termux are the authoritative compilation and
 runtime-test verdicts. D6 is not accepted until both are green.
+
+## Final follow-up correction
+
+The dependency graph fix compiled successfully. A single unit test then failed because it used reserved keyword `ok` as a variable name. The fixture and assertion now use `enabled`, and CI runs all workspace tests with `--no-fail-fast`. See `D6-FINAL-BUILD-FIX-REPORT.md`.
