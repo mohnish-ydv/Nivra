@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "delivery": "D1",
+  "items": [
+    {
+      "id": "DP-001",
+      "priority": "P0",
+      "title": "Build-system fragmentation",
+      "category": "build",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-002",
+      "priority": "P0",
+      "title": "Dependency version conflicts",
+      "category": "packages",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-003",
+      "priority": "P0",
+      "title": "Hostile diagnostics",
+      "category": "diagnostics",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-004",
+      "priority": "P0",
+      "title": "Null dereference",
+      "category": "safety",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-005",
+      "priority": "P0",
+      "title": "Memory lifetime bugs",
+      "category": "safety",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-006",
+      "priority": "P0",
+      "title": "Unhandled recoverable errors",
+      "category": "errors",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-007",
+      "priority": "P0",
+      "title": "Data races",
+      "category": "concurrency",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-008",
+      "priority": "P0",
+      "title": "Tool fragmentation",
+      "category": "tooling",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-009",
+      "priority": "P0",
+      "title": "Irreproducible environments",
+      "category": "reproducibility",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-010",
+      "priority": "P0",
+      "title": "Boilerplate-heavy data models",
+      "category": "productivity",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-011",
+      "priority": "P0",
+      "title": "Dangerous implicit conversions",
+      "category": "types",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-012",
+      "priority": "P0",
+      "title": "Orphaned async work",
+      "category": "concurrency",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-013",
+      "priority": "P1",
+      "title": "Slow incremental builds",
+      "category": "performance",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-014",
+      "priority": "P1",
+      "title": "Configuration sprawl",
+      "category": "build",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-015",
+      "priority": "P1",
+      "title": "Cross-compilation complexity",
+      "category": "platforms",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-016",
+      "priority": "P1",
+      "title": "Unsafe foreign-function boundaries",
+      "category": "ffi",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-017",
+      "priority": "P1",
+      "title": "Supply-chain risk",
+      "category": "security",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-018",
+      "priority": "P1",
+      "title": "Refactoring uncertainty",
+      "category": "tooling",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-019",
+      "priority": "P1",
+      "title": "Test setup overhead",
+      "category": "testing",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-020",
+      "priority": "P1",
+      "title": "Documentation drift",
+      "category": "documentation",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-021",
+      "priority": "P1",
+      "title": "Hidden performance costs",
+      "category": "performance",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-022",
+      "priority": "P1",
+      "title": "Secret leakage",
+      "category": "security",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-023",
+      "priority": "P1",
+      "title": "Serialization schema drift",
+      "category": "data",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-024",
+      "priority": "P1",
+      "title": "Platform capability ambiguity",
+      "category": "platforms",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-025",
+      "priority": "P1",
+      "title": "Backward compatibility anxiety",
+      "category": "compatibility",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-026",
+      "priority": "P2",
+      "title": "Debugging without context",
+      "category": "debugging",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-027",
+      "priority": "P2",
+      "title": "Profiling setup friction",
+      "category": "performance",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-028",
+      "priority": "P2",
+      "title": "Large-repository navigation",
+      "category": "tooling",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-029",
+      "priority": "P2",
+      "title": "Unsafe code review difficulty",
+      "category": "safety",
+      "status": "accepted"
+    },
+    {
+      "id": "DP-030",
+      "priority": "P2",
+      "title": "Onboarding inconsistency",
+      "category": "education",
+      "status": "accepted"
+    }
+  ]
+}

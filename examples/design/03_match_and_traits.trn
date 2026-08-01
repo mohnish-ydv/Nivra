@@ -1,0 +1,21 @@
+module examples.match_and_traits
+
+trait Display {
+    fn display(self) -> String
+}
+
+enum JobState<T> {
+    queued
+    running(progress: Int)
+    completed(T)
+    failed(message: String)
+}
+
+fn describe<T: Display>(state: JobState<T>) -> String {
+    match state {
+        .queued => "Queued"
+        .running(progress) => "Running: ${progress}%"
+        .completed(value) => value.display()
+        .failed(message) => "Failed: ${message}"
+    }
+}

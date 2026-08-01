@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "delivery": "D1",
+  "working_name": "Trion",
+  "tagline": "Power without the pain.",
+  "kind": [
+    "statically_typed",
+    "compiled",
+    "general_purpose",
+    "official_integrated_toolchain"
+  ],
+  "primary_goal": "Reduce recurring developer complexity while preserving native performance and low-level capability.",
+  "v1_workloads": [
+    "cli_tools",
+    "automation",
+    "backend_services",
+    "native_libraries",
+    "portable_application_logic"
+  ],
+  "required_platform_workflow": [
+    "android_termux",
+    "github_actions"
+  ],
+  "success_metrics_count": 9
+}

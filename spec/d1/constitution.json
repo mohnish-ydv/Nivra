@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "delivery": "D1",
+  "amendment_requires": [
+    "problem_statement",
+    "affected_pain_ids",
+    "alternatives",
+    "compatibility_analysis",
+    "migration_strategy",
+    "spec_update",
+    "verification"
+  ],
+  "articles": [
+    {
+      "id": "C-001",
+      "title": "Developer intent over ceremony",
+      "status": "locked"
+    },
+    {
+      "id": "C-002",
+      "title": "Safe by default",
+      "status": "locked"
+    },
+    {
+      "id": "C-003",
+      "title": "Power remains available",
+      "status": "locked"
+    },
+    {
+      "id": "C-004",
+      "title": "Static meaning before execution",
+      "status": "locked"
+    },
+    {
+      "id": "C-005",
+      "title": "No ambient null",
+      "status": "locked"
+    },
+    {
+      "id": "C-006",
+      "title": "Recoverable errors are values",
+      "status": "locked"
+    },
+    {
+      "id": "C-007",
+      "title": "Mutation is visible",
+      "status": "locked"
+    },
+    {
+      "id": "C-008",
+      "title": "Concurrency is structured",
+      "status": "locked"
+    },
+    {
+      "id": "C-009",
+      "title": "Performance is explainable",
+      "status": "locked"
+    },
+    {
+      "id": "C-010",
+      "title": "One official workflow",
+      "status": "locked"
+    },
+    {
+      "id": "C-011",
+      "title": "Diagnostics are a product surface",
+      "status": "locked"
+    },
+    {
+      "id": "C-012",
+      "title": "Reproducibility is the default",
+      "status": "locked"
+    },
+    {
+      "id": "C-013",
+      "title": "Readability defeats cleverness",
+      "status": "locked"
+    },
+    {
+      "id": "C-014",
+      "title": "Compatibility is planned",
+      "status": "locked"
+    },
+    {
+      "id": "C-015",
+      "title": "Tooling is part of the language",
+      "status": "locked"
+    },
+    {
+      "id": "C-016",
+      "title": "Secure supply chain",
+      "status": "locked"
+    },
+    {
+      "id": "C-017",
+      "title": "No feature without a pain case",
+      "status": "locked"
+    },
+    {
+      "id": "C-018",
+      "title": "Phone-first participation",
+      "status": "locked"
+    }
+  ]
+}

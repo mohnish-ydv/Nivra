@@ -1,0 +1,84 @@
+module examples.complete_tour
+
+use std.fs
+use std.json
+use std.time.Duration
+
+const DEFAULT_RETRIES: Int = 3
+
+@derive(Debug, Equal, Json)
+record User {
+    id: UserId
+    name: String
+    email: String? = none
+}
+
+enum LoadState<T> {
+    idle
+    loading
+    ready(T)
+    failed(AppError)
+}
+
+trait Display {
+    fn display(self) -> String
+}
+
+impl Display for User {
+    fn display(self) -> String {
+        "${self.name} #${self.id}"
+    }
+}
+
+fn clamp(value: Int, min: Int = 0, max: Int = 100) -> Int {
+    if value < min { min }
+    else if value > max { max }
+    else { value }
+}
+
+fn load_user(path: Path) -> Result<User, AppError> {
+    let text = try fs.read_text(path)
+    let value = try json.parse(text)
+    User.from_json(value)
+}
+
+fn render_state(state: LoadState<User>) {
+    match state {
+        .idle => print("Idle")
+        .loading => print("Loading")
+        .ready(user) => print(user.display())
+        .failed(error) => print("Failed: ${error}")
+    }
+}
+
+async fn refresh_all(paths: List<Path>) -> Result<List<User>, AppError> {
+    task_group {
+        for path in paths {
+            spawn load_user(path)
+        }
+    }
+}
+
+fn main() -> Result<Void, AppError> {
+    let user = try load_user("user.json")
+    render_state(.ready(user))
+
+    var attempts = 0
+    while attempts < DEFAULT_RETRIES {
+        attempts += 1
+        print("Attempt ${attempts}")
+    }
+
+    let nickname: String? = user.email
+    if let value = nickname {
+        print(value)
+    } else {
+        print("No email")
+    }
+
+    unsafe {
+        native_log(pointer: 0x1000)
+    }
+
+    Ok(())
+}

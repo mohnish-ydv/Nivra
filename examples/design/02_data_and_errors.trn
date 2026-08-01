@@ -1,0 +1,17 @@
+module examples.data_and_errors
+
+use std.fs
+use std.json
+
+@derive(Debug, Equal, Json)
+record Settings {
+    theme: String
+    retries: Int
+    endpoint: String?
+}
+
+fn load_settings(path: Path) -> Result<Settings, ConfigError> {
+    let text = try fs.read_text(path)
+    let value = try json.parse(text)
+    Settings.from_json(value)
+}

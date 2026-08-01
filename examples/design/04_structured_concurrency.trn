@@ -1,0 +1,11 @@
+module examples.structured_concurrency
+
+use std.http
+
+async fn fetch_pages(urls: List<Url>) -> Result<List<Response>, NetError> {
+    task_group {
+        for url in urls {
+            spawn http.get(url)
+        }
+    }
+}
