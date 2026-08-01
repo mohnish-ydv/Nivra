@@ -1,99 +1,135 @@
 # Manual Verification After GitHub Actions Is Green
 
-D2 is still a design delivery, so the manual test checks architecture integrity
-rather than compiling `.nva` programs.
+D3 contains real Rust code. Do not compile it directly inside Android shared
+storage because executable/linker behavior there can fail. Use the included
+wrapper to copy it into Termux home.
 
-## 1. Extract and enter the project
-
-```bash
-cd ~/storage/downloads
-unzip Nivra-D2-Architecture-Spec-GitHub-Ready.zip
-cd Nivra-D2-Architecture-Spec-GitHub-Ready
-```
-
-## 2. Run the cumulative golden verifier
+## 1. Install free Termux prerequisites
 
 ```bash
-bash verify.sh
+pkg update -y
+pkg install rust python git -y
 ```
+
+## 2. Enter the extracted D3 folder
+
+```bash
+cd ~/storage/downloads/Nivra-D3-Compiler-Foundation-GitHub-Ready
+```
+
+## 3. Run the Termux-safe verifier
+
+```bash
+bash scripts/termux-verify.sh
+```
+
+The script copies the repository to:
+
+```text
+~/nivra-d3-verification
+```
+
+and runs all cumulative checks there.
 
 Expected ending:
 
 ```text
 D1 regression: PASS
-D2 architecture integrity: PASS
-D2 grammar integrity: PASS
-D2 examples: PASS
-★★★★★ D2 GOLDEN BUILD
+D2 regression: PASS
+D3 structure: PASS
+Rust tests: PASS
+CLI smoke tests: PASS
+★★★★★ D3 GOLDEN BUILD
 ```
 
-## 3. Print the architecture report
+## 4. Enter the internal test copy
 
 ```bash
-python3 tools/d2_report.py
+cd ~/nivra-d3-verification
 ```
 
-Expected key values:
+## 5. Check the CLI version and doctor
+
+```bash
+./target/debug/nivra --version
+./target/debug/nivra doctor
+```
+
+Expected key lines:
 
 ```text
-Architecture decisions: 45
-Type-system rules: 29
-Memory-model rules: 24
-Error-model rules: 18
-Concurrency rules: 24
-Compiler stages: 13
-Grammar productions: 60
-D2 examples: 8
-D2 status: PASS
+nivra 0.3.0 (compiler foundation D3)
+Source manager: PASS
+Diagnostic renderer: PASS
+Lossless lexer: PASS
+D3 status: OPERATIONAL
 ```
 
-## 4. Query the locked memory model
+## 6. Check a valid file
 
 ```bash
-python3 tools/decision_query.py memory
+./target/debug/nivra check examples/d3/01_hello.nva
 ```
 
-Confirm it reports:
+Expected ending:
 
-- deterministic destruction
-- move-by-default for non-copy values
-- `Box<T>`, `Shared<T>`, and `Weak<T>`
-- local borrows through `&T` and `&mut T`
-- no borrowed fields in Edition 2026
-- no borrow crossing an `await`
-- no mandatory tracing garbage collector
-- named unsafe capabilities
+```text
+0 errors
+```
 
-## 5. Read the complete architecture syntax tour
+D3 does not execute the program; it checks source loading and lexing.
+
+## 7. Check an invalid file and its exit code
 
 ```bash
-sed -n '1,300p' examples/d2/08_complete_architecture_tour.nva
+./target/debug/nivra check examples/d3/invalid/unterminated_string.nva
+echo $?
 ```
 
-Check that:
+Expected:
 
-- `.nva` and Nivra naming are used
-- `Unit`, not `Void`, represents no useful value
-- integer overflow is checked by default
-- fallible work returns `Result`
-- non-copy values move unless explicitly cloned
-- shared ownership is explicit
-- task creation occurs inside a `task_group`
-- FFI and raw memory are inside named unsafe capabilities
+```text
+error[LEX002]: unterminated string literal
+...
+1
+```
 
-## 6. Read the specification index
+## 8. Inspect lossless trivia
 
 ```bash
-sed -n '1,320p' docs/16-LANGUAGE-SPEC-DRAFT.md
+./target/debug/nivra lex examples/d3/02_unicode_and_comments.nva --trivia | head -n 30
 ```
 
-The document must clearly separate normative Edition 2026 rules from future
-extensions.
+Expected token names include:
+
+```text
+whitespace
+newline
+doc_line_comment
+block_comment
+identifier
+```
+
+## 9. Check JSON output
+
+```bash
+./target/debug/nivra check examples/d3/03_literals_and_operators.nva --json | python3 -m json.tool
+```
+
+Expected JSON fields:
+
+```text
+path
+tokens
+errors
+warnings
+diagnostics
+```
 
 ## Pass rule
 
-When GitHub Actions and all checks above pass, report:
+After GitHub Actions is green and every manual check passes, report:
 
 ```text
-GG D2 Passed
+GG D3 Passed
 ```

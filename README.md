@@ -1,45 +1,48 @@
-# Nivra — D2 Architecture & Specification
+# Nivra — D3 Compiler Foundation
 
-> **Nivra** is the pre-1.0 engineering identity of the language formerly using
-> the provisional D1 name **Trion**.
->
 > **Mission:** Power without the pain.
 
 Nivra is a statically typed, compiled, general-purpose programming language and
 integrated toolchain designed to remove recurring developer headaches while
 preserving native performance and low-level control.
 
-## Delivery status
+D3 is the first executable implementation delivery.
 
-D1 was independently verified on Android + Termux and GitHub Actions. D2 is a
-cumulative design delivery that locks the architecture required before compiler
-implementation begins.
+## Delivery progression
 
 - **D1:** mission, developer pain map, constitution, syntax direction
 - **D2:** identity, type system, memory model, error model, concurrency,
-  compiler architecture, backend, ABI/FFI, package model, compatibility policy,
-  grammar, and Language Specification Draft 0.2
+  compiler architecture, backend, ABI/FFI, package model, grammar, compatibility
+- **D3:** Rust workspace, source manager, Unicode line map, structured diagnostics,
+  lossless lexer, and first operational `nivra` CLI
 
-D2 intentionally contains no compiler binary. The first implementation delivery
-starts only after this specification passes its gate.
+## Implemented commands
 
-## Locked technical identity
+```bash
+nivra check examples/d3/01_hello.nva
+nivra lex examples/d3/01_hello.nva
+nivra lex examples/d3/02_unicode_and_comments.nva --trivia
+nivra explain LEX005
+nivra doctor
+nivra --version
+```
 
-- Language: `Nivra`
-- CLI: `nivra`
-- Source extension: `.nva`
-- Manifest: `nivra.toml`
-- Lockfile: `nivra.lock`
-- First edition: `2026`
-- Bootstrap compiler implementation: Rust
-- Reference native backend: portable C11 compiled with Clang
-- Future optimized backend: LLVM, behind the same backend-neutral MIR
-- License: Apache-2.0
+`nivra check` in D3 performs source loading and lexical checking only. Parsing,
+type checking, ownership validation, execution, and native code generation are
+not claimed yet.
 
-The name is locked for pre-1.0 engineering continuity, not represented as legal
-trademark clearance. `docs/06-IDENTITY-AND-GOVERNANCE.md` records the review.
+## Rust workspace
+
+- `nivra-source` — files, source IDs, spans, Unicode-aware line maps
+- `nivra-diagnostics` — actionable human and JSON diagnostics
+- `nivra-lexer` — lossless hand-written lexer with recovery
+- `nivra-cli` — initial compiler driver
+
+The workspace has zero third-party runtime dependencies. Detailed preflight evidence is in `D3-QA-REPORT.md`.
 
 ## Verify
+
+On Linux or a Termux-internal filesystem:
 
 ```bash
 bash verify.sh
@@ -48,19 +51,24 @@ bash verify.sh
 Expected ending:
 
 ```text
-★★★★★ D2 GOLDEN BUILD
+★★★★★ D3 GOLDEN BUILD
 ```
 
-## Key documents
+For an archive extracted in Android Downloads, use:
 
-- `docs/16-LANGUAGE-SPEC-DRAFT.md` — normative specification index
-- `docs/07-TYPE-SYSTEM.md`
-- `docs/08-MEMORY-MODEL.md`
-- `docs/09-ERROR-MODEL.md`
-- `docs/10-CONCURRENCY-MODEL.md`
-- `docs/11-COMPILER-ARCHITECTURE.md`
-- `docs/12-BACKEND-AND-PORTABILITY.md`
-- `docs/13-ABI-AND-FFI.md`
-- `docs/14-PACKAGE-AND-BUILD-MODEL.md`
-- `spec/d2/grammar.ebnf`
-- `examples/d2/08_complete_architecture_tour.nva`
+```bash
+bash scripts/termux-verify.sh
+```
+
+That script copies the repository to Termux home before compiling, avoiding
+Android shared-storage executable restrictions.
+
+## Current identity
+
+- Language: `Nivra`
+- Command: `nivra`
+- Source extension: `.nva`
+- Edition: `2026`
+- Compiler foundation version: `0.3.0`
+- Bootstrap implementation: Rust
+- License: Apache-2.0

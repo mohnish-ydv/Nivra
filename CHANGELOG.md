@@ -1,5 +1,25 @@
 # Changelog
 
+## D3 — 2026-08-02
+
+### Fixed
+
+- removed the fixed `/tmp/nivra-d1-lint.txt` path that failed on Termux
+- made verification compatible with a project-local Termux home copy
+
+### Added
+
+- Rust workspace and Cargo lockfile
+- source manager and Unicode-aware line maps
+- structured human and JSON diagnostics
+- lossless lexer with recovery
+- all D2 keywords and core punctuation/operators
+- nested comments, numeric bases, strings, characters, and escape validation
+- bidi-control and NUL diagnostics
+- initial `nivra` CLI
+- unit, integration, fixture, smoke, and cumulative regression tests
+- D3 GitHub Actions release artifact
+
 ## D2 — 2026-08-02
 
 ### Added

@@ -1,48 +1,53 @@
-# Exact Termux and GitHub Commands
+# Termux and GitHub Commands for D3
 
-## Install requirements
+## Verify before pushing
 
 ```bash
 pkg update -y
-pkg install git python unzip -y
-termux-setup-storage
+pkg install rust python git -y
+
+cd ~/storage/downloads/Nivra-D3-Compiler-Foundation-GitHub-Ready
+bash scripts/termux-verify.sh
 ```
 
-## Verify the D2 ZIP
+## Preserve the existing Nivra repository history
+
+Assuming the verified D2 folder still contains `.git`:
 
 ```bash
 cd ~/storage/downloads
-unzip Nivra-D2-Architecture-Spec-GitHub-Ready.zip
-cd Nivra-D2-Architecture-Spec-GitHub-Ready
-bash verify.sh
+
+mv Nivra-D2-Architecture-Spec-GitHub-Ready/.git \
+Nivra-D3-Compiler-Foundation-GitHub-Ready/.git
 ```
 
-## Replace the existing repository with cumulative D2
+If D2 was already pushed and the old folder no longer has `.git`, clone the
+repository into Termux home and copy D3 over it instead.
 
-Run inside the extracted D2 folder. Replace the repository URL only when your
-actual repository uses a different name.
+## Commit and push
 
 ```bash
-cd ~/storage/downloads/Nivra-D2-Architecture-Spec-GitHub-Ready
+cd ~/storage/downloads/Nivra-D3-Compiler-Foundation-GitHub-Ready
 
 git config --global --add safe.directory "$PWD"
-git init
-git branch -M main
-git add .
-git commit -m "feat: complete Nivra D2 architecture specification"
-git remote add origin https://github.com/mohnish-ydv/Nivra.git
-git push -u origin main
+git add -A
+git commit -m "feat: implement Nivra D3 compiler foundation"
+git push
 ```
 
-If `origin` already exists:
+## GitHub Actions result
 
-```bash
-git remote set-url origin https://github.com/mohnish-ydv/Nivra.git
-git push -u origin main
-```
+Open **Actions → Verify D3 Compiler Foundation**.
 
-If you are updating the same local Git repository instead of starting from this
-ZIP, copy the D2 contents into it, then commit and push normally.
+A green run confirms:
 
-After pushing, open **Actions** and verify `Verify Nivra D2` is green. Then run
-the steps in `MANUAL-VERIFICATION.md`.
+- D1 and D2 regressions
+- D3 structure validation
+- Rust formatting
+- all workspace tests
+- CLI smoke tests
+- release build
+- uploaded Linux x86_64 `nivra` artifact
+
+The uploaded Linux artifact is not an Android binary. On Termux, compile natively
+with `bash scripts/termux-verify.sh`.

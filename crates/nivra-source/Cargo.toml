@@ -1,0 +1,14 @@
+[package]
+name = "nivra-source"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Source files, spans, and Unicode-aware line maps for Nivra"
+
+[lib]
+path = "src/lib.rs"
+
+[lints]
+workspace = true

@@ -1,30 +1,32 @@
-# D2 Acceptance Checklist
+# D3 Acceptance Checklist
 
-## Automated
+## D2 repair
 
-- [x] D1 verification still passes unchanged.
-- [x] Every D2 JSON document is valid.
-- [x] Decision IDs and rule IDs are unique.
-- [x] Locked, deferred, and rejected sets do not overlap.
-- [x] Identity files consistently use Nivra, `nivra`, and `.nva`.
-- [x] The EBNF has unique productions and no undefined nonterminal references.
-- [x] Required type, memory, error, concurrency, compiler, FFI, package, and
-      compatibility rules are present.
-- [x] D2 examples use balanced delimiters and current identity.
-- [x] The complete tour covers safety, errors, traits, generics, structured
-      concurrency, FFI, and explicit unsafe capabilities.
-- [x] Semantic contradiction checks pass.
-- [x] GitHub Actions invokes the same cumulative verifier used in Termux.
+- [x] Fixed `/tmp/nivra-d1-lint.txt` permission failure.
+- [x] No fixed temporary output path remains in verification scripts.
+- [x] D1 regression checks pass.
+- [x] D2 architecture and grammar checks pass.
 
-## Manual
+## Implementation
 
-- [ ] GitHub Actions shows a green check for `Verify Nivra D2`.
-- [ ] `bash verify.sh` ends with `★★★★★ D2 GOLDEN BUILD`.
-- [ ] `python3 tools/d2_report.py` prints the expected architecture counts.
-- [ ] `python3 tools/decision_query.py memory` prints the locked memory summary.
-- [ ] The complete D2 syntax tour is readable and internally coherent.
-- [ ] The user accepts the D2 architecture and reports `GG D2 Passed`.
+- [x] Four Rust crates exist and use workspace metadata.
+- [x] Runtime dependency count is zero.
+- [x] Source IDs, spans, source loading, and line maps are implemented.
+- [x] Human and JSON diagnostics are implemented.
+- [x] Lossless trivia tokenization is implemented.
+- [x] All 45 D2 keywords are implemented.
+- [x] Nested comments, Unicode identifiers, numbers, strings, and chars are tested.
+- [x] Lexer errors recover without compiler panic.
+- [x] `nivra check`, `lex`, `explain`, `doctor`, and version are implemented.
+- [x] Valid and invalid examples are included.
+- [x] GitHub Actions builds and uploads the release binary.
 
-## Gate
+## Manual after GitHub Actions is green
 
-D3 starts only after all manual checks pass.
+- [ ] `bash scripts/termux-verify.sh` prints the D3 golden marker.
+- [ ] `nivra --version` reports `0.3.0`.
+- [ ] valid example reports zero lexical errors.
+- [ ] invalid string reports `LEX002` and exit code 1.
+- [ ] `nivra lex --trivia` shows comments and whitespace.
+- [ ] `nivra check --json` prints valid JSON.
+- [ ] user reports `GG D3 Passed`.

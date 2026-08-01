@@ -1,0 +1,13 @@
+module examples.d3.unicode_and_comments
+
+/// Unicode identifiers are retained as one token.
+fn greet() {
+    let नाम = "Nivra"
+    let Δelta = 42
+
+    /* Outer comments may contain
+       /* nested comments */
+       without ending early.
+    */
+    print("${नाम}: ${Δelta}")
+}

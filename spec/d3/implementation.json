@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "language": "Rust",
+  "workspace_version": "0.3.0",
+  "minimum_rust": "1.74",
+  "external_runtime_dependencies": 0,
+  "crates": [
+    {
+      "name": "nivra-source",
+      "purpose": "source files, spans, Unicode-aware line maps"
+    },
+    {
+      "name": "nivra-diagnostics",
+      "purpose": "structured human and JSON diagnostics"
+    },
+    {
+      "name": "nivra-lexer",
+      "purpose": "lossless hand-written lexer"
+    },
+    {
+      "name": "nivra-cli",
+      "purpose": "nivra check, lex, explain, doctor"
+    }
+  ],
+  "compiler_stages_implemented": [
+    "CP-01",
+    "CP-02",
+    "CP-03"
+  ],
+  "compiler_stages_started": [
+    "driver"
+  ],
+  "edition": "2026"
+}

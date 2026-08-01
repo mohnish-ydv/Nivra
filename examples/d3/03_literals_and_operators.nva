@@ -1,0 +1,13 @@
+module examples.d3.literals_and_operators
+
+const MASK: U32 = 0xCAFE
+const FLAGS: U8 = 0b1010_0101
+const RATIO: Float = 12.5e-3
+
+fn update(var value: Int) -> Int {
+    value += 1
+    if value >= 10 && value != 12 {
+        value <<= 1
+    }
+    value
+}

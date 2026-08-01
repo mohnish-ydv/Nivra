@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/nivra-source",
+    "crates/nivra-diagnostics",
+    "crates/nivra-lexer",
+    "crates/nivra-cli",
+]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2021"
+rust-version = "1.74"
+license = "Apache-2.0"
+authors = ["Mohnish Raj"]
+repository = "https://github.com/mohnish-ydv/Nivra"
+description = "Nivra programming language compiler foundation"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"

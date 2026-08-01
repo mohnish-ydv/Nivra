@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "delivery": "D3",
+  "codes": [
+    {
+      "code": "LEX001",
+      "severity": "error",
+      "meaning": "unexpected character"
+    },
+    {
+      "code": "LEX002",
+      "severity": "error",
+      "meaning": "unterminated string literal"
+    },
+    {
+      "code": "LEX003",
+      "severity": "error",
+      "meaning": "invalid escape sequence"
+    },
+    {
+      "code": "LEX004",
+      "severity": "error",
+      "meaning": "unterminated block comment"
+    },
+    {
+      "code": "LEX005",
+      "severity": "error",
+      "meaning": "malformed numeric literal"
+    },
+    {
+      "code": "LEX006",
+      "severity": "error",
+      "meaning": "floating-point exponent has no digits"
+    },
+    {
+      "code": "LEX007",
+      "severity": "error",
+      "meaning": "unterminated character literal"
+    },
+    {
+      "code": "LEX008",
+      "severity": "error",
+      "meaning": "character literal length is not one"
+    },
+    {
+      "code": "LEX009",
+      "severity": "warning_or_error",
+      "meaning": "bidirectional control character"
+    },
+    {
+      "code": "LEX010",
+      "severity": "error",
+      "meaning": "NUL byte in source"
+    },
+    {
+      "code": "CLI001",
+      "severity": "error",
+      "meaning": "unknown command"
+    },
+    {
+      "code": "CLI002",
+      "severity": "error",
+      "meaning": "missing or invalid command argument"
+    },
+    {
+      "code": "CLI003",
+      "severity": "error",
+      "meaning": "unknown diagnostic code"
+    },
+    {
+      "code": "DRV001",
+      "severity": "error",
+      "meaning": "source loading failure"
+    }
+  ]
+}

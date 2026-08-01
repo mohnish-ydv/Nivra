@@ -1,72 +1,71 @@
-# D2 Delivery Report
+# D3 Delivery Report
 
 ## Delivery
 
-- Delivery: D2
-- Builds on: verified D1
-- Status: PASS
-- Specification version: 0.2
-- Language edition: 2026
-- Compiler included: No
-- Verification target: Android + Termux and GitHub Actions
+- Delivery: D3
+- Builds on: D1 + D2
+- Version: 0.3.0
+- Status: IMPLEMENTED; cumulative static QA passed; compile acceptance is enforced by GitHub Actions and the Termux verifier
+- Implementation language: Rust
+- Third-party runtime dependencies: 0
+- Verification targets: GitHub Actions, Linux, Android + Termux
 
-## D1 evidence accepted
+## D2 defect fixed
 
-The user supplied a complete local run showing:
+The D2 verifier redirected output to the fixed path:
 
-- all D1 integrity checks passed
-- 30 developer pain points loaded
-- 18 constitution articles loaded
-- 5 design examples validated
-- the D1 golden-build marker printed
-- GitHub Actions showed a green check
+```text
+/tmp/nivra-d1-lint.txt
+```
 
-No D1 correction was required before D2.
+That path returned `Permission denied` in the user's Termux environment. D3 removes
+the fixed temporary file entirely. Specification linters now stream directly, and
+all verification scratch work stays inside a disposable project-local directory.
 
-## D2 outcomes
+## Implemented outcomes
 
-1. Renamed the provisional Trion identity to Nivra after a collision review.
-2. Locked the CLI, source extension, manifest, lockfile, edition, and license.
-3. Locked the primitive, nominal, generic, trait, inference, and conversion rules.
-4. Locked an ownership-lite deterministic memory model with explicit sharing.
-5. Locked `Result`-based recoverable errors and aborting panics.
-6. Locked structured concurrency, cancellation, sendability, and race rules.
-7. Locked a Rust bootstrap compiler with a hand-written frontend.
-8. Locked backend-neutral HIR/MIR and a C11 + Clang reference backend.
-9. Locked C ABI interoperability and explicit unsafe capabilities.
-10. Locked a reproducible package/build model without arbitrary install scripts.
-11. Locked edition-based compatibility and migration policy.
-12. Added a machine-checkable EBNF grammar and architecture manifests.
-13. Added eight D2 design examples and cross-document consistency checks.
-14. Added cumulative GitHub Actions and Termux verification.
+1. Created a four-crate Rust workspace.
+2. Implemented stable `SourceId`, checked byte spans, UTF-8 source loading, virtual
+   sources, CRLF handling, and Unicode-aware line/column lookup.
+3. Implemented structured diagnostics with codes, severities, labels, notes, help,
+   deterministic phone-friendly rendering, and JSON output.
+4. Implemented a lossless hand-written lexer retaining whitespace and comments.
+5. Implemented all 45 D2 keywords.
+6. Implemented Unicode identifiers with common combining-mark support.
+7. Implemented nested block comments and documentation comments.
+8. Implemented integer and floating-point literals, base validation, exponent
+   validation, string/character escapes, and recovery diagnostics.
+9. Added bidirectional-control and NUL-byte detection.
+10. Implemented `nivra check`, `lex`, `explain`, `doctor`, help, and version.
+11. Added 20 unit and CLI integration tests.
+12. Added valid and invalid D3 fixtures.
+13. Added cumulative D1/D2/D3 verification and GitHub Actions release artifact.
+14. Added a Termux-safe verification wrapper that builds under `$HOME`.
 
-## Test evidence
+## Honest boundaries
 
-`bash verify.sh` validates both D1 and D2. D2 checks include:
+D3 does not include:
 
-- 14 machine-readable specification documents
-- 45 architecture decisions
-- 29 type rules
-- 24 memory rules
-- 18 error rules
-- 24 concurrency rules
-- 13 compiler stages
-- EBNF definition/reference consistency
-- keyword and syntax agreement
-- identity migration integrity
-- example delimiter and feature coverage
-- forbidden semantic contradictions
+- parser or CST
+- AST lowering
+- name resolution
+- type checking
+- ownership checking
+- interpreter
+- C11 backend
+- native Nivra executable generation
+- package manager
 
-## Deliberate boundaries
-
-- D2 is a specification delivery, not executable language implementation.
-- LLVM is a future optimized backend; C11 is the first reference backend.
-- The project name has search-based engineering review, not legal clearance.
-- Borrowed fields and explicit lifetime parameters are not in Edition 2026.
-- A tracing garbage collector is not part of the core memory model.
-- C++ ABI compatibility is not promised; C shims are required.
+A file containing valid tokens in invalid grammatical order may pass D3 `check`.
+D4 will close that gap with parsing and syntax diagnostics.
 
 ## Next delivery
 
-D3 begins implementation: Rust workspace, source manager, diagnostic engine,
-lexer foundation, repository quality gates, and the first `nivra` CLI shell.
+D4 target:
+
+- lossless CST
+- recursive-descent declaration parser
+- Pratt expression parser
+- error recovery
+- syntax diagnostics
+- AST lowering foundation

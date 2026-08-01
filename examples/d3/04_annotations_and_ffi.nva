@@ -1,0 +1,11 @@
+module examples.d3.annotations_and_ffi
+
+@derive(Debug, Equal)
+record Point {
+    x: F32
+    y: F32
+}
+
+extern "C" {
+    unsafe fn native_log(message: *const U8, length: Usize) -> I32
+}

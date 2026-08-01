@@ -1,0 +1,18 @@
+[package]
+name = "nivra-lexer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Lossless hand-written lexer for Nivra"
+
+[dependencies]
+nivra-source = { path = "../nivra-source" }
+nivra-diagnostics = { path = "../nivra-diagnostics" }
+
+[lib]
+path = "src/lib.rs"
+
+[lints]
+workspace = true

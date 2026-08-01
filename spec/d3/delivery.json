@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "delivery": "D3",
+  "version": "0.3.0",
+  "status": "implemented",
+  "scope": [
+    "rust_workspace",
+    "source_manager",
+    "unicode_line_map",
+    "structured_diagnostics",
+    "lossless_lexer",
+    "initial_cli"
+  ],
+  "out_of_scope": [
+    "parser",
+    "ast",
+    "name_resolution",
+    "type_checker",
+    "interpreter",
+    "code_generation",
+    "package_manager"
+  ],
+  "golden_marker": "\u2605\u2605\u2605\u2605\u2605 D3 GOLDEN BUILD"
+}

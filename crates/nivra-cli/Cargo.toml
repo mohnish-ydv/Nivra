@@ -1,0 +1,21 @@
+[package]
+name = "nivra-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "The initial Nivra command-line compiler driver"
+default-run = "nivra"
+
+[dependencies]
+nivra-source = { path = "../nivra-source" }
+nivra-diagnostics = { path = "../nivra-diagnostics" }
+nivra-lexer = { path = "../nivra-lexer" }
+
+[[bin]]
+name = "nivra"
+path = "src/main.rs"
+
+[lints]
+workspace = true

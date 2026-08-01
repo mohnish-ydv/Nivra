@@ -1,0 +1,6 @@
+module examples.d3.hello
+
+fn main() {
+    let message = "Hello from Nivra D3"
+    print(message)
+}
