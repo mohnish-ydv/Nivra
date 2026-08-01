@@ -1,10 +1,11 @@
-# Nivra — D6 Static Type-Checker Foundation
+# Nivra — D6 Static Type-Checker Foundation (Build Fix)
 
 > **Mission:** Power without the pain.
 
-Nivra is a statically typed, compiled, general-purpose programming language and
-integrated toolchain designed to remove recurring developer headaches while
-preserving native performance and low-level control.
+This is the corrected cumulative D6 archive. It repairs the GitHub Actions
+`E0432` failure caused by an undeclared parser dependency in `nivra-types` tests
+and adds a repository-wide Cargo dependency preflight so the same class of error
+is detected before Rust compilation.
 
 ## Cumulative delivery status
 
@@ -15,6 +16,8 @@ preserving native performance and low-level control.
 - **D5:** scopes, symbols, module indexing, name resolution, `nivra resolve`
 - **D6:** static type representation, signatures, local inference, operator/call/
   condition/assignment/return validation, and `nivra typecheck`
+- **D6 build fix:** declares the test-only `nivra-parser` edge in both
+  `Cargo.toml` and `Cargo.lock`; validates all local imports and lock edges
 
 ## D6 operational commands
 
@@ -45,18 +48,17 @@ D6 contains eight local-only Rust crates:
 
 There are no third-party Rust runtime dependencies.
 
-## Verify
-
-On Android + Termux:
+## Verify on Android + Termux
 
 ```bash
 bash scripts/termux-verify.sh
 ```
 
-Expected final marker:
+Expected final marker after actual Rust compilation and tests:
 
 ```text
 ★★★★★ D6 GOLDEN BUILD
 ```
 
-See `MANUAL-VERIFICATION.md` for the exact checks after GitHub Actions turns green.
+Read `D6-BUILD-FIX-REPORT.md` for the exact root cause and
+`MANUAL-VERIFICATION.md` for post-Actions checks.

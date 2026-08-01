@@ -14,29 +14,33 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-printf '[1/11] D1 specification regression\n'
+printf '[1/12] D1 specification regression\n'
 python3 tools/spec_lint.py
 printf 'D1 regression: PASS\n\n'
 
-printf '[2/11] D2 architecture regression\n'
+printf '[2/12] D2 architecture regression\n'
 python3 tools/d2_spec_lint.py
 printf 'D2 regression: PASS\n\n'
 
-printf '[3/11] D3 compiler-foundation regression\n'
+printf '[3/12] D3 compiler-foundation regression\n'
 python3 tools/d3_structure_lint.py
 printf 'D3 regression: PASS\n\n'
 
-printf '[4/11] D4 parser and AST regression\n'
+printf '[4/12] D4 parser and AST regression\n'
 python3 tools/d4_structure_lint.py
 printf 'D4 regression: PASS\n\n'
 
-printf '[5/11] D5 semantic regression\n'
+printf '[5/12] D5 semantic regression\n'
 python3 tools/d5_structure_lint.py
 printf 'D5 regression: PASS\n\n'
 
-printf '[6/11] D6 type-checker structure\n'
+printf '[6/12] D6 type-checker structure\n'
 python3 tools/d6_structure_lint.py
 printf 'D6 structure: PASS\n\n'
+
+printf '[7/12] Cargo dependency graph preflight\n'
+python3 tools/d6_dependency_lint.py
+printf 'Cargo dependency graph: PASS\n\n'
 
 if ! command -v cargo >/dev/null 2>&1; then
   echo "FAIL: cargo is required for D6."
@@ -45,14 +49,14 @@ if ! command -v cargo >/dev/null 2>&1; then
   exit 1
 fi
 
-printf '[7/11] Script and source preflight\n'
+printf '[8/12] Script and source preflight\n'
 python3 -m compileall -q tools
 for script in verify.sh scripts/*.sh; do
   bash -n "$script"
 done
 printf 'Script and source preflight: PASS\n\n'
 
-printf '[8/11] Rust formatting\n'
+printf '[9/12] Rust formatting\n'
 if cargo fmt --version >/dev/null 2>&1; then
   if [[ "${NIVRA_APPLY_FORMAT:-0}" == "1" ]]; then
     cargo fmt --all
@@ -67,16 +71,16 @@ else
 fi
 printf '\n'
 
-printf '[9/11] Rust unit and integration tests\n'
+printf '[10/12] Rust unit and integration tests\n'
 cargo test --workspace --all-targets --locked
 printf 'Rust tests: PASS\n\n'
 
-printf '[10/11] Debug build and D6 CLI smoke tests\n'
+printf '[11/12] Debug build and D6 CLI smoke tests\n'
 cargo build --workspace --locked
 bash scripts/d6-smoke.sh
 printf '\n'
 
-printf '[11/11] Delivery reports\n'
+printf '[12/12] Delivery reports\n'
 python3 tools/d3_report.py
 printf '\n'
 python3 tools/d4_report.py

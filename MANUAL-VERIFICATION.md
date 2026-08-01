@@ -1,13 +1,15 @@
-# D6 Manual Verification After GitHub Actions Is Green
+# D6 Build-Fix Manual Verification
+
+Run these checks only after the corrected GitHub Actions workflow is green.
 
 ## 1. Run the Termux-safe cumulative verifier
 
 ```bash
-cd ~/storage/downloads/Nivra-D6-Type-Checker-GitHub-Ready
+cd ~/storage/downloads/Nivra-D6-Type-Checker-Build-Fix-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
-The project is copied to `~/nivra-d6-verification` before Rust compilation.
+The project is copied to `~/nivra-d6-verification` before compilation.
 Expected ending:
 
 ```text
@@ -17,6 +19,7 @@ D3 regression: PASS
 D4 regression: PASS
 D5 regression: PASS
 D6 structure: PASS
+Cargo dependency graph: PASS
 Rust tests: PASS
 D6 CLI smoke tests: PASS
 ★★★★★ D6 GOLDEN BUILD
@@ -53,8 +56,8 @@ Expected ending contains `0 errors`.
   --functions --types | sed -n '1,240p'
 ```
 
-Confirm that `clamp`, `score`, `bounded`, `final_score`, `tags`, `contact`, and
-`attempts` have readable types.
+Confirm readable types for `clamp`, `score`, `bounded`, `final_score`, `tags`,
+`contact`, and `attempts`.
 
 ## 5. Check representative failures
 
@@ -69,8 +72,8 @@ echo $?
 echo $?
 ```
 
-Expected codes are `TYP001`, `TYP003`, `TYP007`, and `TYP010`; each command exits
-with code `1`.
+Expected codes: `TYP001`, `TYP003`, `TYP007`, and `TYP010`. Every invalid command
+must exit with code `1`.
 
 ## 6. Validate JSON output
 
@@ -85,8 +88,6 @@ echo $?
 Expected exit code: `0`.
 
 ## Pass message
-
-When Actions and every manual check pass, report:
 
 ```text
 GG D6 Passed

@@ -69,6 +69,7 @@ version = "0.6.0"
 dependencies = [
  "nivra-diagnostics",
  "nivra-lexer",
+ "nivra-parser",
  "nivra-sema",
  "nivra-source",
  "nivra-syntax",

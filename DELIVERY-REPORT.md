@@ -1,45 +1,42 @@
-# D6 Delivery Report
+# D6 Build-Fix Delivery Report
 
 ## Delivery
 
-- Delivery: D6
-- Builds on: user-verified D1–D5
+- Delivery: D6 corrective release
+- Builds on: user-verified D1–D5 and failed D6 Actions evidence
 - Version: 0.6.0
 - Edition: 2026
-- Status before user verification: CANDIDATE
-- New crate: `nivra-types`
-- Total workspace crates: 8
+- Status before corrected user verification: BUILD-FIX CANDIDATE
+- Workspace crates: 8
 - Third-party Rust runtime dependencies: 0
 
-## Implemented
+## Failure reproduced from logs
 
-1. static `Type` representation with recovery, primitive, nominal, optional,
-   reference, pointer, tuple, and function forms
-2. nominal/imported/builtin type inventory
-3. module-wide function and extern signature collection
-4. parameter and return-type parsing
-5. lexical local type environments
-6. literal, array, name, operator, call, block, and control-flow inference
-7. binding annotation validation and inference
-8. function call arity and argument validation
-9. Bool-only conditions
-10. expression-body and explicit-return validation
-11. immutable-assignment rejection
-12. diagnostics `TYP001`–`TYP010`
-13. `nivra typecheck` human and JSON reports
-14. `nivra check` upgraded through the type phase
-15. five valid and ten invalid D6 conformance fixtures
-16. cumulative D1–D6 CI and Termux verification
+GitHub Actions reached `nivra-types` and failed in its test target with Rust
+`E0432`: `use nivra_parser::parse` referenced a crate that was not declared in
+`nivra-types` dev-dependencies.
 
-## Deliberate boundaries
+## Corrections
 
-D6 does not claim complete type-system conformance. Member lookup, trait solving,
-generic substitution, overload selection, ownership/borrow checking, exhaustiveness,
-HIR/MIR, native code generation, and execution remain later deliveries.
+1. added `nivra-parser` as a path-only `dev-dependency` of `nivra-types`
+2. synchronized the `nivra-types` dependency set in `Cargo.lock`
+3. added a generic eight-crate manifest/import/lock dependency validator
+4. made CI run dependency validation and `cargo metadata --locked` before tests
+5. added the same dependency validation to the cumulative Termux verifier
+6. added permanent regression assertions for the exact missing edge
+7. documented the failure, fix, push flow, and manual acceptance procedure
+
+## D6 feature scope retained
+
+The corrected archive retains static type representation, signature collection,
+local inference, operator/call/condition/array/assignment/return validation,
+`TYP001`–`TYP010`, `nivra typecheck`, five valid fixtures, ten invalid fixtures,
+and 75 cumulative Rust tests.
 
 ## Verification truthfulness
 
-The packaging environment does not contain Rust/Cargo. Static repository integrity,
-TOML/JSON/shell validation, test inventory, source-delimiter checks, and fresh ZIP
-extraction are performed here. GitHub Actions and the user's Termux run are the
-authoritative Rust compilation and test verdicts.
+The packaging environment could not install Rust/Cargo. Static whole-repository
+checks, manifest/lock consistency, TOML/JSON/Python/shell validation, fixture/test
+inventory, archive integrity, and fresh extraction verification are performed
+before release. GitHub Actions and Termux are the authoritative compilation and
+runtime-test verdicts. D6 is not accepted until both are green.

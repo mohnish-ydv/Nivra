@@ -38,8 +38,10 @@ required = [
     "docs/42-D6-TO-D7-GATE.md",
     "scripts/d6-smoke.sh",
     "scripts/termux-verify.sh",
+    "tools/d6_dependency_lint.py",
     ".github/workflows/verify-d6.yml",
     "D6-QA-REPORT.md",
+    "D6-BUILD-FIX-REPORT.md",
 ]
 missing = [item for item in required if not (ROOT / item).is_file()]
 if missing:
@@ -100,9 +102,21 @@ for manifest in [ROOT / "Cargo.toml", *sorted((ROOT / "crates").glob("*/Cargo.to
         parsed = tomllib.loads(manifest.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as exc:
         fail(f"invalid TOML in {manifest.relative_to(ROOT)}: {exc}")
-    for dependency, value in parsed.get("dependencies", {}).items():
-        if not isinstance(value, dict) or "path" not in value:
-            fail(f"non-local dependency {dependency!r} in {manifest.relative_to(ROOT)}")
+    for section in ("dependencies", "dev-dependencies", "build-dependencies"):
+        for dependency, value in parsed.get(section, {}).items():
+            if not isinstance(value, dict) or "path" not in value:
+                fail(
+                    f"non-local {section} entry {dependency!r} "
+                    f"in {manifest.relative_to(ROOT)}"
+                )
+
+types_manifest = tomllib.loads(
+    (ROOT / "crates/nivra-types/Cargo.toml").read_text(encoding="utf-8")
+)
+types_dev_dependencies = types_manifest.get("dev-dependencies", {})
+parser_dev_dependency = types_dev_dependencies.get("nivra-parser")
+if not isinstance(parser_dev_dependency, dict) or parser_dev_dependency.get("path") != "../nivra-parser":
+    fail("nivra-types tests require local nivra-parser dev-dependency")
 print("D6 manifest and dependency isolation: PASS")
 
 
@@ -123,6 +137,13 @@ for package_name in [
         fail(f"Cargo.lock missing {package_name}")
 if lock.count('version = "0.6.0"') != 8:
     fail("Cargo.lock does not contain eight 0.6.0 packages")
+types_lock_match = re.search(
+    r'name = "nivra-types"\nversion = "0\.6\.0"\ndependencies = \[\n(?P<body>.*?)\n\]',
+    lock,
+    re.DOTALL,
+)
+if types_lock_match is None or '"nivra-parser"' not in types_lock_match.group("body"):
+    fail("Cargo.lock is missing the nivra-types -> nivra-parser test edge")
 print("D6 Cargo lock: PASS")
 
 
@@ -321,6 +342,8 @@ workflow = (ROOT / ".github/workflows/verify-d6.yml").read_text(encoding="utf-8"
 for anchor in [
     "bash verify.sh",
     "rustup toolchain install 1.74.0",
+    "python3 tools/d6_dependency_lint.py",
+    "cargo metadata --locked --format-version 1 --no-deps",
     "cargo test --workspace --all-targets --locked",
     "cargo build --workspace --release --locked",
     "bash scripts/d6-smoke.sh",

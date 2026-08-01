@@ -1,5 +1,20 @@
 # Changelog
 
+## D6 Build Fix — 2026-08-02
+
+### Fixed
+
+- declared `nivra-parser` as the test-only dependency used by `nivra-types`
+- synchronized the corresponding local dependency edge in `Cargo.lock`
+- repaired GitHub Actions Rust `E0432` failure in the `nivra-types` test target
+
+### Added
+
+- whole-workspace Cargo manifest/import/lock dependency validator
+- early CI `cargo metadata --locked` dependency gate
+- permanent regression checks for undeclared local test dependencies
+- build-fix report and corrected phone/GitHub commands
+
 ## D6 — 2026-08-02
 
 ### Added

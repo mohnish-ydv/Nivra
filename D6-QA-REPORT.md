@@ -20,3 +20,14 @@
 GitHub Actions and Termux execute actual Rust formatting, compilation, tests,
 debug/release builds, CLI smoke tests, and reports. D6 is accepted only after those
 checks pass.
+
+
+## Corrective build audit
+
+- uploaded GitHub Actions log inspected
+- failure isolated to undeclared `nivra-parser` test dependency
+- `nivra-types/Cargo.toml` and `Cargo.lock` repaired together
+- all workspace manifests and local path targets parsed
+- all local Rust imports checked against declared dependencies
+- all Cargo.lock local edges checked for exact manifest parity
+- corrected CI now runs dependency validation before compilation

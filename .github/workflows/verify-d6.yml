@@ -27,6 +27,14 @@ jobs:
           cargo --version
           rustfmt --version
 
+      - name: Validate local dependency graph
+        run: |
+          python3 tools/d6_dependency_lint.py
+          cargo metadata --locked --format-version 1 --no-deps > /dev/null
+
+      - name: Compile and run D6 type-crate tests
+        run: cargo test -p nivra-types --lib --locked
+
       - name: Run Rust test suite
         run: cargo test --workspace --all-targets --locked
 

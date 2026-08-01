@@ -14,5 +14,8 @@ nivra-lexer = { path = "../nivra-lexer" }
 nivra-syntax = { path = "../nivra-syntax" }
 nivra-sema = { path = "../nivra-sema" }
 
+[dev-dependencies]
+nivra-parser = { path = "../nivra-parser" }
+
 [lints]
 workspace = true
