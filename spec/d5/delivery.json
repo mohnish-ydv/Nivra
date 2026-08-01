@@ -1,0 +1,10 @@
+{
+  "delivery": "D5",
+  "version": "0.5.0",
+  "title": "Semantic Index and Name Resolution",
+  "builds_on": ["D1", "D2", "D3", "D4"],
+  "crates_added": ["nivra-sema"],
+  "commands_added": ["nivra resolve"],
+  "external_runtime_dependencies": 0,
+  "type_checking_included": false
+}

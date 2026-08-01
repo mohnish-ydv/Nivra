@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEST="${NIVRA_D4_TEST_DIR:-$HOME/nivra-d4-verification}"
+DEST="${NIVRA_D5_TEST_DIR:-$HOME/nivra-d5-verification}"
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "FAIL: Python is missing."
@@ -25,12 +25,12 @@ fi
 case "$DEST" in
   "$HOME"/*) ;;
   *)
-    echo "FAIL: NIVRA_D4_TEST_DIR must stay inside Termux home: $HOME"
+    echo "FAIL: NIVRA_D5_TEST_DIR must stay inside Termux home: $HOME"
     exit 1
     ;;
 esac
 
-echo "Copying D4 to Termux internal storage:"
+echo "Copying D5 to Termux internal storage:"
 echo "  $DEST"
 rm -rf "$DEST"
 mkdir -p "$DEST"

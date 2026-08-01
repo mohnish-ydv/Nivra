@@ -1,0 +1,17 @@
+module examples.d5.lexical_scopes
+
+fn total(values: List<Int>) -> Int {
+    var sum = 0
+
+    for value in values {
+        let doubled = value * 2
+        sum = sum + doubled
+    }
+
+    if sum > 100 {
+        let message = "large"
+        print(message)
+    }
+
+    sum
+}

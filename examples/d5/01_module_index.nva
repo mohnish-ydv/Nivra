@@ -1,0 +1,17 @@
+module examples.d5.module_index
+
+use std.fs
+use std.collections.List
+
+pub const DEFAULT_LIMIT: Int = 25
+
+pub record User {
+    id: U64
+    name: String
+}
+
+pub fn load_names(path: Path) -> List<String> {
+    let text = fs.read_text(path)
+    let names = text.lines()
+    names
+}

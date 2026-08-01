@@ -1,0 +1,9 @@
+module examples.d5.invalid.duplicate_module_symbol
+
+fn calculate() -> Int {
+    1
+}
+
+fn calculate() -> Int {
+    2
+}

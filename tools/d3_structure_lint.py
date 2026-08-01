@@ -72,8 +72,8 @@ expected_crates = [
 for crate in expected_crates:
     if f'"{crate}"' not in workspace:
         fail(f"workspace missing {crate}")
-if 'version = "0.4.0"' not in workspace:
-    fail("cumulative workspace version is not 0.4.0")
+if 'version = "0.5.0"' not in workspace:
+    fail("cumulative workspace version is not 0.5.0")
 if 'unsafe_code = "forbid"' not in workspace:
     fail("workspace must forbid unsafe Rust")
 print("Rust workspace: PASS")
@@ -271,7 +271,7 @@ for path in script_files:
         fail(f"fixed D2 temporary path remains in {path.relative_to(ROOT)}")
 print("Termux permission regression: PASS")
 
-workflow = ROOT / ".github/workflows/verify-d4.yml"
+workflow = ROOT / ".github/workflows/verify-d5.yml"
 if not workflow.is_file():
     fail("cumulative GitHub Actions workflow missing")
 workflow_text = workflow.read_text(encoding="utf-8")

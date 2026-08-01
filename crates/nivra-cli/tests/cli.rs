@@ -19,7 +19,7 @@ fn temporary_source(name: &str, content: &str) -> PathBuf {
 }
 
 #[test]
-fn version_reports_d4_foundation() {
+fn version_reports_d5_foundation() {
     let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
         .arg("--version")
         .output()
@@ -27,8 +27,8 @@ fn version_reports_d4_foundation() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("nivra 0.4.0"));
-    assert!(stdout.contains("D4"));
+    assert!(stdout.contains("nivra 0.5.0"));
+    assert!(stdout.contains("D5"));
 }
 
 #[test]
@@ -151,4 +151,91 @@ fn explain_describes_parser_error() {
 
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("not closed"));
+}
+
+#[test]
+fn resolve_reports_module_symbols_and_scopes() {
+    let path = temporary_source(
+        "resolve.nva",
+        "module demo.resolve\nuse std.fs\nrecord User { name: String }\nfn load(path: Path) { let text = fs.read_text(path)\n print(text) }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .args(["resolve"])
+        .arg(&path)
+        .args(["--symbols", "--scopes"])
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Module: demo.resolve"));
+    assert!(stdout.contains("SYMBOL TABLE"));
+    assert!(stdout.contains("SCOPE TREE"));
+    assert!(stdout.contains("User"));
+    assert!(stdout.contains("load"));
+}
+
+#[test]
+fn check_rejects_unresolved_value_name() {
+    let path = temporary_source(
+        "unresolved.nva",
+        "module demo\nfn main() { missing_service() }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("SEM003"));
+}
+
+#[test]
+fn check_rejects_duplicate_local() {
+    let path = temporary_source(
+        "duplicate.nva",
+        "module demo\nfn main() { let value = 1\n let value = 2\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("SEM002"));
+}
+
+#[test]
+fn resolve_json_contains_semantic_graph() {
+    let path = temporary_source(
+        "semantic_json.nva",
+        "module demo\nfn echo(value: Int) { print(value) }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("resolve")
+        .arg(&path)
+        .arg("--json")
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.starts_with('{'));
+    assert!(stdout.contains("\"module\":\"demo\""));
+    assert!(stdout.contains("\"symbols\":["));
+    assert!(stdout.contains("\"scopes\":["));
+    assert!(stdout.contains("\"resolutions\":["));
+}
+
+#[test]
+fn explain_describes_semantic_error() {
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .args(["explain", "SEM003"])
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("not visible"));
 }

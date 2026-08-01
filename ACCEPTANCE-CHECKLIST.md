@@ -1,38 +1,34 @@
-# D4 Acceptance Checklist
+# D5 Acceptance Checklist
 
-## Automated release gates
+## Automated
 
-- [x] D1 specification regression passes.
-- [x] D2 architecture regression passes.
-- [x] D3 compiler-foundation structure regression passes.
-- [x] D4 specification and repository structure pass.
-- [x] Workspace contains six local-only Rust crates.
-- [x] Cargo manifests and lockfile are structurally valid.
-- [x] Lossless CST and typed AST implementation anchors exist.
-- [x] All 60 required syntax node kinds are represented.
-- [x] Five parser diagnostic codes are implemented/explained.
-- [x] Five valid and four invalid parser fixtures exist.
-- [x] At least 30 cumulative Rust tests exist.
-- [x] Fixed D2 temporary path does not return.
-- [x] GitHub Actions invokes the cumulative verifier and release build.
+- [x] D1–D4 structural regressions remain checked.
+- [x] Seven local-only Rust crates are present.
+- [x] Workspace version and lockfile are 0.5.0.
+- [x] No registry dependency exists.
+- [x] Semantic scope, symbol, and resolution models exist.
+- [x] Six unique `SEM` diagnostics exist and are explained by the CLI.
+- [x] `nivra check` invokes semantics only after a clean parse.
+- [x] `nivra resolve` supports summary, symbols, scopes, and JSON.
+- [x] Five valid and five invalid D5 fixtures exist.
+- [x] Cumulative Rust test inventory exceeds 50 tests.
+- [x] Fixed `/tmp` paths and unresolved drafting markers are prohibited.
+- [x] GitHub Actions builds/tests debug and release binaries.
 
-## User compile and runtime gates
+## Manual
 
-- [ ] GitHub Actions `Verify D4 Parser and AST` is green.
-- [ ] `bash scripts/termux-verify.sh` prints the D4 golden-build marker.
-- [ ] `nivra doctor` reports every D4 subsystem as PASS.
-- [ ] Valid D4 parser tour returns zero errors.
-- [ ] Parser summary reports a lossless round trip.
-- [ ] CST tree contains function, binary, call, and control-flow nodes.
-- [ ] Trivia tree contains documentation and block-comment tokens.
-- [ ] Invalid block fixture emits `PAR003` and exit code 1.
-- [ ] Invalid expression fixture emits `PAR005` and exit code 1.
-- [ ] Parser JSON decodes successfully.
+- [ ] GitHub Actions shows a green check for `Verify D5 Semantic Resolution`.
+- [ ] `bash scripts/termux-verify.sh` prints `★★★★★ D5 GOLDEN BUILD`.
+- [ ] `nivra doctor` reports D5 semantic components as PASS.
+- [ ] All valid D5 examples report zero errors.
+- [ ] Invalid fixtures emit expected `SEM` codes.
+- [ ] Symbol and scope output is readable on a phone.
+- [ ] JSON resolution output decodes with Python.
 
 ## Gate
 
-D5 starts only after the user reports:
+Proceed to D6 only after the user reports:
 
 ```text
-GG D4 Passed
+GG D5 Passed
 ```

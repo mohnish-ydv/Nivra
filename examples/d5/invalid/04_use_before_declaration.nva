@@ -1,0 +1,6 @@
+module examples.d5.invalid.use_before_declaration
+
+fn main() {
+    print(message)
+    let message = "declared too late"
+}

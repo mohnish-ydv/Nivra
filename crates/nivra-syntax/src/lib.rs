@@ -322,6 +322,44 @@ impl SyntaxNode {
         }
     }
 
+    /// Returns the first direct child with the requested kind.
+    #[must_use]
+    pub fn child_by_kind(&self, kind: SyntaxKind) -> Option<&SyntaxNode> {
+        self.child_nodes().find(|node| node.kind() == kind)
+    }
+
+    /// Iterates direct children with the requested kind.
+    pub fn children_by_kind(
+        &self,
+        kind: SyntaxKind,
+    ) -> impl Iterator<Item = &SyntaxNode> {
+        self.child_nodes().filter(move |node| node.kind() == kind)
+    }
+
+    /// Returns the first direct non-trivia token.
+    #[must_use]
+    pub fn first_significant_token(&self) -> Option<SyntaxToken> {
+        self.child_tokens()
+            .find(|token| !token.kind().is_trivia() && token.kind() != TokenKind::Eof)
+    }
+
+    /// Collects all descendant tokens in source order.
+    #[must_use]
+    pub fn descendant_tokens(&self) -> Vec<SyntaxToken> {
+        let mut tokens = Vec::new();
+        self.collect_descendant_tokens(&mut tokens);
+        tokens
+    }
+
+    fn collect_descendant_tokens(&self, output: &mut Vec<SyntaxToken>) {
+        for child in &self.children {
+            match child {
+                SyntaxElement::Node(node) => node.collect_descendant_tokens(output),
+                SyntaxElement::Token(token) => output.push(*token),
+            }
+        }
+    }
+
     /// Counts nodes recursively, including this node.
     #[must_use]
     pub fn descendant_node_count(&self) -> usize {
@@ -398,14 +436,64 @@ macro_rules! ast_wrapper {
 }
 
 ast_wrapper!(SourceFileAst, SourceFile);
+ast_wrapper!(ModuleAst, ModuleDeclaration);
+ast_wrapper!(UseAst, UseDeclaration);
+ast_wrapper!(ConstAst, ConstDeclaration);
+ast_wrapper!(TypeAliasAst, TypeAliasDeclaration);
+ast_wrapper!(NewtypeAst, NewtypeDeclaration);
 ast_wrapper!(FunctionAst, FunctionDeclaration);
+ast_wrapper!(ExternFunctionAst, ExternFunction);
 ast_wrapper!(RecordAst, RecordDeclaration);
+ast_wrapper!(StructAst, StructDeclaration);
 ast_wrapper!(EnumAst, EnumDeclaration);
+ast_wrapper!(EnumVariantAst, EnumVariant);
 ast_wrapper!(TraitAst, TraitDeclaration);
 ast_wrapper!(ImplAst, ImplDeclaration);
+ast_wrapper!(ParameterAst, Parameter);
+ast_wrapper!(FieldAst, Field);
+ast_wrapper!(PatternAst, Pattern);
+ast_wrapper!(NameExpressionAst, NameExpression);
+ast_wrapper!(TypeReferenceAst, TypeReference);
 ast_wrapper!(BlockAst, Block);
 ast_wrapper!(LetStatementAst, LetStatement);
+ast_wrapper!(VarStatementAst, VarStatement);
 ast_wrapper!(ExpressionStatementAst, ExpressionStatement);
+
+/// Shared accessor for AST nodes whose declaration starts with a direct identifier.
+pub trait NamedAstNode<'a>: AstNode<'a> {
+    /// Returns the declaration name token.
+    #[must_use]
+    fn name_token(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .child_tokens()
+            .find(|token| token.kind() == TokenKind::Identifier)
+    }
+}
+
+macro_rules! named_ast {
+    ($($name:ident),+ $(,)?) => {
+        $(impl<'a> NamedAstNode<'a> for $name<'a> {})+
+    };
+}
+
+named_ast!(
+    ModuleAst,
+    UseAst,
+    ConstAst,
+    TypeAliasAst,
+    NewtypeAst,
+    FunctionAst,
+    ExternFunctionAst,
+    RecordAst,
+    StructAst,
+    EnumAst,
+    EnumVariantAst,
+    TraitAst,
+    ParameterAst,
+    FieldAst,
+    PatternAst,
+    NameExpressionAst,
+);
 
 impl<'a> SourceFileAst<'a> {
     /// Iterates top-level declaration nodes.

@@ -1,4 +1,4 @@
-# D4 Manual Verification After GitHub Actions Is Green
+# D5 Manual Verification After GitHub Actions Is Green
 
 ## 1. Install requirements
 
@@ -7,19 +7,14 @@ pkg update -y
 pkg install rust python git -y
 ```
 
-## 2. Run the Termux-safe cumulative verifier
-
-From the extracted D4 folder:
+## 2. Run the Termux-safe golden verifier
 
 ```bash
+cd ~/storage/downloads/Nivra-D5-Semantic-Resolution-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
-The wrapper copies the repository to:
-
-```text
-~/nivra-d4-verification
-```
+The project is copied to `~/nivra-d5-verification` before Cargo runs.
 
 Expected ending:
 
@@ -27,16 +22,17 @@ Expected ending:
 D1 regression: PASS
 D2 regression: PASS
 D3 regression: PASS
-D4 structure: PASS
+D4 regression: PASS
+D5 structure: PASS
 Rust tests: PASS
-D4 CLI smoke tests: PASS
-★★★★★ D4 GOLDEN BUILD
+D5 CLI smoke tests: PASS
+★★★★★ D5 GOLDEN BUILD
 ```
 
-## 3. Inspect compiler status
+## 3. Check the CLI identity
 
 ```bash
-cd ~/nivra-d4-verification
+cd ~/nivra-d5-verification
 ./target/debug/nivra --version
 ./target/debug/nivra doctor
 ```
@@ -44,120 +40,74 @@ cd ~/nivra-d4-verification
 Expected version:
 
 ```text
-nivra 0.4.0 (parser and AST foundation D4)
+nivra 0.5.0 (semantic name-resolution foundation D5)
 ```
 
-Doctor must include:
-
-```text
-Lossless CST parser: PASS
-Pratt expression parser: PASS
-Typed AST foundation: PASS
-Error recovery: PASS
-D4 status: OPERATIONAL
-```
-
-## 4. Check the complete valid parser tour
+## 4. Check a valid semantic program
 
 ```bash
-./target/debug/nivra check examples/d4/05_complete_parser_tour.nva
+./target/debug/nivra check examples/d5/05_complete_semantic_tour.nva
 ```
 
-Expected ending:
+Expected ending contains:
 
 ```text
 0 errors
 ```
 
-## 5. Confirm lossless parsing
+## 5. Inspect symbols and scopes
 
 ```bash
-./target/debug/nivra parse examples/d4/04_lossless_comments.nva
+./target/debug/nivra resolve \
+  examples/d5/05_complete_semantic_tour.nva \
+  --symbols --scopes | sed -n '1,220p'
 ```
 
-Expected:
+Confirm that the output contains module, function, parameter, local, block, match-arm, closure,
+task-group, and imported names.
 
-```text
-Root: source_file
-Parser recoveries: 0
-Errors: 0
-Lossless round trip: PASS
-```
-
-## 6. Inspect the CST
+## 6. Test unresolved-name diagnostics
 
 ```bash
-./target/debug/nivra parse \
-  examples/d4/02_expression_precedence.nva \
-  --tree | head -n 100
-```
-
-The output must contain:
-
-```text
-function_declaration
-binary_expression
-if_expression
-```
-
-## 7. Confirm trivia preservation
-
-```bash
-./target/debug/nivra parse \
-  examples/d4/04_lossless_comments.nva \
-  --tree --trivia | grep -E 'doc_line_comment|block_comment'
-```
-
-Both token kinds must appear.
-
-## 8. Test missing delimiter diagnostics
-
-```bash
-./target/debug/nivra check \
-  examples/d4/invalid/01_missing_block_close.nva
+./target/debug/nivra check examples/d5/invalid/03_unresolved_name.nva
 echo $?
 ```
 
 Expected:
 
 ```text
-error[PAR003]
+error[SEM003]
 1
 ```
 
-## 9. Test missing expression recovery
+## 7. Test duplicate diagnostics
 
 ```bash
-./target/debug/nivra check \
-  examples/d4/invalid/02_missing_expression.nva
+./target/debug/nivra check examples/d5/invalid/02_duplicate_local.nva
 echo $?
 ```
 
 Expected:
 
 ```text
-error[PAR005]
+error[SEM002]
 1
 ```
 
-## 10. Validate parser JSON
+## 8. Decode semantic JSON
 
 ```bash
-./target/debug/nivra parse \
-  examples/d4/01_declarations.nva \
+./target/debug/nivra resolve \
+  examples/d5/01_module_index.nva \
   --json | python3 -m json.tool >/dev/null
 
 echo $?
 ```
 
-Expected exit code:
+Expected: `0`.
+
+When all checks pass, report:
 
 ```text
-0
-```
-
-After every check passes, report:
-
-```text
-GG D4 Passed
+GG D5 Passed
 ```

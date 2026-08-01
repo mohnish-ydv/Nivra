@@ -1,0 +1,7 @@
+module examples.d5.invalid.duplicate_local
+
+fn main() {
+    let message = "first"
+    let message = "second"
+    print(message)
+}

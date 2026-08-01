@@ -93,3 +93,12 @@ The Edition 2026 draft now has an executable lossless parser foundation. D4
 implements declaration, statement, type/pattern shell, and Pratt expression CST
 construction with recovery. Parser acceptance is not yet language conformance:
 semantic validity begins with D5 name and scope analysis.
+
+
+## D5 implementation status
+
+D5 adds the first semantic pass above the lossless parser. It creates module,
+lexical-scope, symbol, namespace, visibility, and source-name resolution data.
+Value names are resolved in declaration order inside nested scopes; module
+declarations are indexed before function bodies. Type-name completeness, member
+lookup, overload selection, and type compatibility remain D6 responsibilities.

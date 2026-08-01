@@ -1,0 +1,9 @@
+module examples.d5.patterns_and_closures
+
+fn transform(values: List<Int>) -> List<Int> {
+    let mapped = values.map(|value| value * 2)
+
+    match mapped {
+        result => result,
+    }
+}

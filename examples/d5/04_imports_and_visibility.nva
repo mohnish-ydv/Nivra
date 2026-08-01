@@ -1,0 +1,17 @@
+module examples.d5.imports_and_visibility
+
+use std.json as json
+use std.sync.Shared
+
+pub record Config {
+    endpoint: String
+}
+
+fn decode(text: String) -> Config {
+    let value = json.parse(text)
+    Config.decode(value)
+}
+
+pub fn share(config: Config) -> Shared<Config> {
+    Shared.new(config)
+}

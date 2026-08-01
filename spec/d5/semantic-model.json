@@ -1,0 +1,22 @@
+{
+  "namespaces": ["value", "type"],
+  "scope_kinds": [
+    "prelude", "module", "type_body", "function", "block",
+    "loop", "match_arm", "closure", "task_group"
+  ],
+  "symbol_kinds": [
+    "builtin", "import", "constant", "type_alias", "newtype",
+    "record", "struct", "enum", "trait", "function",
+    "extern_function", "method", "generic_parameter", "parameter",
+    "local", "field", "enum_variant", "task_group"
+  ],
+  "resolution_policy": {
+    "lexical_parent_walk": true,
+    "declaration_order_for_locals": true,
+    "module_declarations_indexed_before_bodies": true,
+    "separate_type_and_value_namespaces": true,
+    "member_lookup_deferred": true,
+    "unknown_type_diagnostics_deferred": true,
+    "suggest_nearby_visible_name": true
+  }
+}

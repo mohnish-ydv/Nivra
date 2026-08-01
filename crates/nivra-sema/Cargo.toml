@@ -1,12 +1,11 @@
 [package]
-name = "nivra-cli"
+name = "nivra-sema"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "Nivra compiler driver with semantic name resolution"
-default-run = "nivra"
+description = "Nivra semantic AST indexing, scopes, symbols, and name resolution"
 
 [dependencies]
 nivra-source = { path = "../nivra-source" }
@@ -14,11 +13,6 @@ nivra-diagnostics = { path = "../nivra-diagnostics" }
 nivra-lexer = { path = "../nivra-lexer" }
 nivra-syntax = { path = "../nivra-syntax" }
 nivra-parser = { path = "../nivra-parser" }
-nivra-sema = { path = "../nivra-sema" }
-
-[[bin]]
-name = "nivra"
-path = "src/main.rs"
 
 [lints]
 workspace = true

@@ -1,0 +1,13 @@
+module examples.d5.invalid.multiple_semantic_errors
+module examples.d5.invalid.second_module
+
+record User {
+    name: String
+    name: String
+}
+
+fn process(value: Int, value: Int) {
+    let result = unknown_value
+    let result = 2
+    print(result)
+}

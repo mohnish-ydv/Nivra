@@ -41,7 +41,7 @@ required_files = [
     "docs/30-D4-TO-D5-GATE.md",
     "scripts/d4-smoke.sh",
     "scripts/termux-verify.sh",
-    ".github/workflows/verify-d4.yml",
+    ".github/workflows/verify-d5.yml",
 ]
 missing = [path for path in required_files if not (ROOT / path).is_file()]
 if missing:
@@ -73,8 +73,8 @@ required_members = {
 if not required_members.issubset(members):
     fail(f"workspace missing crates: {sorted(required_members - members)}")
 package = workspace.get("workspace", {}).get("package", {})
-if package.get("version") != "0.4.0":
-    fail("workspace version is not 0.4.0")
+if package.get("version") != "0.5.0":
+    fail("workspace version is not 0.5.0")
 if workspace.get("workspace", {}).get("lints", {}).get("rust", {}).get("unsafe_code") != "forbid":
     fail("workspace no longer forbids unsafe Rust")
 print("D4 Rust workspace: PASS")
@@ -171,7 +171,7 @@ for forbidden in ["/tmp/nivra-d1-lint.txt", "TO" + "DO", "T" + "BD", "FIX" + "ME
             fail(f"forbidden marker {forbidden!r} in {path.relative_to(ROOT)}")
 print("D4 release hygiene: PASS")
 
-workflow = (ROOT / ".github/workflows/verify-d4.yml").read_text(encoding="utf-8")
+workflow = (ROOT / ".github/workflows/verify-d5.yml").read_text(encoding="utf-8")
 for anchor in [
     "bash verify.sh",
     "cargo build --workspace --release --locked",

@@ -7,6 +7,7 @@ use std::process;
 use nivra_diagnostics::{Renderer, error_count};
 use nivra_lexer::lex;
 use nivra_parser::parse;
+use nivra_sema::{SemanticResult, analyze_parse};
 use nivra_source::{SourceError, SourceManager};
 use nivra_syntax::{SyntaxElement, SyntaxNode};
 
@@ -29,7 +30,7 @@ fn run(arguments: Vec<OsString>) -> i32 {
             0
         }
         "version" | "--version" | "-V" => {
-            println!("nivra {VERSION} (parser and AST foundation D4)");
+            println!("nivra {VERSION} (semantic name-resolution foundation D5)");
             0
         }
         "doctor" => doctor(),
@@ -37,9 +38,10 @@ fn run(arguments: Vec<OsString>) -> i32 {
         "check" => check_command(&arguments[1..]),
         "lex" => lex_command(&arguments[1..]),
         "parse" => parse_command(&arguments[1..]),
+        "resolve" => resolve_command(&arguments[1..]),
         unknown => {
             eprintln!("error[CLI001]: unknown command `{unknown}`");
-            eprintln!("  = help: run `nivra help` to list available D4 commands");
+            eprintln!("  = help: run `nivra help` to list available D5 commands");
             2
         }
     }
@@ -54,18 +56,21 @@ USAGE:
     nivra <COMMAND> [OPTIONS]
 
 COMMANDS:
-    check <FILE> [--json]                     Lex and parse a Nivra source file
-    lex <FILE> [--trivia] [--json]            Print the lossless token stream
-    parse <FILE> [--tree] [--trivia] [--json] Inspect the lossless CST
-    explain <CODE>                             Explain a D4 diagnostic code
-    doctor                                     Show compiler-driver information
-    version                                    Print the version
-    help                                       Print this help
+    check <FILE> [--json]                       Lex, parse, and resolve names
+    lex <FILE> [--trivia] [--json]              Print the lossless token stream
+    parse <FILE> [--tree] [--trivia] [--json]   Inspect the lossless CST
+    resolve <FILE> [--symbols] [--scopes]        Inspect semantic name resolution
+                   [--all] [--json]
+    explain <CODE>                               Explain a D5 diagnostic code
+    doctor                                       Show compiler-driver information
+    version                                      Print the version
+    help                                         Print this help
 
-D4 SCOPE:
-    Source management, diagnostics, lexing, lossless CST parsing, Pratt expression
-    precedence, recovery, and typed AST foundations are implemented.
-    Name resolution, type checking, lowering, code generation, and execution arrive later.
+D5 SCOPE:
+    Source management, diagnostics, lexing, lossless parsing, typed AST accessors,
+    module indexing, lexical scopes, symbol tables, and value-name resolution are
+    implemented. Full type checking, ownership checking, HIR/MIR, code generation,
+    and execution arrive in later deliveries.
 "
     );
 }
@@ -90,9 +95,12 @@ fn doctor() -> i32 {
     println!("Lossless lexer: PASS");
     println!("Lossless CST parser: PASS");
     println!("Pratt expression parser: PASS");
-    println!("Typed AST foundation: PASS");
+    println!("Typed AST accessors: PASS");
     println!("Error recovery: PASS");
-    println!("D4 status: OPERATIONAL");
+    println!("Module indexer: PASS");
+    println!("Scope and symbol tables: PASS");
+    println!("Name resolver: PASS");
+    println!("D5 status: OPERATIONAL");
     0
 }
 
@@ -119,12 +127,18 @@ fn explain(code: Option<&OsString>) -> i32 {
         "PAR003" => "A delimited construct is not closed before its recovery boundary.",
         "PAR004" => "Only declarations are accepted at the source-file or declaration-body level.",
         "PAR005" => "An expression was required but no expression could begin here.",
-        "CLI001" => "The requested D4 command does not exist.",
+        "SEM001" => "A module-level name is declared more than once in the same namespace.",
+        "SEM002" => "A local binding is declared more than once in the same lexical scope.",
+        "SEM003" => "A value name is not visible from this lexical scope.",
+        "SEM004" => "A source file contains more than one module declaration.",
+        "SEM005" => "A parameter or generic parameter is duplicated.",
+        "SEM006" => "A field, enum variant, or method is duplicated in its type body.",
+        "CLI001" => "The requested D5 command does not exist.",
         "CLI002" => "A required command argument is missing or an option is invalid.",
         "DRV001" => "The compiler driver could not load the requested source file.",
         _ => {
             eprintln!("error[CLI003]: unknown diagnostic code `{code}`");
-            eprintln!("  = help: D4 codes use the LEX, PAR, CLI, and DRV prefixes");
+            eprintln!("  = help: D5 codes use the LEX, PAR, SEM, CLI, and DRV prefixes");
             return 2;
         }
     };
@@ -152,39 +166,47 @@ fn check_command(arguments: &[OsString]) -> i32 {
         return 2;
     };
     let result = parse(source);
-    let errors = error_count(&result.diagnostics);
-    let warnings = result.diagnostics.len().saturating_sub(errors);
+    let semantic = analyze_parse(source, &result);
+    let mut diagnostics = result.diagnostics.clone();
+    if let Some(semantic_result) = &semantic {
+        diagnostics.extend(semantic_result.diagnostics.iter().cloned());
+    }
+    let errors = error_count(&diagnostics);
+    let warnings = diagnostics.len().saturating_sub(errors);
     let nodes = result.root.descendant_node_count();
     let tokens = result.root.descendant_token_count();
+    let semantic_symbols = semantic.as_ref().map_or(0, |value| value.user_symbols().count());
+    let semantic_scopes = semantic.as_ref().map_or(0, |value| value.scopes.len());
+    let resolved_names = semantic.as_ref().map_or(0, SemanticResult::resolved_name_count);
 
     if parsed.json {
-        let diagnostics = Renderer::new().json_many(&result.diagnostics, &sources);
+        let rendered = Renderer::new().json_many(&diagnostics, &sources);
         println!(
-            "{{\"path\":{},\"nodes\":{},\"tokens\":{},\"lexical_diagnostics\":{},\"recoveries\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}}}",
+            "{{\"path\":{},\"nodes\":{},\"tokens\":{},\"lexical_diagnostics\":{},\"recoveries\":{},\"semantic_symbols\":{},\"semantic_scopes\":{},\"resolved_names\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}}}",
             json_string(&parsed.path.to_string_lossy()),
             nodes,
             tokens,
             result.lexical_diagnostic_count,
             result.recovered_error_count,
+            semantic_symbols,
+            semantic_scopes,
+            resolved_names,
             errors,
             warnings,
-            diagnostics
+            rendered
         );
     } else {
-        if !result.diagnostics.is_empty() {
-            eprint!(
-                "{}",
-                Renderer::new().human_many(&result.diagnostics, &sources)
-            );
+        if !diagnostics.is_empty() {
+            eprint!("{}", Renderer::new().human_many(&diagnostics, &sources));
         }
         if errors == 0 {
             println!(
-                "Checked {}: {nodes} nodes, {tokens} lossless tokens, {warnings} warnings, 0 errors",
+                "Checked {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {warnings} warnings, 0 errors",
                 parsed.path.display()
             );
         } else {
             println!(
-                "Check failed for {}: {nodes} nodes, {tokens} lossless tokens, {warnings} warnings, {errors} errors",
+                "Check failed for {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {warnings} warnings, {errors} errors",
                 parsed.path.display()
             );
         }
@@ -258,6 +280,89 @@ fn parse_command(arguments: &[OsString]) -> i32 {
             eprint!(
                 "{}",
                 Renderer::new().human_many(&result.diagnostics, &sources)
+            );
+        }
+    }
+
+    if errors > 0 { 1 } else { 0 }
+}
+
+
+fn resolve_command(arguments: &[OsString]) -> i32 {
+    let options = match parse_resolve_options(arguments) {
+        Ok(value) => value,
+        Err(message) => {
+            eprintln!("error[CLI002]: {message}");
+            eprintln!(
+                "  = help: usage: `nivra resolve <FILE> [--symbols] [--scopes] [--all] [--json]`"
+            );
+            return 2;
+        }
+    };
+
+    let (sources, source_id) = match load_source(&options.path) {
+        Ok(value) => value,
+        Err(error) => return print_source_error(error, options.json),
+    };
+    let Some(source) = sources.get(source_id) else {
+        eprintln!("error[DRV999]: loaded source disappeared from the source manager");
+        return 2;
+    };
+    let parsed = parse(source);
+    if parsed.has_errors() {
+        if options.json {
+            println!(
+                "{{\"path\":{},\"phase\":\"parse\",\"diagnostics\":{}}}",
+                json_string(&options.path.to_string_lossy()),
+                Renderer::new().json_many(&parsed.diagnostics, &sources)
+            );
+        } else {
+            eprint!(
+                "{}",
+                Renderer::new().human_many(&parsed.diagnostics, &sources)
+            );
+            eprintln!("Semantic resolution skipped because parsing failed.");
+        }
+        return 1;
+    }
+
+    let semantic = nivra_sema::analyze(source, &parsed.root);
+    let errors = error_count(&semantic.diagnostics);
+    let warnings = semantic.diagnostics.len().saturating_sub(errors);
+
+    if options.json {
+        println!(
+            "{}",
+            semantic_json(&options.path, &semantic, &sources)
+        );
+    } else {
+        println!("RESOLUTION SUMMARY");
+        println!("==================");
+        println!("Path: {}", options.path.display());
+        println!("Module: {}", semantic.module.name);
+        println!("User symbols: {}", semantic.user_symbols().count());
+        println!("Scopes: {}", semantic.scopes.len());
+        println!("Resolved names: {}", semantic.resolved_name_count());
+        println!("Unresolved names: {}", semantic.unresolved_name_count());
+        println!("Errors: {errors}");
+        println!("Warnings: {warnings}");
+
+        if options.symbols {
+            println!();
+            println!("SYMBOL TABLE");
+            println!("============");
+            print!("{}", semantic.symbol_report(options.all));
+        }
+        if options.scopes {
+            println!();
+            println!("SCOPE TREE");
+            println!("==========");
+            print!("{}", semantic.scope_report());
+        }
+        if !semantic.diagnostics.is_empty() {
+            eprint!(
+                "{}",
+                Renderer::new().human_many(&semantic.diagnostics, &sources)
             );
         }
     }
@@ -358,6 +463,55 @@ struct FileOptions {
     tree: bool,
 }
 
+
+#[derive(Debug)]
+struct ResolveOptions {
+    path: PathBuf,
+    json: bool,
+    symbols: bool,
+    scopes: bool,
+    all: bool,
+}
+
+fn parse_resolve_options(arguments: &[OsString]) -> Result<ResolveOptions, String> {
+    let mut path = None;
+    let mut json = false;
+    let mut symbols = false;
+    let mut scopes = false;
+    let mut all = false;
+
+    for argument in arguments {
+        if argument.as_os_str() == OsStr::new("--json") {
+            json = true;
+        } else if argument.as_os_str() == OsStr::new("--symbols") {
+            symbols = true;
+        } else if argument.as_os_str() == OsStr::new("--scopes") {
+            scopes = true;
+        } else if argument.as_os_str() == OsStr::new("--all") {
+            all = true;
+        } else if argument.to_string_lossy().starts_with('-') {
+            return Err(format!("unknown option `{}`", argument.to_string_lossy()));
+        } else if path.replace(PathBuf::from(argument.as_os_str())).is_some() {
+            return Err("only one source file may be supplied".to_owned());
+        }
+    }
+
+    if json && (symbols || scopes || all) {
+        return Err("`--json` already includes symbols and scopes; remove display flags".to_owned());
+    }
+    if all && !symbols {
+        return Err("`--all` requires `--symbols`".to_owned());
+    }
+
+    Ok(ResolveOptions {
+        path: path.ok_or_else(|| "a source file path is required".to_owned())?,
+        json,
+        symbols,
+        scopes,
+        all,
+    })
+}
+
 fn parse_file_options(arguments: &[OsString], mode: OptionMode) -> Result<FileOptions, String> {
     let mut path = None;
     let mut json = false;
@@ -414,6 +568,97 @@ fn print_source_error(error: SourceError, json: bool) -> i32 {
         eprintln!("  = help: check the path, file permissions, and UTF-8 encoding");
     }
     2
+}
+
+fn semantic_json(
+    path: &Path,
+    semantic: &SemanticResult,
+    sources: &SourceManager,
+) -> String {
+    let mut output = String::new();
+    output.push('{');
+    let _ = write!(
+        output,
+        "\"path\":{},\"module\":{},\"root_scope\":{},\"symbols\":[",
+        json_string(&path.to_string_lossy()),
+        json_string(&semantic.module.name),
+        semantic.module.root_scope.raw()
+    );
+    for (index, symbol) in semantic.symbols.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let _ = write!(
+            output,
+            "{{\"id\":{},\"name\":{},\"kind\":{},\"namespace\":{},\"visibility\":{},\"origin\":{},\"scope\":{},\"start\":{},\"end\":{}}}",
+            symbol.id.raw(),
+            json_string(&symbol.name),
+            json_string(symbol.kind.as_str()),
+            json_string(symbol.namespace.as_str()),
+            json_string(symbol.visibility.as_str()),
+            json_string(symbol.origin.as_str()),
+            symbol.scope.raw(),
+            symbol.span.start(),
+            symbol.span.end()
+        );
+    }
+    output.push_str("],\"scopes\":[");
+    for (index, scope) in semantic.scopes.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let parent = scope
+            .parent
+            .map_or_else(|| "null".to_owned(), |value| value.raw().to_string());
+        let symbols = scope
+            .symbols
+            .iter()
+            .map(|value| value.raw().to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        let _ = write!(
+            output,
+            "{{\"id\":{},\"parent\":{},\"kind\":{},\"start\":{},\"end\":{},\"symbols\":[{}]}}",
+            scope.id.raw(),
+            parent,
+            json_string(scope.kind.as_str()),
+            scope.span.start(),
+            scope.span.end(),
+            symbols
+        );
+    }
+    output.push_str("],\"resolutions\":[");
+    for (index, resolution) in semantic.resolutions.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let symbol = resolution
+            .symbol
+            .map_or_else(|| "null".to_owned(), |value| value.raw().to_string());
+        let _ = write!(
+            output,
+            "{{\"name\":{},\"namespace\":{},\"scope\":{},\"symbol\":{},\"start\":{},\"end\":{}}}",
+            json_string(&resolution.name),
+            json_string(resolution.namespace.as_str()),
+            resolution.scope.raw(),
+            symbol,
+            resolution.span.start(),
+            resolution.span.end()
+        );
+    }
+    let errors = error_count(&semantic.diagnostics);
+    let warnings = semantic.diagnostics.len().saturating_sub(errors);
+    let _ = write!(
+        output,
+        "],\"resolved_names\":{},\"unresolved_names\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}",
+        semantic.resolved_name_count(),
+        semantic.unresolved_name_count(),
+        errors,
+        warnings,
+        Renderer::new().json_many(&semantic.diagnostics, sources)
+    );
+    output.push('}');
+    output
 }
 
 fn syntax_json(node: &SyntaxNode, source: &nivra_source::SourceFile, trivia: bool) -> String {

@@ -1,0 +1,11 @@
+{
+  "prefix": "SEM",
+  "codes": [
+    {"code": "SEM001", "title": "duplicate module symbol"},
+    {"code": "SEM002", "title": "duplicate local binding"},
+    {"code": "SEM003", "title": "unresolved value name"},
+    {"code": "SEM004", "title": "multiple module declarations"},
+    {"code": "SEM005", "title": "duplicate parameter"},
+    {"code": "SEM006", "title": "duplicate type-body member"}
+  ]
+}

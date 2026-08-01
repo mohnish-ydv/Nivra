@@ -1,0 +1,5 @@
+module examples.d5.invalid.unresolved_name
+
+fn main() {
+    missing_service()
+}

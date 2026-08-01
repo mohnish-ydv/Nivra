@@ -1,0 +1,75 @@
+module examples.d5.complete_semantic_tour
+
+use std.fs
+use std.json
+use std.sync.Shared
+
+const DEFAULT_RETRIES: Int = 3
+
+newtype UserId = U64
+
+@derive(Debug, Equal, Json)
+pub record User {
+    id: UserId
+    name: String
+    email: String? = none
+}
+
+enum LoadState<T> {
+    idle,
+    loading,
+    ready(T),
+    failed(String),
+}
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+impl Display for User {
+    fn display(self: &Self) -> String {
+        self.name
+    }
+}
+
+fn load_user(path: Path) -> User {
+    let text = fs.read_text(path)
+    let value = json.parse(text)
+    User.decode(value)
+}
+
+async fn load_all(paths: List<Path>) -> List<User> {
+    task_group group {
+        let tasks = paths.map(|path| group.spawn async {
+            load_user(path)
+        })
+        Task.all(tasks)
+    }
+}
+
+fn render(state: LoadState<User>) {
+    match state {
+        .idle => print("Idle"),
+        .loading => print("Loading"),
+        .ready(user) => print(user.display()),
+        .failed(message) => print(message),
+    }
+}
+
+pub fn main() {
+    var retries = 0
+    while retries < DEFAULT_RETRIES {
+        retries = retries + 1
+    }
+
+    let user = load_user("user.json")
+    let shared = Shared.new(user)
+
+    if let email = shared.email {
+        print(email)
+    } else {
+        print("No email")
+    }
+
+    render(.ready(shared.clone_value()))
+}

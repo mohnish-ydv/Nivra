@@ -1,54 +1,48 @@
-# Nivra — D4 Parser & AST Foundation
+# Nivra — D5 Semantic Index & Name Resolution
 
 > **Mission:** Power without the pain.
 
 Nivra is a statically typed, compiled, general-purpose programming language and
-integrated toolchain designed to remove recurring developer headaches while
-preserving native performance and low-level control.
+integrated toolchain designed around safer defaults, actionable diagnostics, and a
+single official workflow.
 
 ## Delivery status
 
 - **D1:** mission, pain map, constitution, syntax direction
-- **D2:** identity, type/memory/error/concurrency architecture and spec draft
-- **D3:** Rust workspace, source manager, diagnostics, lexer, initial CLI
-- **D4:** lossless CST parser, Pratt expressions, recovery, typed AST foundation
+- **D2:** language architecture and Specification Draft 0.2
+- **D3:** Rust compiler workspace, source manager, diagnostics, lexer, CLI
+- **D4:** lossless CST parser, Pratt expressions, recovery, AST foundation
+- **D5:** semantic AST accessors, module index, scopes, symbol tables, name resolution
 
-## What works in D4
+## D5 operational commands
 
 ```bash
 nivra check file.nva
-nivra lex file.nva --trivia
-nivra parse file.nva
-nivra parse file.nva --tree
-nivra parse file.nva --tree --trivia
-nivra parse file.nva --json
-nivra explain PAR003
+nivra resolve file.nva
+nivra resolve file.nva --symbols --scopes
+nivra resolve file.nva --json
+nivra explain SEM003
 nivra doctor
 ```
 
-`nivra check` now performs lexical and syntax validation. D4 does not yet resolve
-names, check types, generate native code, or execute programs.
+`nivra check` now runs source loading, lexing, parsing, and semantic name
+resolution. Type checking is deliberately not claimed in D5.
 
 ## Workspace
 
-- `nivra-source` — source files, IDs, spans, Unicode positions
-- `nivra-diagnostics` — human and JSON diagnostics
-- `nivra-lexer` — lossless Edition 2026 lexer
-- `nivra-syntax` — immutable CST and typed AST wrappers
-- `nivra-parser` — recursive descent + Pratt parser and recovery
-- `nivra-cli` — operational compiler driver
+D5 contains seven local-only Rust crates:
 
-All compiler crates use only local path dependencies in D4.
+- `nivra-source`
+- `nivra-diagnostics`
+- `nivra-lexer`
+- `nivra-syntax`
+- `nivra-parser`
+- `nivra-sema`
+- `nivra-cli`
+
+There are no third-party runtime crate dependencies.
 
 ## Verify
-
-On GitHub Actions or a Rust-enabled machine:
-
-```bash
-bash verify.sh
-```
-
-On Android + Termux, use the internal-storage-safe wrapper:
 
 ```bash
 bash scripts/termux-verify.sh
@@ -57,7 +51,7 @@ bash scripts/termux-verify.sh
 Expected final line:
 
 ```text
-★★★★★ D4 GOLDEN BUILD
+★★★★★ D5 GOLDEN BUILD
 ```
 
-See `MANUAL-VERIFICATION.md` for the exact checks to run after Actions turns green.
+See `MANUAL-VERIFICATION.md` for the exact checks after GitHub Actions is green.
