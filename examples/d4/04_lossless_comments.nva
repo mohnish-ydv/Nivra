@@ -1,0 +1,8 @@
+module examples.d4.lossless_comments
+
+/// Documentation trivia remains inside the CST.
+fn main() {
+    // Spaces and comments survive parse round trips.
+    let message = "lossless" /* inline block comment */
+    print(message)
+}

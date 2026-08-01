@@ -1,0 +1,9 @@
+module examples.d4.invalid.broken_declaration
+
+mystery Widget {
+    value: Int
+}
+
+fn still_visible() {
+    print("recovered")
+}

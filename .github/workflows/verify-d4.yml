@@ -1,4 +1,4 @@
-name: Verify D3 Compiler Foundation
+name: Verify D4 Parser and AST
 
 on:
   push:
@@ -11,9 +11,9 @@ permissions:
 
 jobs:
   verify:
-    name: Specs, Rust tests, CLI, release
+    name: Specs, parser tests, CLI, release
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -36,21 +36,30 @@ jobs:
       - name: Build release workspace
         run: cargo build --workspace --release --locked
 
+      - name: Run release CLI parser smoke
+        env:
+          NIVRA_BIN: ${{ github.workspace }}/target/release/nivra
+        run: bash scripts/d4-smoke.sh
+
       - name: Generate reports
         run: |
           python3 tools/d2_report.py > D2-ARCHITECTURE-REPORT.txt
           python3 tools/d3_report.py > D3-COMPILER-FOUNDATION-REPORT.txt
-          ./target/release/nivra doctor > D3-NIVRA-DOCTOR.txt
+          python3 tools/d4_report.py > D4-PARSER-AST-REPORT.txt
+          ./target/release/nivra doctor > D4-NIVRA-DOCTOR.txt
+          ./target/release/nivra parse examples/d4/05_complete_parser_tour.nva --tree > D4-CST-TREE.txt
 
-      - name: Upload D3 Linux artifact and reports
+      - name: Upload D4 Linux artifact and reports
         uses: actions/upload-artifact@v4
         with:
-          name: nivra-d3-linux-x86_64
+          name: nivra-d4-linux-x86_64
           path: |
             target/release/nivra
             D2-ARCHITECTURE-REPORT.txt
             D3-COMPILER-FOUNDATION-REPORT.txt
-            D3-NIVRA-DOCTOR.txt
+            D4-PARSER-AST-REPORT.txt
+            D4-NIVRA-DOCTOR.txt
+            D4-CST-TREE.txt
             MANUAL-VERIFICATION.md
           if-no-files-found: error
           retention-days: 14

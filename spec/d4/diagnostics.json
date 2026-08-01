@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "delivery": "D4",
+  "codes": [
+    {
+      "code": "PAR001",
+      "title": "unexpected syntax token",
+      "recovery": "skip to a safe declaration or statement boundary"
+    },
+    {
+      "code": "PAR002",
+      "title": "missing required syntax element",
+      "recovery": "insert a conceptual missing element without dropping source tokens"
+    },
+    {
+      "code": "PAR003",
+      "title": "unclosed delimited construct",
+      "recovery": "continue from the matching outer boundary or end of file"
+    },
+    {
+      "code": "PAR004",
+      "title": "declaration expected",
+      "recovery": "synchronize at the next declaration start"
+    },
+    {
+      "code": "PAR005",
+      "title": "expression expected",
+      "recovery": "emit an error node and preserve later statements"
+    }
+  ]
+}

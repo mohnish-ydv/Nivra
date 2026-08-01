@@ -1,0 +1,9 @@
+module examples.d4.expression_precedence
+
+fn calculate(a: Int, b: Int, c: Int) -> Int {
+    let grouped = (a + b) * c
+    let natural = a + b * c
+    let shifted = natural << 2
+    let decision = shifted > 10 && grouped != 0
+    if decision { shifted } else { grouped }
+}

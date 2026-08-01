@@ -1,0 +1,19 @@
+module examples.d4.control_flow
+
+fn process(values: List<Int>) -> Result<Int, AppError> {
+    var total = 0
+
+    for value in values {
+        if value < 0 {
+            continue
+        }
+        total = total + value
+    }
+
+    ensure total > 0 else AppError.empty_input()
+
+    match total {
+        1 => ok(1),
+        value => ok(value),
+    }
+}

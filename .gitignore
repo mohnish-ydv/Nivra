@@ -6,3 +6,7 @@ D1-SPEC-REPORT.txt
 NIVRA-D2-REPORT.txt
 target/
 .nivra-cache/
+D4-PARSER-AST-REPORT.txt
+D4-NIVRA-DOCTOR.txt
+D4-CST-TREE.txt
+.nivra-verify/

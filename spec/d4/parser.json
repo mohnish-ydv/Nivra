@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "delivery": "D4",
+  "architecture": "hand-written recursive descent plus Pratt expressions",
+  "lossless": true,
+  "preserves_trivia": true,
+  "tree_layers": ["lossless CST", "typed AST views"],
+  "features": [
+    "source files and declaration lists",
+    "attributes and visibility prefixes",
+    "modules and imports",
+    "constants, aliases, and newtypes",
+    "records, structs, enums, traits, and implementations",
+    "functions, generic parameter lists, parameters, and return types",
+    "C extern blocks and unsafe function declarations",
+    "blocks and binding statements",
+    "return, break, continue, defer, and ensure statements",
+    "while and for statements",
+    "if-let and else-if expressions",
+    "match expressions and arms",
+    "task-group, async, unsafe, try, await, and spawn expressions",
+    "closures, calls, members, indexing, and postfix try",
+    "Pratt binary and assignment precedence",
+    "tuple, array, literal, name, and relative enum-variant expressions",
+    "delimiter and boundary based recovery",
+    "lossless source round trip"
+  ],
+  "precedence_levels": 12,
+  "recovery_boundaries": [
+    "top-level declaration starts",
+    "statement starts",
+    "newlines",
+    "semicolons",
+    "commas",
+    "closing braces",
+    "end of file"
+  ],
+  "external_runtime_dependencies": 0
+}

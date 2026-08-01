@@ -1,0 +1,7 @@
+module examples.d4.invalid.missing_expression
+
+fn main() {
+    let first =
+    let second = 2
+    print(second)
+}

@@ -4,17 +4,19 @@ members = [
     "crates/nivra-source",
     "crates/nivra-diagnostics",
     "crates/nivra-lexer",
+    "crates/nivra-syntax",
+    "crates/nivra-parser",
     "crates/nivra-cli",
 ]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 rust-version = "1.74"
 license = "Apache-2.0"
 authors = ["Mohnish Raj"]
 repository = "https://github.com/mohnish-ydv/Nivra"
-description = "Nivra programming language compiler foundation"
+description = "Nivra programming language parser and AST foundation"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

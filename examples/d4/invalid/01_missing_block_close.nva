@@ -1,0 +1,4 @@
+module examples.d4.invalid.missing_block_close
+
+fn main() {
+    let value = 1

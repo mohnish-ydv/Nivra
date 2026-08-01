@@ -1,0 +1,84 @@
+module examples.d4.complete_parser_tour
+
+use std.fs
+use std.json
+use std.sync.Shared
+
+const DEFAULT_RETRIES: Int = 3
+newtype UserId = U64
+
+@derive(Debug, Equal, Json)
+record User {
+    id: UserId
+    name: String
+    email: String? = none
+}
+
+enum LoadState<T> {
+    idle,
+    loading,
+    ready(T),
+    failed(AppError),
+}
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+impl Display for User {
+    fn display(self: &Self) -> String {
+        "${self.name} #${self.id}"
+    }
+}
+
+fn load_user(path: Path) -> Result<User, AppError> {
+    let text = try fs.read_text(path)
+    let value = try json.parse(text)
+    ensure value.has("id") else AppError.missing_field("id")
+    User.decode(value)
+}
+
+async fn refresh_all(paths: List<Path>) -> Result<List<User>, AppError> {
+    task_group group {
+        let tasks = paths.map(|path| group.spawn async {
+            try await load_user(path)
+        })
+        try await Task.all(tasks)
+    }
+}
+
+extern "C" {
+    unsafe fn native_log(message: *const U8, length: Usize) -> I32
+}
+
+fn log_native(message: &String) -> Result<Unit, NativeError> {
+    unsafe(ffi, memory) {
+        let status = native_log(message.pointer(), message.byte_length())
+        ensure status == 0 else NativeError.code(status)
+    }
+    ok(())
+}
+
+fn main() -> Result<Unit, AppError> {
+    var user = try load_user("user.json")
+    let shared_user = Shared.new(user)
+
+    var attempts = 0
+    while attempts < DEFAULT_RETRIES {
+        attempts = attempts + 1
+        print("Attempt ${attempts}")
+    }
+
+    if let email = shared_user.email {
+        print(email)
+    } else {
+        print("No email")
+    }
+
+    match attempts {
+        0 => print("never started"),
+        value => print(value),
+    }
+
+    ok(())
+}

@@ -1,74 +1,66 @@
-# Manual Verification After GitHub Actions Is Green
+# D4 Manual Verification After GitHub Actions Is Green
 
-D3 contains real Rust code. Do not compile it directly inside Android shared
-storage because executable/linker behavior there can fail. Use the included
-wrapper to copy it into Termux home.
-
-## 1. Install free Termux prerequisites
+## 1. Install requirements
 
 ```bash
 pkg update -y
 pkg install rust python git -y
 ```
 
-## 2. Enter the extracted D3 folder
+## 2. Run the Termux-safe cumulative verifier
 
-```bash
-cd ~/storage/downloads/Nivra-D3-Compiler-Foundation-GitHub-Ready
-```
-
-## 3. Run the Termux-safe verifier
+From the extracted D4 folder:
 
 ```bash
 bash scripts/termux-verify.sh
 ```
 
-The script copies the repository to:
+The wrapper copies the repository to:
 
 ```text
-~/nivra-d3-verification
+~/nivra-d4-verification
 ```
-
-and runs all cumulative checks there.
 
 Expected ending:
 
 ```text
 D1 regression: PASS
 D2 regression: PASS
-D3 structure: PASS
+D3 regression: PASS
+D4 structure: PASS
 Rust tests: PASS
-CLI smoke tests: PASS
-★★★★★ D3 GOLDEN BUILD
+D4 CLI smoke tests: PASS
+★★★★★ D4 GOLDEN BUILD
 ```
 
-## 4. Enter the internal test copy
+## 3. Inspect compiler status
 
 ```bash
-cd ~/nivra-d3-verification
-```
-
-## 5. Check the CLI version and doctor
-
-```bash
+cd ~/nivra-d4-verification
 ./target/debug/nivra --version
 ./target/debug/nivra doctor
 ```
 
-Expected key lines:
+Expected version:
 
 ```text
-nivra 0.3.0 (compiler foundation D3)
-Source manager: PASS
-Diagnostic renderer: PASS
-Lossless lexer: PASS
-D3 status: OPERATIONAL
+nivra 0.4.0 (parser and AST foundation D4)
 ```
 
-## 6. Check a valid file
+Doctor must include:
+
+```text
+Lossless CST parser: PASS
+Pratt expression parser: PASS
+Typed AST foundation: PASS
+Error recovery: PASS
+D4 status: OPERATIONAL
+```
+
+## 4. Check the complete valid parser tour
 
 ```bash
-./target/debug/nivra check examples/d3/01_hello.nva
+./target/debug/nivra check examples/d4/05_complete_parser_tour.nva
 ```
 
 Expected ending:
@@ -77,59 +69,95 @@ Expected ending:
 0 errors
 ```
 
-D3 does not execute the program; it checks source loading and lexing.
-
-## 7. Check an invalid file and its exit code
+## 5. Confirm lossless parsing
 
 ```bash
-./target/debug/nivra check examples/d3/invalid/unterminated_string.nva
+./target/debug/nivra parse examples/d4/04_lossless_comments.nva
+```
+
+Expected:
+
+```text
+Root: source_file
+Parser recoveries: 0
+Errors: 0
+Lossless round trip: PASS
+```
+
+## 6. Inspect the CST
+
+```bash
+./target/debug/nivra parse \
+  examples/d4/02_expression_precedence.nva \
+  --tree | head -n 100
+```
+
+The output must contain:
+
+```text
+function_declaration
+binary_expression
+if_expression
+```
+
+## 7. Confirm trivia preservation
+
+```bash
+./target/debug/nivra parse \
+  examples/d4/04_lossless_comments.nva \
+  --tree --trivia | grep -E 'doc_line_comment|block_comment'
+```
+
+Both token kinds must appear.
+
+## 8. Test missing delimiter diagnostics
+
+```bash
+./target/debug/nivra check \
+  examples/d4/invalid/01_missing_block_close.nva
 echo $?
 ```
 
 Expected:
 
 ```text
-error[LEX002]: unterminated string literal
-...
+error[PAR003]
 1
 ```
 
-## 8. Inspect lossless trivia
+## 9. Test missing expression recovery
 
 ```bash
-./target/debug/nivra lex examples/d3/02_unicode_and_comments.nva --trivia | head -n 30
+./target/debug/nivra check \
+  examples/d4/invalid/02_missing_expression.nva
+echo $?
 ```
 
-Expected token names include:
+Expected:
 
 ```text
-whitespace
-newline
-doc_line_comment
-block_comment
-identifier
+error[PAR005]
+1
 ```
 
-## 9. Check JSON output
+## 10. Validate parser JSON
 
 ```bash
-./target/debug/nivra check examples/d3/03_literals_and_operators.nva --json | python3 -m json.tool
+./target/debug/nivra parse \
+  examples/d4/01_declarations.nva \
+  --json | python3 -m json.tool >/dev/null
+
+echo $?
 ```
 
-Expected JSON fields:
+Expected exit code:
 
 ```text
-path
-tokens
-errors
-warnings
-diagnostics
+0
 ```
 
-## Pass rule
-
-After GitHub Actions is green and every manual check passes, report:
+After every check passes, report:
 
 ```text
-GG D3 Passed
+GG D4 Passed
 ```

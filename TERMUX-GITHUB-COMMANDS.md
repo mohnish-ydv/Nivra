@@ -1,53 +1,39 @@
-# Termux and GitHub Commands for D3
+# D4 Termux and GitHub Commands
 
-## Verify before pushing
-
-```bash
-pkg update -y
-pkg install rust python git -y
-
-cd ~/storage/downloads/Nivra-D3-Compiler-Foundation-GitHub-Ready
-bash scripts/termux-verify.sh
-```
-
-## Preserve the existing Nivra repository history
-
-Assuming the verified D2 folder still contains `.git`:
+## Extract and preflight
 
 ```bash
 cd ~/storage/downloads
-
-mv Nivra-D2-Architecture-Spec-GitHub-Ready/.git \
-Nivra-D3-Compiler-Foundation-GitHub-Ready/.git
+rm -rf Nivra-D4-Parser-AST-GitHub-Ready
+unzip Nivra-D4-Parser-AST-GitHub-Ready.zip
+cd Nivra-D4-Parser-AST-GitHub-Ready
+python3 tools/d4_structure_lint.py
 ```
 
-If D2 was already pushed and the old folder no longer has `.git`, clone the
-repository into Termux home and copy D3 over it instead.
+## Preserve the existing D3 Git history
 
-## Commit and push
+Run from `~/storage/downloads`:
 
 ```bash
-cd ~/storage/downloads/Nivra-D3-Compiler-Foundation-GitHub-Ready
+mv Nivra-D3-Compiler-Foundation-GitHub-Ready/.git \
+   Nivra-D4-Parser-AST-GitHub-Ready/.git
+```
+
+Then push:
+
+```bash
+cd ~/storage/downloads/Nivra-D4-Parser-AST-GitHub-Ready
 
 git config --global --add safe.directory "$PWD"
 git add -A
-git commit -m "feat: implement Nivra D3 compiler foundation"
+git commit -m "feat: implement Nivra D4 parser and AST foundation"
 git push
 ```
 
-## GitHub Actions result
+Open:
 
-Open **Actions → Verify D3 Compiler Foundation**.
+```text
+GitHub repository → Actions → Verify D4 Parser and AST
+```
 
-A green run confirms:
-
-- D1 and D2 regressions
-- D3 structure validation
-- Rust formatting
-- all workspace tests
-- CLI smoke tests
-- release build
-- uploaded Linux x86_64 `nivra` artifact
-
-The uploaded Linux artifact is not an Android binary. On Termux, compile natively
-with `bash scripts/termux-verify.sh`.
+After the green check, follow `MANUAL-VERIFICATION.md`.

@@ -1,23 +1,20 @@
 [package]
-name = "nivra-cli"
+name = "nivra-parser"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "The initial Nivra command-line compiler driver"
-default-run = "nivra"
+description = "Error-recovering lossless parser for Nivra Edition 2026"
 
 [dependencies]
 nivra-source = { path = "../nivra-source" }
 nivra-diagnostics = { path = "../nivra-diagnostics" }
 nivra-lexer = { path = "../nivra-lexer" }
 nivra-syntax = { path = "../nivra-syntax" }
-nivra-parser = { path = "../nivra-parser" }
 
-[[bin]]
-name = "nivra"
-path = "src/main.rs"
+[lib]
+path = "src/lib.rs"
 
 [lints]
 workspace = true

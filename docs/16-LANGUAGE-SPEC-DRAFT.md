@@ -86,3 +86,10 @@ The first edition excludes class inheritance, explicit lifetime parameters,
 borrowed fields, catchable exceptions, catchable panic, arbitrary package install
 scripts, C++ ABI promises, generic specialization, higher-kinded types, and a
 mandatory tracing garbage collector.
+
+## D4 implementation status
+
+The Edition 2026 draft now has an executable lossless parser foundation. D4
+implements declaration, statement, type/pattern shell, and Pratt expression CST
+construction with recovery. Parser acceptance is not yet language conformance:
+semantic validity begins with D5 name and scope analysis.

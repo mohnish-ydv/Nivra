@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "delivery": "D4",
+  "version": "0.4.0",
+  "title": "Lossless Parser and AST Foundation",
+  "builds_on": ["D1", "D2", "D3"],
+  "status": "implemented",
+  "compiler_stages_implemented": ["CP-04", "CP-05"],
+  "commands": ["check", "lex", "parse", "explain", "doctor", "version", "help"],
+  "phone_verification": "scripts/termux-verify.sh"
+}

@@ -1,0 +1,8 @@
+module examples.d4.invalid.multiple_errors
+
+fn first( {
+    let value =
+}
+
+fn second() {
+    print("parser continues")

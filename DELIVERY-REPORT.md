@@ -1,71 +1,66 @@
-# D3 Delivery Report
+# D4 Delivery Report
 
-## Delivery
+## Delivery identity
 
-- Delivery: D3
-- Builds on: D1 + D2
-- Version: 0.3.0
-- Status: IMPLEMENTED; cumulative static QA passed; compile acceptance is enforced by GitHub Actions and the Termux verifier
-- Implementation language: Rust
-- Third-party runtime dependencies: 0
-- Verification targets: GitHub Actions, Linux, Android + Termux
+- Delivery: D4
+- Version: 0.4.0
+- Builds on: verified D1, D2, and D3
+- Status before user verification: RELEASE CANDIDATE
+- Primary target: Android + Termux and GitHub Actions
+- External Rust registry dependencies: 0
 
-## D2 defect fixed
+## Fixed regression
 
-The D2 verifier redirected output to the fixed path:
+D2 used a fixed `/tmp/nivra-d1-lint.txt` path that failed on the user's Termux
+environment. D3 removed that path; D4 keeps the regression check and performs all
+phone builds from `$HOME/nivra-d4-verification`.
 
-```text
-/tmp/nivra-d1-lint.txt
-```
+## Implemented
 
-That path returned `Permission denied` in the user's Termux environment. D3 removes
-the fixed temporary file entirely. Specification linters now stream directly, and
-all verification scratch work stays inside a disposable project-local directory.
+1. Added `nivra-syntax` and `nivra-parser` crates.
+2. Added 60 stable CST node kinds.
+3. Preserved every lexer token, including whitespace and comments.
+4. Added exact lossless source reconstruction.
+5. Added recursive-descent declaration and statement parsing.
+6. Added Pratt expression parsing with 12 precedence levels.
+7. Added calls, members, indexes, closures, async, task-group, unsafe, try,
+   await, spawn, if, match, loop statements, and common expressions.
+8. Added delimiter and synchronization-based recovery.
+9. Added five parser diagnostic codes.
+10. Added typed AST views over CST nodes.
+11. Upgraded `nivra check` from lexical to lexical + syntax checking.
+12. Added `nivra parse` summary, tree, trivia, and JSON modes.
+13. Added five valid and four invalid D4 fixtures.
+14. Added cumulative Rust tests and CLI smoke tests.
+15. Added D4 CI release artifact and parser reports.
 
-## Implemented outcomes
+## Verification evidence available before GitHub
 
-1. Created a four-crate Rust workspace.
-2. Implemented stable `SourceId`, checked byte spans, UTF-8 source loading, virtual
-   sources, CRLF handling, and Unicode-aware line/column lookup.
-3. Implemented structured diagnostics with codes, severities, labels, notes, help,
-   deterministic phone-friendly rendering, and JSON output.
-4. Implemented a lossless hand-written lexer retaining whitespace and comments.
-5. Implemented all 45 D2 keywords.
-6. Implemented Unicode identifiers with common combining-mark support.
-7. Implemented nested block comments and documentation comments.
-8. Implemented integer and floating-point literals, base validation, exponent
-   validation, string/character escapes, and recovery diagnostics.
-9. Added bidirectional-control and NUL-byte detection.
-10. Implemented `nivra check`, `lex`, `explain`, `doctor`, help, and version.
-11. Added 20 unit and CLI integration tests.
-12. Added valid and invalid D3 fixtures.
-13. Added cumulative D1/D2/D3 verification and GitHub Actions release artifact.
-14. Added a Termux-safe verification wrapper that builds under `$HOME`.
+The release ZIP has passed:
 
-## Honest boundaries
+- D1 specification regression
+- D2 architecture regression
+- D3 structure regression
+- D4 machine-readable structure validation
+- Cargo manifest parsing
+- local-only dependency validation
+- Cargo lock validation
+- Rust lexical delimiter preflight
+- keyword parity and diagnostic coverage checks
+- shell syntax checks
+- Python tool compilation
+- fixture and test inventory checks
+- ZIP extraction and integrity checks
 
-D3 does not include:
+## Required external compile verdict
 
-- parser or CST
-- AST lowering
-- name resolution
-- type checking
-- ownership checking
-- interpreter
-- C11 backend
-- native Nivra executable generation
-- package manager
-
-A file containing valid tokens in invalid grammatical order may pass D3 `check`.
-D4 will close that gap with parsing and syntax diagnostics.
+GitHub Actions must still compile and test the Rust workspace. The final delivery
+is accepted only after the workflow and manual Termux checks pass. No local Rust
+compiler was available in the packaging environment, so this report does not make
+a false compile-success claim.
 
 ## Next delivery
 
-D4 target:
-
-- lossless CST
-- recursive-descent declaration parser
-- Pratt expression parser
-- error recovery
-- syntax diagnostics
-- AST lowering foundation
+D5: semantic AST accessors, module indexing, lexical scopes, symbol tables,
+duplicate declaration diagnostics, unresolved-name diagnostics, and the first
+semantic `nivra check` pass. Type checking remains later.

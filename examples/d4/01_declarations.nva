@@ -1,0 +1,30 @@
+module examples.d4.declarations
+
+use std.collections.List
+
+const MAX_RETRIES: Int = 3
+newtype UserId = U64
+
+@derive(Debug, Equal)
+record User {
+    id: UserId
+    name: String
+    email: String? = none
+}
+
+enum LoadState<T> {
+    idle,
+    loading,
+    ready(T),
+    failed(String),
+}
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+impl Display for User {
+    fn display(self: &Self) -> String {
+        "${self.name} #${self.id}"
+    }
+}

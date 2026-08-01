@@ -1,55 +1,43 @@
 # Changelog
 
-## D3 — 2026-08-02
-
-### Fixed
-
-- removed the fixed `/tmp/nivra-d1-lint.txt` path that failed on Termux
-- made verification compatible with a project-local Termux home copy
+## D4 — 2026-08-02
 
 ### Added
 
-- Rust workspace and Cargo lockfile
-- source manager and Unicode-aware line maps
-- structured human and JSON diagnostics
-- lossless lexer with recovery
-- all D2 keywords and core punctuation/operators
-- nested comments, numeric bases, strings, characters, and escape validation
-- bidi-control and NUL diagnostics
-- initial `nivra` CLI
-- unit, integration, fixture, smoke, and cumulative regression tests
-- D3 GitHub Actions release artifact
-
-## D2 — 2026-08-02
-
-### Added
-
-- Nivra pre-1.0 engineering identity and migration record
-- complete type-system architecture
-- deterministic ownership-lite memory model
-- typed recoverable error model
-- structured concurrency model
-- Rust bootstrap compiler architecture
-- backend-neutral HIR and MIR
-- C11 + Clang reference backend strategy
-- C ABI and FFI safety rules
-- package, workspace, lockfile, and build policy
-- Edition 2026 compatibility policy
-- Language Specification Draft 0.2
-- machine-readable D2 rules and EBNF grammar
-- eight D2 design examples
-- cumulative D1/D2 verification and GitHub Actions
+- `nivra-syntax` lossless CST and typed AST crate
+- `nivra-parser` recursive-descent and Pratt parser crate
+- 60 syntax node kinds
+- lossless source reconstruction
+- parser recovery and five `PAR` diagnostics
+- `nivra parse` summary, tree, trivia, and JSON modes
+- syntax validation in `nivra check`
+- five valid and four invalid D4 parser fixtures
+- parser/AST unit and CLI integration tests
+- D4 GitHub Actions release workflow and Linux artifact
+- cumulative D4 report, QA report, and phone verification guide
 
 ### Changed
 
-- project identity from provisional Trion to Nivra
-- no-value type from the earlier directional `Void` spelling to `Unit`
-- unsafe syntax from an unnamed block to named capability blocks
-- concurrency examples to explicit task-group handles
+- workspace version from 0.3.0 to 0.4.0
+- CLI status from lexer foundation D3 to parser/AST foundation D4
+- cumulative verifier now includes D4 structure, parser tests, and smoke tests
+- Termux verification destination changed to `~/nivra-d4-verification`
+
+### Preserved
+
+- D1 mission and constitution
+- D2 architecture and grammar
+- D3 source, diagnostics, and lexer behavior
+- D2 fixed temporary-file permission regression
+
+## D3 — 2026-08-02
+
+- Rust compiler workspace, source manager, diagnostics, lexer, and CLI foundation
+
+## D2 — 2026-08-02
+
+- language architecture and Edition 2026 specification draft
 
 ## D1 — 2026-08-02
 
-- mission and developer pain map
-- language constitution
-- syntax direction v0.1
-- initial specification verification
+- mission, pain map, constitution, and syntax direction
