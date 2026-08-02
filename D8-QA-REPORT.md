@@ -25,13 +25,20 @@ The final source audit found and corrected three issues before packaging:
 
 Dedicated type-checker and CLI regressions now cover all three paths.
 
+
+## Uploaded Actions failure closure
+
+The uploaded run had exactly two failures after compile-all-targets and every
+focused gate passed. The final source closes both root causes and adds semantic,
+type-checker, and CLI regressions for diagnostic precedence and enum-call recovery.
+
 ## Runtime gates in GitHub Actions and Termux
 
 - pinned Rust 1.74 toolchain
 - runner-side Rust formatting normalization
 - `cargo check --workspace --all-targets --locked`
 - focused parser/type/CLI regressions
-- complete tests with `--no-fail-fast`
+- complete 138-test suite with `--no-fail-fast`
 - debug and release workspace builds
 - D8 valid/invalid CLI smoke suite
 - report and JSON validation

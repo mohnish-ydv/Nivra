@@ -32,6 +32,18 @@ executes `cargo fmt --all`, then compiles every workspace target. Focused parser
 type, and CLI regressions run before the complete `--no-fail-fast` suite. This
 prevents a cosmetic formatting mismatch from hiding compiler or behavior failures.
 
+
+## Uploaded-run build fixes
+
+The uploaded Actions log compiled every workspace target and passed all focused D8
+gates. Only two complete-suite tests failed. This release fixes their underlying
+pipeline behavior rather than weakening assertions:
+
+- semantic indexing defers duplicate generic parameters to authoritative `GEN005`;
+- enum payload-call analysis emits `NOM001` before method recovery can swallow it.
+
+Five focused semantic/type/CLI regressions now execute before the full suite.
+
 ## Deliberate boundaries
 
 - Generic traits and generic trait methods emit GEN006.
@@ -43,6 +55,6 @@ prevents a cosmetic formatting mismatch from hiding compiler or behavior failure
 ## Verification evidence bundled
 
 The archive includes structural validation for all cumulative deliveries, Cargo
-and lockfile graph checks, Rust lexical integrity checks, 135 test declarations,
+and lockfile graph checks, Rust lexical integrity checks, 138 test declarations,
 17 D8 fixtures, workflow contracts, shell/Python validation, and clean archive
 verification. GitHub Actions remains the authoritative Rust 1.74 compile/test gate.

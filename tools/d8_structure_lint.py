@@ -36,6 +36,7 @@ required = [
     "docs/53-METHOD-SELECTION.md",
     "docs/54-D8-DIAGNOSTICS.md",
     "docs/55-D8-TO-D9-GATE.md",
+    "D8-BUILD-FIX-REPORT.md",
     "scripts/d8-smoke.sh",
     "tools/d8_report.py",
     ".github/workflows/verify-d8.yml",
@@ -78,6 +79,7 @@ print("D8 Cargo workspace: PASS")
 
 syntax = (ROOT / "crates/nivra-syntax/src/lib.rs").read_text(encoding="utf-8")
 parser = (ROOT / "crates/nivra-parser/src/lib.rs").read_text(encoding="utf-8")
+sema = (ROOT / "crates/nivra-sema/src/lib.rs").read_text(encoding="utf-8")
 types = (ROOT / "crates/nivra-types/src/lib.rs").read_text(encoding="utf-8")
 cli = (ROOT / "crates/nivra-cli/src/main.rs").read_text(encoding="utf-8")
 cli_tests = (ROOT / "crates/nivra-cli/tests/cli.rs").read_text(encoding="utf-8")
@@ -247,9 +249,13 @@ for regression in [
     "rejects_ambiguous_trait_method_selection",
     "rejects_external_trait_for_external_type",
     "rejects_generic_traits_until_the_feature_is_defined",
+    "rejects_duplicate_generic_parameters",
+    "rejects_unknown_enum_variant_with_suggestion",
 ]:
     if regression not in types:
         fail(f"D8 type regression test missing: {regression}")
+if "duplicate_generic_parameters_are_deferred_to_type_checker" not in sema:
+    fail("D8 semantic diagnostic-precedence regression test missing")
 for regression in [
     "check_accepts_inferred_generic_function_call",
     "check_accepts_explicit_generic_function_call",
@@ -258,10 +264,19 @@ for regression in [
     "check_rejects_unsatisfied_generic_trait_bound",
     "check_rejects_invalid_generic_constraint_parameter",
     "check_rejects_generic_trait_declaration",
+    "check_reports_gen005_for_duplicate_generic_parameters",
+    "check_reports_unknown_enum_variant_with_suggestion",
     "typecheck_json_contains_generic_and_trait_graphs",
 ]:
     if regression not in cli_tests:
         fail(f"D8 CLI regression test missing: {regression}")
+for anchor in [
+    "D8 owns duplicate generic-parameter diagnostics through GEN005",
+    "return Some(Type::Error);",
+    "enum `{}` has no variant `{variant_name}`",
+]:
+    if anchor not in sema and anchor not in types:
+        fail(f"D8 build-fix implementation anchor missing: {anchor}")
 print("D8 root-cause regression guards: PASS")
 
 workflow = (ROOT / ".github/workflows/verify-d8.yml").read_text(encoding="utf-8")

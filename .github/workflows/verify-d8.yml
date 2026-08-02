@@ -50,6 +50,9 @@ jobs:
 
       - name: Run focused D8 type regressions
         run: |
+          cargo test -p nivra-sema duplicate_generic_parameters_are_deferred_to_type_checker --locked
+          cargo test -p nivra-types rejects_duplicate_generic_parameters --locked
+          cargo test -p nivra-types rejects_unknown_enum_variant_with_suggestion --locked
           cargo test -p nivra-types infers_generic_function_arguments --locked
           cargo test -p nivra-types accepts_where_clause_trait_bound --locked
           cargo test -p nivra-types accepts_default_trait_method_using_required_method --locked
@@ -62,6 +65,8 @@ jobs:
           cargo test -p nivra-cli --test cli check_accepts_explicit_generic_function_call --locked
           cargo test -p nivra-cli --test cli check_accepts_nested_explicit_generic_argument --locked
           cargo test -p nivra-cli --test cli check_accepts_concrete_default_trait_method --locked
+          cargo test -p nivra-cli --test cli check_reports_gen005_for_duplicate_generic_parameters --locked
+          cargo test -p nivra-cli --test cli check_reports_unknown_enum_variant_with_suggestion --locked
           cargo test -p nivra-cli --test cli check_rejects_unsatisfied_generic_trait_bound --locked
           cargo test -p nivra-cli --test cli check_rejects_invalid_generic_constraint_parameter --locked
           cargo test -p nivra-cli --test cli check_rejects_generic_trait_declaration --locked

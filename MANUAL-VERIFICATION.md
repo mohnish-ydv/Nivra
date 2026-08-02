@@ -6,7 +6,7 @@ Run these checks only after GitHub Actions shows a green result for
 ## Full Termux verification
 
 ```bash
-cd ~/storage/downloads/Nivra-D8-Generics-Traits-GitHub-Ready
+cd ~/storage/downloads/Nivra-D8-Generics-Traits-Final-Build-Fix-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
@@ -28,6 +28,22 @@ Rust tests: PASS
 D8 CLI smoke tests: PASS
 ★★★★★ D8 GOLDEN BUILD
 ```
+
+
+## Uploaded-log regression checks
+
+```bash
+cargo test -p nivra-sema \
+  duplicate_generic_parameters_are_deferred_to_type_checker --locked
+cargo test -p nivra-types rejects_duplicate_generic_parameters --locked
+cargo test -p nivra-types rejects_unknown_enum_variant_with_suggestion --locked
+cargo test -p nivra-cli --test cli \
+  check_reports_gen005_for_duplicate_generic_parameters --locked
+cargo test -p nivra-cli --test cli \
+  check_reports_unknown_enum_variant_with_suggestion --locked
+```
+
+All five must report `ok`.
 
 ## CLI identity
 

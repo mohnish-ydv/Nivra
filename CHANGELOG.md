@@ -1,5 +1,20 @@
 # Changelog
 
+## D8 Build Fix — 2026-08-02
+
+### Fixed
+
+- deferred duplicate generic-parameter diagnostics from semantic `SEM005` to D8 `GEN005`
+- restored `NOM001` and nearest-name suggestions for unknown enum payload-variant calls
+- prevented method-call recovery from swallowing invalid enum-variant diagnostics
+
+### Hardened
+
+- added one semantic, two type-checker, and two CLI root-cause regressions
+- run all five uploaded-log regressions before the complete workspace suite
+- increased cumulative Rust test inventory to 138
+- added `D8-BUILD-FIX-REPORT.md` with the complete failure classification
+
 ## D8 — 2026-08-02
 
 ### Added

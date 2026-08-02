@@ -1,35 +1,39 @@
-# D8 Termux and GitHub Commands
+# D8 Final Build-Fix Termux and GitHub Commands
+
+## Extract
 
 ```bash
 cd ~/storage/downloads
-rm -rf Nivra-D8-Generics-Traits-GitHub-Ready
-unzip Nivra-D8-Generics-Traits-GitHub-Ready.zip
+rm -rf Nivra-D8-Generics-Traits-Final-Build-Fix-GitHub-Ready
+unzip Nivra-D8-Generics-Traits-Final-Build-Fix-GitHub-Ready.zip
 ```
 
-Transfer the verified D7 Git history:
+## Transfer the failed D8 repository history
 
 ```bash
-mv Nivra-D7-Nominal-Members-Verified-Final-GitHub-Ready/.git \
-   Nivra-D8-Generics-Traits-GitHub-Ready/.git
+mv Nivra-D8-Generics-Traits-GitHub-Ready/.git \
+   Nivra-D8-Generics-Traits-Final-Build-Fix-GitHub-Ready/.git
 ```
 
-Commit and push:
+## Commit and push
 
 ```bash
-cd ~/storage/downloads/Nivra-D8-Generics-Traits-GitHub-Ready
+cd ~/storage/downloads/Nivra-D8-Generics-Traits-Final-Build-Fix-GitHub-Ready
 git config --global --add safe.directory "$PWD"
 git add -A
-git commit -m "feat: implement Nivra D8 generics and trait constraints"
+git commit -m "fix: finalize D8 generic and enum diagnostic pipelines"
 git push
 ```
 
 Open `Actions → Verify D8 Generics and Traits`.
 
-After the workflow is green:
+## After GitHub Actions is green
 
 ```bash
 pkg update -y
 pkg install rust python git unzip -y
-cd ~/storage/downloads/Nivra-D8-Generics-Traits-GitHub-Ready
+cd ~/storage/downloads/Nivra-D8-Generics-Traits-Final-Build-Fix-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
+
+The Cargo verification copy is created at `~/nivra-d8-verification`.

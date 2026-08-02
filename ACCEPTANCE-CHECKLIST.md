@@ -16,9 +16,11 @@
 - [x] Unsupported generic traits/methods fail explicitly with GEN006.
 - [x] GEN001–GEN006 and TRT001–TRT006 are implemented and explained.
 - [x] Five valid and twelve invalid D8 fixtures are included.
-- [x] At least 135 cumulative Rust tests are present.
+- [x] At least 138 cumulative Rust tests are present.
 - [x] GitHub Actions normalizes formatting before compiling every target.
 - [x] Focused parser, type-checker, and CLI regressions run before the full suite.
+- [x] Duplicate generic parameters reach GEN005 instead of stopping at SEM005.
+- [x] Unknown enum payload-variant calls emit NOM001 with a nearest-name suggestion.
 - [x] The complete suite uses `--no-fail-fast`.
 - [x] Release build, CLI smoke suite, reports, and JSON validation are gated.
 

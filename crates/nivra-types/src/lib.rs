@@ -2455,12 +2455,31 @@ impl<'a> Checker<'a> {
         if nominal.kind != NominalKind::Enum {
             return None;
         }
-        let (variant_name, _) = member_name(callee, self.source)?;
-        let variant = nominal
+        let (variant_name, variant_span) = member_name(callee, self.source)?;
+        let Some(variant) = nominal
             .variants
             .iter()
-            .find(|variant| variant.name == variant_name)?
-            .clone();
+            .find(|variant| variant.name == variant_name)
+            .cloned()
+        else {
+            let candidates = nominal
+                .variants
+                .iter()
+                .map(|variant| variant.name.as_str())
+                .collect::<Vec<_>>();
+            let mut diagnostic = Diagnostic::error(
+                "NOM001",
+                format!("enum `{}` has no variant `{variant_name}`", nominal.name),
+            )
+            .with_primary(variant_span, "unknown enum variant");
+            if let Some(suggestion) = closest_name(&candidates, &variant_name) {
+                diagnostic = diagnostic.with_help(format!("did you mean `{suggestion}`?"));
+            } else {
+                diagnostic = diagnostic.with_help("use a declared enum variant");
+            }
+            self.diagnostics.push(diagnostic);
+            return Some(Type::Error);
+        };
         let generic_names = nominal
             .generic_parameters
             .iter()

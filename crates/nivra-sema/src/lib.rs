@@ -685,20 +685,26 @@ impl<'a> Analyzer<'a> {
         };
         let tokens = significant_direct_tokens(generics);
         let mut expect_name = false;
+        let mut seen = HashSet::new();
         for token in tokens {
             match token.kind() {
                 TokenKind::Less | TokenKind::Comma => expect_name = true,
                 TokenKind::Identifier if expect_name => {
                     if let Some(name) = token.text(self.source) {
-                        self.define(
-                            scope,
-                            name,
-                            SymbolKind::GenericParameter,
-                            Namespace::Type,
-                            Visibility::Private,
-                            SymbolOrigin::Source,
-                            token.span(),
-                        );
+                        // D8 owns duplicate generic-parameter diagnostics through GEN005.
+                        // Keep the first symbol visible to name resolution, but do not emit
+                        // the older generic SEM005 diagnostic and stop type checking early.
+                        if seen.insert(name.to_owned()) {
+                            self.define(
+                                scope,
+                                name,
+                                SymbolKind::GenericParameter,
+                                Namespace::Type,
+                                Visibility::Private,
+                                SymbolOrigin::Source,
+                                token.span(),
+                            );
+                        }
                     }
                     expect_name = false;
                 }
@@ -1496,6 +1502,22 @@ mod tests {
     fn duplicate_parameters_are_rejected() {
         let result = semantic("module demo\nfn add(value: Int, value: Int) { value }\n");
         assert!(result.diagnostics.iter().any(|item| item.code == "SEM005"));
+    }
+
+    #[test]
+    fn duplicate_generic_parameters_are_deferred_to_type_checker() {
+        let result = semantic("module demo\nfn choose<T, T>(value: T) -> T { value }\n");
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(
+            result
+                .symbols
+                .iter()
+                .filter(|symbol| {
+                    symbol.kind == SymbolKind::GenericParameter && symbol.name == "T"
+                })
+                .count(),
+            1
+        );
     }
 
     #[test]

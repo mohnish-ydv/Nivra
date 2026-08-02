@@ -580,6 +580,42 @@ fn check_rejects_invalid_generic_constraint_parameter() {
 }
 
 #[test]
+fn check_reports_gen005_for_duplicate_generic_parameters() {
+    let path = temporary_source(
+        "duplicate_generic_parameters.nva",
+        "module test\nfn choose<T, T>(value: T) -> T { value }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("GEN005"), "{stderr}");
+    assert!(!stderr.contains("SEM005"), "{stderr}");
+}
+
+#[test]
+fn check_reports_unknown_enum_variant_with_suggestion() {
+    let path = temporary_source(
+        "unknown_enum_variant.nva",
+        "module test\nenum State { ready(String) }\nfn main() { let state = State.redy(\"done\") }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("NOM001"), "{stderr}");
+    assert!(stderr.contains("ready"), "{stderr}");
+}
+
+#[test]
 fn check_accepts_nested_explicit_generic_argument() {
     let path = temporary_source(
         "nested_generic_argument.nva",

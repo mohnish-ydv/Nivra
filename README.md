@@ -51,7 +51,15 @@ nivra doctor
 - 8 zero-third-party-dependency Rust crates
 - pinned Rust 1.74 CI
 - Android + Termux verification
-- 135 cumulative Rust unit/integration tests
+- 138 cumulative Rust unit/integration tests
+
+
+## D8 build-fix status
+
+The uploaded Rust 1.74 run compiled every workspace target and passed every focused
+D8 gate. The full suite exposed two remaining behavior mismatches; both are fixed:
+`GEN005` now owns duplicate generic parameters, and unknown enum payload-variant
+calls emit `NOM001` with suggestions. Five direct regressions guard these paths.
 
 ## Verify
 
