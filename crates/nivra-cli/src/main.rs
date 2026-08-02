@@ -4,13 +4,13 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::process;
 
-use nivra_diagnostics::{Renderer, error_count};
+use nivra_diagnostics::{error_count, Renderer};
 use nivra_lexer::lex;
 use nivra_parser::parse;
-use nivra_sema::{SemanticResult, analyze_parse};
+use nivra_sema::{analyze_parse, SemanticResult};
 use nivra_source::{SourceError, SourceManager};
 use nivra_syntax::{SyntaxElement, SyntaxNode};
-use nivra_types::{TypeCheckResult, check as check_types};
+use nivra_types::{check as check_types, TypeCheckResult};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -158,7 +158,9 @@ fn explain(code: Option<&OsString>) -> i32 {
         "TYP009" => "Array elements must have one compatible element type.",
         "TYP010" => "An immutable `let` binding cannot be assigned a new value.",
         "NOM001" => "The requested member (field, method, or enum variant) does not exist.",
-        "NOM002" => "Member access requires a concrete nominal value and explicit optional handling.",
+        "NOM002" => {
+            "Member access requires a concrete nominal value and explicit optional handling."
+        }
         "NOM003" => "A required record or struct field is missing from construction.",
         "NOM004" => "A constructor initializer names a field that the type does not declare.",
         "NOM005" => "A record or struct field is initialized more than once.",
@@ -216,9 +218,13 @@ fn check_command(arguments: &[OsString]) -> i32 {
     let warnings = diagnostics.len().saturating_sub(errors);
     let nodes = result.root.descendant_node_count();
     let tokens = result.root.descendant_token_count();
-    let semantic_symbols = semantic.as_ref().map_or(0, |value| value.user_symbols().count());
+    let semantic_symbols = semantic
+        .as_ref()
+        .map_or(0, |value| value.user_symbols().count());
     let semantic_scopes = semantic.as_ref().map_or(0, |value| value.scopes.len());
-    let resolved_names = semantic.as_ref().map_or(0, SemanticResult::resolved_name_count);
+    let resolved_names = semantic
+        .as_ref()
+        .map_or(0, SemanticResult::resolved_name_count);
     let typed_bindings = typed.as_ref().map_or(0, |value| value.bindings.len());
     let typed_expressions = typed.as_ref().map_or(0, |value| value.expressions.len());
     let function_signatures = typed.as_ref().map_or(0, |value| value.functions.len());
@@ -261,7 +267,11 @@ fn check_command(arguments: &[OsString]) -> i32 {
         }
     }
 
-    if errors > 0 { 1 } else { 0 }
+    if errors > 0 {
+        1
+    } else {
+        0
+    }
 }
 
 fn parse_command(arguments: &[OsString]) -> i32 {
@@ -269,9 +279,7 @@ fn parse_command(arguments: &[OsString]) -> i32 {
         Ok(value) => value,
         Err(message) => {
             eprintln!("error[CLI002]: {message}");
-            eprintln!(
-                "  = help: usage: `nivra parse <FILE> [--tree] [--trivia] [--json]`"
-            );
+            eprintln!("  = help: usage: `nivra parse <FILE> [--tree] [--trivia] [--json]`");
             return 2;
         }
     };
@@ -301,10 +309,7 @@ fn parse_command(arguments: &[OsString]) -> i32 {
         );
     } else {
         if parsed.tree {
-            print!(
-                "{}",
-                result.root.debug_tree(source, parsed.include_trivia)
-            );
+            print!("{}", result.root.debug_tree(source, parsed.include_trivia));
         } else {
             println!("PARSE SUMMARY");
             println!("=============");
@@ -333,9 +338,12 @@ fn parse_command(arguments: &[OsString]) -> i32 {
         }
     }
 
-    if errors > 0 { 1 } else { 0 }
+    if errors > 0 {
+        1
+    } else {
+        0
+    }
 }
-
 
 fn resolve_command(arguments: &[OsString]) -> i32 {
     let options = match parse_resolve_options(arguments) {
@@ -380,10 +388,7 @@ fn resolve_command(arguments: &[OsString]) -> i32 {
     let warnings = semantic.diagnostics.len().saturating_sub(errors);
 
     if options.json {
-        println!(
-            "{}",
-            semantic_json(&options.path, &semantic, &sources)
-        );
+        println!("{}", semantic_json(&options.path, &semantic, &sources));
     } else {
         println!("RESOLUTION SUMMARY");
         println!("==================");
@@ -416,9 +421,12 @@ fn resolve_command(arguments: &[OsString]) -> i32 {
         }
     }
 
-    if errors > 0 { 1 } else { 0 }
+    if errors > 0 {
+        1
+    } else {
+        0
+    }
 }
-
 
 fn typecheck_command(arguments: &[OsString]) -> i32 {
     let options = match parse_typecheck_options(arguments) {
@@ -449,7 +457,10 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
                 Renderer::new().json_many(&parsed.diagnostics, &sources)
             );
         } else {
-            eprint!("{}", Renderer::new().human_many(&parsed.diagnostics, &sources));
+            eprint!(
+                "{}",
+                Renderer::new().human_many(&parsed.diagnostics, &sources)
+            );
             eprintln!("Type checking skipped because parsing failed.");
         }
         return 1;
@@ -464,7 +475,10 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
                 Renderer::new().json_many(&semantic.diagnostics, &sources)
             );
         } else {
-            eprint!("{}", Renderer::new().human_many(&semantic.diagnostics, &sources));
+            eprint!(
+                "{}",
+                Renderer::new().human_many(&semantic.diagnostics, &sources)
+            );
             eprintln!("Type checking skipped because name resolution failed.");
         }
         return 1;
@@ -506,11 +520,18 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
             print!("{}", typed.nominal_report());
         }
         if !typed.diagnostics.is_empty() {
-            eprint!("{}", Renderer::new().human_many(&typed.diagnostics, &sources));
+            eprint!(
+                "{}",
+                Renderer::new().human_many(&typed.diagnostics, &sources)
+            );
         }
     }
 
-    if errors > 0 { 1 } else { 0 }
+    if errors > 0 {
+        1
+    } else {
+        0
+    }
 }
 
 fn lex_command(arguments: &[OsString]) -> i32 {
@@ -588,7 +609,11 @@ fn lex_command(arguments: &[OsString]) -> i32 {
         }
     }
 
-    if result.has_errors() { 1 } else { 0 }
+    if result.has_errors() {
+        1
+    } else {
+        0
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -606,7 +631,6 @@ struct FileOptions {
     tree: bool,
 }
 
-
 #[derive(Debug)]
 struct ResolveOptions {
     path: PathBuf,
@@ -615,7 +639,6 @@ struct ResolveOptions {
     scopes: bool,
     all: bool,
 }
-
 
 #[derive(Debug)]
 struct TypecheckOptions {
@@ -689,7 +712,9 @@ fn parse_resolve_options(arguments: &[OsString]) -> Result<ResolveOptions, Strin
     }
 
     if json && (symbols || scopes || all) {
-        return Err("`--json` already includes symbols and scopes; remove display flags".to_owned());
+        return Err(
+            "`--json` already includes symbols and scopes; remove display flags".to_owned(),
+        );
     }
     if all && !symbols {
         return Err("`--all` requires `--symbols`".to_owned());
@@ -762,12 +787,7 @@ fn print_source_error(error: SourceError, json: bool) -> i32 {
     2
 }
 
-
-fn typecheck_json(
-    path: &Path,
-    typed: &TypeCheckResult,
-    sources: &SourceManager,
-) -> String {
+fn typecheck_json(path: &Path, typed: &TypeCheckResult, sources: &SourceManager) -> String {
     let mut output = String::new();
     output.push('{');
     let _ = write!(
@@ -935,11 +955,7 @@ fn typecheck_json(
     output
 }
 
-fn semantic_json(
-    path: &Path,
-    semantic: &SemanticResult,
-    sources: &SourceManager,
-) -> String {
+fn semantic_json(path: &Path, semantic: &SemanticResult, sources: &SourceManager) -> String {
     let mut output = String::new();
     output.push('{');
     let _ = write!(

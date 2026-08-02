@@ -649,7 +649,10 @@ impl<'a> Lexer<'a> {
                 self.advance();
                 let digits_start = self.position;
                 let mut digit_count = 0usize;
-                while self.current().is_some_and(|value| value.is_ascii_hexdigit()) {
+                while self
+                    .current()
+                    .is_some_and(|value| value.is_ascii_hexdigit())
+                {
                     self.advance();
                     digit_count += 1;
                 }
@@ -725,7 +728,9 @@ impl<'a> Lexer<'a> {
 
         if self.current() == Some('.')
             && !self.starts_with("..")
-            && self.peek_char(1).is_some_and(|character| character.is_ascii_digit())
+            && self
+                .peek_char(1)
+                .is_some_and(|character| character.is_ascii_digit())
         {
             kind = TokenKind::FloatLiteral;
             self.advance();
@@ -754,10 +759,7 @@ impl<'a> Lexer<'a> {
 
         let text = &self.text[start..self.position];
         if invalid_underscore_placement(text) {
-            self.malformed_number(
-                start,
-                "underscores must appear only between digits",
-            );
+            self.malformed_number(start, "underscores must appear only between digits");
         }
 
         self.push(kind, start);
@@ -802,9 +804,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn consume_digits_and_underscores(&mut self, radix: u32) {
-        while self.current().is_some_and(|character| {
-            character == '_' || character.to_digit(radix).is_some()
-        }) {
+        while self
+            .current()
+            .is_some_and(|character| character == '_' || character.to_digit(radix).is_some())
+        {
             self.advance();
         }
     }
@@ -1026,7 +1029,7 @@ impl fmt::Display for Keyword {
 mod tests {
     use nivra_source::SourceManager;
 
-    use super::{Keyword, TokenKind, lex};
+    use super::{lex, Keyword, TokenKind};
 
     fn lex_text(text: &str) -> (nivra_source::SourceFile, super::Lexed) {
         let mut manager = SourceManager::new();
@@ -1053,11 +1056,11 @@ mod tests {
         assert!(kinds.contains(&TokenKind::Keyword(Keyword::Module)));
         assert!(kinds.contains(&TokenKind::DocLineComment));
         assert!(kinds.contains(&TokenKind::Keyword(Keyword::Fn)));
-        assert_eq!(result.tokens.last().map(|token| token.kind), Some(TokenKind::Eof));
         assert_eq!(
-            result.tokens[0].text(&source),
-            Some("module")
+            result.tokens.last().map(|token| token.kind),
+            Some(TokenKind::Eof)
         );
+        assert_eq!(result.tokens[0].text(&source), Some("module"));
         assert!(!result.has_errors());
     }
 
@@ -1101,12 +1104,10 @@ mod tests {
         // The block comment consumes the rest of this input, so the quote is intentionally
         // not lexed as a string. A separate input checks the string case.
         let (_source, string_result) = lex_text("\"open\n");
-        assert!(
-            string_result
-                .diagnostics
-                .iter()
-                .any(|diagnostic| diagnostic.code == "LEX002")
-        );
+        assert!(string_result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "LEX002"));
     }
 
     #[test]

@@ -18,7 +18,7 @@ fi
 
 if [[ "$ROOT" == "$DEST" ]]; then
   cd "$ROOT"
-  export NIVRA_APPLY_FORMAT=1
+  export NIVRA_REQUIRE_FORMAT=1
   exec bash verify.sh
 fi
 
@@ -39,5 +39,5 @@ rm -rf "$DEST/target" "$DEST/.nivra-d6-smoke" "$DEST/.nivra-d7-smoke" "$DEST/__p
 find "$DEST/tools" -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
 
 cd "$DEST"
-export NIVRA_APPLY_FORMAT=1
+export NIVRA_REQUIRE_FORMAT=1
 exec bash verify.sh

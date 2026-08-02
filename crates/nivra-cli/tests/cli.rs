@@ -8,10 +8,8 @@ fn temporary_source(name: &str, content: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_else(|error| panic!("{error}"))
         .as_nanos();
-    let directory = std::env::temp_dir().join(format!(
-        "nivra-cli-test-{}-{nonce}",
-        std::process::id()
-    ));
+    let directory =
+        std::env::temp_dir().join(format!("nivra-cli-test-{}-{nonce}", std::process::id()));
     fs::create_dir_all(&directory).unwrap_or_else(|error| panic!("{error}"));
     let path = directory.join(name);
     fs::write(&path, content).unwrap_or_else(|error| panic!("{error}"));
@@ -43,7 +41,11 @@ fn check_accepts_syntactically_valid_source() {
         .output()
         .unwrap_or_else(|error| panic!("{error}"));
 
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     assert!(String::from_utf8_lossy(&output.stdout).contains("0 errors"));
 }
 
@@ -103,7 +105,11 @@ fn parse_tree_contains_function_and_binary_nodes() {
         .output()
         .unwrap_or_else(|error| panic!("{error}"));
 
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("function_declaration"));
     assert!(stdout.contains("binary_expression"));
@@ -166,7 +172,11 @@ fn resolve_reports_module_symbols_and_scopes() {
         .output()
         .unwrap_or_else(|error| panic!("{error}"));
 
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Module: demo.resolve"));
     assert!(stdout.contains("SYMBOL TABLE"));
@@ -240,7 +250,6 @@ fn explain_describes_semantic_error() {
     assert!(String::from_utf8_lossy(&output.stdout).contains("not visible"));
 }
 
-
 #[test]
 fn typecheck_reports_functions_and_bindings() {
     let path = temporary_source(
@@ -254,7 +263,11 @@ fn typecheck_reports_functions_and_bindings() {
         .output()
         .unwrap_or_else(|error| panic!("{error}"));
 
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("TYPECHECK SUMMARY"));
     assert!(stdout.contains("fn add(a: Int, b: Int) -> Int"));
@@ -322,7 +335,11 @@ fn typecheck_json_contains_static_type_graph() {
         .output()
         .unwrap_or_else(|error| panic!("{error}"));
 
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.starts_with('{'));
     assert!(stdout.contains("\"functions\":["));
@@ -341,7 +358,6 @@ fn explain_describes_type_error() {
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("parameter type"));
 }
-
 
 #[test]
 fn typecheck_reports_nominal_members() {

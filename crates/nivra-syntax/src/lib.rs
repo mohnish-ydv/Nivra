@@ -331,10 +331,7 @@ impl SyntaxNode {
     }
 
     /// Iterates direct children with the requested kind.
-    pub fn children_by_kind(
-        &self,
-        kind: SyntaxKind,
-    ) -> impl Iterator<Item = &SyntaxNode> {
+    pub fn children_by_kind(&self, kind: SyntaxKind) -> impl Iterator<Item = &SyntaxNode> {
         self.child_nodes().filter(move |node| node.kind() == kind)
     }
 
@@ -551,11 +548,7 @@ mod tests {
     #[test]
     fn typed_ast_cast_checks_kind() {
         let id = SourceId::from_raw(0);
-        let root = SyntaxNode::new(
-            SyntaxKind::SourceFile,
-            Vec::new(),
-            Span::empty(id, 0),
-        );
+        let root = SyntaxNode::new(SyntaxKind::SourceFile, Vec::new(), Span::empty(id, 0));
         assert!(SourceFileAst::cast(&root).is_some());
     }
 }

@@ -1,8 +1,8 @@
 # Nivra D7 — Nominal Types and Member Checking
 
-> **Final build-fix revision:** includes the earlier escaped-string correction,
-> repairs empty nominal construction parsing, aligns NOM001 explanation output,
-> and adds focused CI regressions for every D7 failure observed in GitHub Actions.
+> **Final release-fix revision:** includes all earlier D7 compiler/test repairs,
+> applies the complete Rust 1.74 rustfmt output reported by GitHub Actions, and
+> verifies committed formatting without silently rewriting source files.
 
 Nivra is a statically typed, compiled general-purpose language designed to
 deliver native power without recurring developer pain.

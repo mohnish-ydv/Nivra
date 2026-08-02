@@ -1,5 +1,19 @@
 # Changelog
 
+## D7 Formatting and Release Fix — 2026-08-02
+
+### Fixed
+
+- applied every Rust 1.74 formatting hunk reported by the final uploaded Actions log
+- repaired repository-wide `cargo fmt --all -- --check` failure across eight Rust files
+- removed Termux verifier behavior that silently formatted source before checking it
+
+### Hardened
+
+- committed source is now checked without mutation in both CI and Termux
+- added `D7-FORMAT-RELEASE-FIX-REPORT.md` with the exact failure classification
+- retained compile-all-targets, four focused regressions, 98 tests, release build, and CLI smoke gates
+
 ## D7 Final Build Fix — 2026-08-02
 
 ### Fixed

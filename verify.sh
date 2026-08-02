@@ -62,9 +62,6 @@ printf 'Script and source preflight: PASS\n\n'
 
 printf '[10/13] Rust formatting\n'
 if cargo fmt --version >/dev/null 2>&1; then
-  if [[ "${NIVRA_APPLY_FORMAT:-0}" == "1" ]]; then
-    cargo fmt --all
-  fi
   cargo fmt --all -- --check
   printf 'Rust formatting: PASS\n'
 elif [[ "${NIVRA_REQUIRE_FORMAT:-0}" == "1" ]]; then

@@ -288,14 +288,23 @@ impl TypeCheckResult {
             if !nominal.generic_parameters.is_empty() {
                 let _ = write!(output, "<{}>", nominal.generic_parameters.join(", "));
             }
-            let _ = writeln!(output, " @ {}..{}", nominal.span.start(), nominal.span.end());
+            let _ = writeln!(
+                output,
+                " @ {}..{}",
+                nominal.span.start(),
+                nominal.span.end()
+            );
             for field in &nominal.fields {
                 let _ = writeln!(
                     output,
                     "  field {}: {}{}{}",
                     field.name,
                     field.ty,
-                    if field.has_default { " = <default>" } else { "" },
+                    if field.has_default {
+                        " = <default>"
+                    } else {
+                        ""
+                    },
                     if field.public { " pub" } else { "" }
                 );
             }
@@ -324,7 +333,11 @@ impl TypeCheckResult {
                     "  method {}({parameters}) -> {}{}{}",
                     method.name,
                     method.return_type,
-                    if method.mutable_receiver { " mut-self" } else { "" },
+                    if method.mutable_receiver {
+                        " mut-self"
+                    } else {
+                        ""
+                    },
                     method
                         .trait_name
                         .as_ref()
@@ -338,11 +351,7 @@ impl TypeCheckResult {
 
 /// Runs D6 type checking after parsing and name resolution have succeeded.
 #[must_use]
-pub fn check(
-    source: &SourceFile,
-    root: &SyntaxNode,
-    semantic: &SemanticResult,
-) -> TypeCheckResult {
+pub fn check(source: &SourceFile, root: &SyntaxNode, semantic: &SemanticResult) -> TypeCheckResult {
     Checker::new(source, semantic).run(root)
 }
 
@@ -376,9 +385,7 @@ impl<'a> Checker<'a> {
             .map(|name| (*name).to_owned())
             .collect::<HashSet<_>>();
         for symbol in &semantic.symbols {
-            if symbol.namespace == Namespace::Type
-                && !matches!(symbol.kind, SymbolKind::Import)
-            {
+            if symbol.namespace == Namespace::Type && !matches!(symbol.kind, SymbolKind::Import) {
                 let _ = known_types.insert(symbol.name.clone());
             }
             if symbol.namespace == Namespace::Type && symbol.kind == SymbolKind::Import {
@@ -468,11 +475,8 @@ impl<'a> Checker<'a> {
                         if let Some((field_name, field_span, type_text, has_default, public)) =
                             field_declaration_parts(field, self.source)
                         {
-                            let ty = self.parse_declared_type(
-                                &type_text,
-                                field.span(),
-                                &generic_set,
-                            );
+                            let ty =
+                                self.parse_declared_type(&type_text, field.span(), &generic_set);
                             fields.push(FieldInfo {
                                 name: field_name,
                                 ty,
@@ -534,8 +538,7 @@ impl<'a> Checker<'a> {
                     }
                 }
                 SyntaxKind::TraitDeclaration => {
-                    let owner = first_direct_identifier(node, self.source)
-                        .map(|(name, _)| name);
+                    let owner = first_direct_identifier(node, self.source).map(|(name, _)| name);
                     for function in node.child_nodes() {
                         if function.kind() == SyntaxKind::FunctionDeclaration {
                             self.collect_one_signature(
@@ -631,9 +634,9 @@ impl<'a> Checker<'a> {
         if let Some(owner_name) = &owner {
             return_type = replace_self_type(return_type, owner_name);
         }
-        let is_async = significant_direct_tokens(node).iter().any(|token| {
-            token.kind() == TokenKind::Keyword(Keyword::Async)
-        });
+        let is_async = significant_direct_tokens(node)
+            .iter()
+            .any(|token| token.kind() == TokenKind::Keyword(Keyword::Async));
         Some(FunctionSignature {
             name,
             owner,
@@ -660,13 +663,7 @@ impl<'a> Checker<'a> {
                 .first()
                 .filter(|parameter| parameter.name == "self");
             let mutable_receiver = receiver.is_some_and(|parameter| {
-                matches!(
-                    &parameter.ty,
-                    Type::Reference {
-                        mutable: true,
-                        ..
-                    }
-                )
+                matches!(&parameter.ty, Type::Reference { mutable: true, .. })
             });
             let parameters = if receiver.is_some() {
                 signature.parameters.iter().skip(1).cloned().collect()
@@ -697,7 +694,9 @@ impl<'a> Checker<'a> {
             let ty = node
                 .child_nodes()
                 .find(|child| child.kind() == SyntaxKind::TypeReference)
-                .map_or(Type::Unknown, |child| self.parse_type_node(child, &HashSet::new()));
+                .map_or(Type::Unknown, |child| {
+                    self.parse_type_node(child, &HashSet::new())
+                });
             let _ = self.constants.insert(name, ty);
         }
     }
@@ -1084,10 +1083,17 @@ impl<'a> Checker<'a> {
             return Type::Unknown;
         }
         match operator {
-            TokenKind::Plus | TokenKind::Minus | TokenKind::Star | TokenKind::Slash | TokenKind::Percent => {
+            TokenKind::Plus
+            | TokenKind::Minus
+            | TokenKind::Star
+            | TokenKind::Slash
+            | TokenKind::Percent => {
                 if left == right && left.is_numeric() {
                     left
-                } else if operator == TokenKind::Plus && left == Type::String && right == Type::String {
+                } else if operator == TokenKind::Plus
+                    && left == Type::String
+                    && right == Type::String
+                {
                     Type::String
                 } else {
                     self.unsupported_operator(node.span(), operator, &left, &right);
@@ -1122,8 +1128,12 @@ impl<'a> Checker<'a> {
                     Type::Error
                 }
             }
-            TokenKind::Less | TokenKind::LessEqual | TokenKind::Greater | TokenKind::GreaterEqual => {
-                if left == right && (left.is_numeric() || matches!(left, Type::Char | Type::String)) {
+            TokenKind::Less
+            | TokenKind::LessEqual
+            | TokenKind::Greater
+            | TokenKind::GreaterEqual => {
+                if left == right && (left.is_numeric() || matches!(left, Type::Char | Type::String))
+                {
                     Type::Bool
                 } else {
                     self.unsupported_operator(node.span(), operator, &left, &right);
@@ -1148,10 +1158,13 @@ impl<'a> Checker<'a> {
                 .and_then(|binding| (!binding.mutable).then_some(binding.span));
             if let Some(binding_span) = immutable_span {
                 self.diagnostics.push(
-                    Diagnostic::error("TYP010", format!("cannot assign to immutable binding `{name}`"))
-                        .with_primary(children[0].span(), "this binding was declared with `let`")
-                        .with_secondary(binding_span, "binding declared here")
-                        .with_help("declare it with `var` when mutation is required"),
+                    Diagnostic::error(
+                        "TYP010",
+                        format!("cannot assign to immutable binding `{name}`"),
+                    )
+                    .with_primary(children[0].span(), "this binding was declared with `let`")
+                    .with_secondary(binding_span, "binding declared here")
+                    .with_help("declare it with `var` when mutation is required"),
                 );
             }
         } else if children[0].kind() == SyntaxKind::MemberExpression
@@ -1197,7 +1210,10 @@ impl<'a> Checker<'a> {
                 self.diagnostics.push(
                     Diagnostic::error(
                         "TYP002",
-                        format!("prefix operator `{}` is not defined for `{operand}`", operator.name()),
+                        format!(
+                            "prefix operator `{}` is not defined for `{operand}`",
+                            operator.name()
+                        ),
                     )
                     .with_primary(node.span(), "unsupported prefix operation")
                     .with_help("change the operand type or use an operator supported by that type"),
@@ -1220,7 +1236,10 @@ impl<'a> Checker<'a> {
 
         if callee.kind() == SyntaxKind::NameExpression {
             let name = significant_text(callee, self.source);
-            if matches!(name.as_str(), "print" | "println" | "dbg" | "panic" | "todo") {
+            if matches!(
+                name.as_str(),
+                "print" | "println" | "dbg" | "panic" | "todo"
+            ) {
                 return Type::Unit;
             }
             if name == "assert" {
@@ -1230,11 +1249,15 @@ impl<'a> Checker<'a> {
                 return Type::Unit;
             }
             if name == "ok" {
-                let value = arguments.first().map_or(Type::Unknown, |(_, ty)| ty.clone());
+                let value = arguments
+                    .first()
+                    .map_or(Type::Unknown, |(_, ty)| ty.clone());
                 return Type::Named("Result".to_owned(), vec![value, Type::Unknown]);
             }
             if name == "err" {
-                let error = arguments.first().map_or(Type::Unknown, |(_, ty)| ty.clone());
+                let error = arguments
+                    .first()
+                    .map_or(Type::Unknown, |(_, ty)| ty.clone());
                 return Type::Named("Result".to_owned(), vec![Type::Unknown, error]);
             }
             if let Some(index) = self.function_lookup.get(&name).copied() {
@@ -1454,7 +1477,10 @@ impl<'a> Checker<'a> {
                     "NOM002",
                     format!("cannot access member `{member}` through an optional value"),
                 )
-                .with_primary(member_span, "optional values must be handled before member access")
+                .with_primary(
+                    member_span,
+                    "optional values must be handled before member access",
+                )
                 .with_help("use `if let`, `match`, or another explicit optional operation"),
             );
             return Type::Error;
@@ -1465,7 +1491,10 @@ impl<'a> Checker<'a> {
                     "NOM002",
                     format!("type `{base_type}` does not expose nominal members"),
                 )
-                .with_primary(member_span, "member lookup requires a record, struct, or enum value")
+                .with_primary(
+                    member_span,
+                    "member lookup requires a record, struct, or enum value",
+                )
                 .with_help("access a declared nominal type or use a supported built-in operation"),
             );
             return Type::Error;
@@ -1551,10 +1580,16 @@ impl<'a> Checker<'a> {
             self.diagnostics.push(
                 Diagnostic::error(
                     "NOM010",
-                    format!("enum `{}` cannot be constructed with record syntax", nominal.name),
+                    format!(
+                        "enum `{}` cannot be constructed with record syntax",
+                        nominal.name
+                    ),
                 )
                 .with_primary(target.span(), "use a declared enum variant")
-                .with_help(format!("construct a variant such as `{}.<variant>(...)`", nominal.name)),
+                .with_help(format!(
+                    "construct a variant such as `{}.<variant>(...)`",
+                    nominal.name
+                )),
             );
             return Type::Error;
         }
@@ -1571,8 +1606,7 @@ impl<'a> Checker<'a> {
             .copied()
             .filter(|child| child.kind() == SyntaxKind::RecordFieldInitializer)
         {
-            let Some((field_name, field_span)) =
-                first_direct_identifier(initializer, self.source)
+            let Some((field_name, field_span)) = first_direct_identifier(initializer, self.source)
             else {
                 continue;
             };
@@ -1620,7 +1654,10 @@ impl<'a> Checker<'a> {
                 self.diagnostics.push(
                     Diagnostic::error(
                         "NOM003",
-                        format!("missing required field `{}` for `{}`", field.name, nominal.name),
+                        format!(
+                            "missing required field `{}` for `{}`",
+                            field.name, nominal.name
+                        ),
                     )
                     .with_primary(node.span(), "record construction is incomplete")
                     .with_secondary(field.span, "required field declared here")
@@ -1640,23 +1677,14 @@ impl<'a> Checker<'a> {
             SyntaxKind::NameExpression => {
                 let name = significant_text(node, self.source);
                 self.lookup_local(&name).is_some_and(|binding| {
-                    binding.mutable
-                        || matches!(
-                            &binding.ty,
-                            Type::Reference {
-                                mutable: true,
-                                ..
-                            }
-                        )
+                    binding.mutable || matches!(&binding.ty, Type::Reference { mutable: true, .. })
                 })
             }
             SyntaxKind::MemberExpression => node
                 .child_nodes()
                 .next()
                 .is_some_and(|base| self.is_mutable_place(base)),
-            SyntaxKind::PrefixExpression => {
-                significant_text(node, self.source).starts_with("&mut")
-            }
+            SyntaxKind::PrefixExpression => significant_text(node, self.source).starts_with("&mut"),
             _ => false,
         }
     }
@@ -1690,11 +1718,9 @@ impl<'a> Checker<'a> {
             .any(|child| child.kind() == SyntaxKind::Pattern);
         let children = node.child_nodes().collect::<Vec<_>>();
         if !has_pattern {
-            if let Some(condition) = children
-                .iter()
-                .copied()
-                .find(|child| child.kind() != SyntaxKind::Block && child.kind() != SyntaxKind::IfExpression)
-            {
+            if let Some(condition) = children.iter().copied().find(|child| {
+                child.kind() != SyntaxKind::Block && child.kind() != SyntaxKind::IfExpression
+            }) {
                 let actual = self.infer_expression(condition);
                 self.require_bool(&actual, condition.span(), "if condition");
             }
@@ -1745,10 +1771,18 @@ impl<'a> Checker<'a> {
             .map_or(Type::Unknown, |child| self.infer_expression(child));
         if let Some(index) = children.get(1) {
             let index_type = self.infer_expression(index);
-            self.require_assignable(&Type::Int, &index_type, index.span(), "index expression", "TYP001");
+            self.require_assignable(
+                &Type::Int,
+                &index_type,
+                index.span(),
+                "index expression",
+                "TYP001",
+            );
         }
         match base {
-            Type::Named(name, arguments) if name == "List" && arguments.len() == 1 => arguments[0].clone(),
+            Type::Named(name, arguments) if name == "List" && arguments.len() == 1 => {
+                arguments[0].clone()
+            }
             Type::String => Type::Char,
             Type::Unknown | Type::Error => Type::Unknown,
             other => {
@@ -1774,9 +1808,14 @@ impl<'a> Checker<'a> {
             Type::Unknown | Type::Error => Type::Unknown,
             other => {
                 self.diagnostics.push(
-                    Diagnostic::error("TYP002", format!("`try` requires Result<T, E>, found `{other}`"))
-                        .with_primary(node.span(), "this expression cannot be propagated")
-                        .with_help("return a Result from the called operation or handle the value directly"),
+                    Diagnostic::error(
+                        "TYP002",
+                        format!("`try` requires Result<T, E>, found `{other}`"),
+                    )
+                    .with_primary(node.span(), "this expression cannot be propagated")
+                    .with_help(
+                        "return a Result from the called operation or handle the value directly",
+                    ),
                 );
                 Type::Error
             }
@@ -1787,12 +1826,7 @@ impl<'a> Checker<'a> {
         self.parse_declared_type(&node.lossless_text(self.source), node.span(), generics)
     }
 
-    fn parse_declared_type(
-        &mut self,
-        text: &str,
-        span: Span,
-        generics: &HashSet<String>,
-    ) -> Type {
+    fn parse_declared_type(&mut self, text: &str, span: Span, generics: &HashSet<String>) -> Type {
         let mut parser = TypeTextParser::new(text);
         let ty = parser.parse().unwrap_or(Type::Error);
         if ty == Type::Error {
@@ -1809,7 +1843,9 @@ impl<'a> Checker<'a> {
             self.diagnostics.push(
                 Diagnostic::error("TYP008", format!("unknown type `{name}`"))
                     .with_primary(span, "this type is not declared or imported")
-                    .with_help(format!("declare `{name}`, import it, or correct its spelling")),
+                    .with_help(format!(
+                        "declare `{name}`, import it, or correct its spelling"
+                    )),
             );
         }
         ty
@@ -1845,17 +1881,13 @@ impl<'a> Checker<'a> {
             )
             .with_primary(span, format!("this value has type `{actual}`"))
             .with_note("Nivra does not insert lossy numeric conversions")
-            .with_help(format!("provide a `{expected}` value or convert explicitly")),
+            .with_help(format!(
+                "provide a `{expected}` value or convert explicitly"
+            )),
         );
     }
 
-    fn unsupported_operator(
-        &mut self,
-        span: Span,
-        operator: TokenKind,
-        left: &Type,
-        right: &Type,
-    ) {
+    fn unsupported_operator(&mut self, span: Span, operator: TokenKind, left: &Type, right: &Type) {
         self.diagnostics.push(
             Diagnostic::error(
                 "TYP002",
@@ -1914,7 +1946,9 @@ fn field_declaration_parts(
         .copied()
         .find(|token| token.kind() == TokenKind::Identifier)?;
     let name = name_token.text(source)?.to_owned();
-    let colon = tokens.iter().position(|token| token.kind() == TokenKind::Colon)?;
+    let colon = tokens
+        .iter()
+        .position(|token| token.kind() == TokenKind::Colon)?;
     let mut type_text = String::new();
     let mut has_default = false;
     for token in &tokens[colon + 1..] {
@@ -2013,10 +2047,7 @@ fn impl_header(node: &SyntaxNode, source: &SourceFile) -> (Option<String>, Optio
         .iter()
         .any(|token| token.kind() == TokenKind::Keyword(Keyword::For));
     if has_for && identifiers.len() >= 2 {
-        (
-            identifiers.last().cloned(),
-            identifiers.first().cloned(),
-        )
+        (identifiers.last().cloned(), identifiers.first().cloned())
     } else {
         (identifiers.first().cloned(), None)
     }
@@ -2034,9 +2065,7 @@ fn replace_self_type(ty: Type, owner: &str) -> Type {
                 .map(|argument| replace_self_type(argument, owner))
                 .collect(),
         ),
-        Type::Optional(inner) => {
-            Type::Optional(Box::new(replace_self_type(*inner, owner)))
-        }
+        Type::Optional(inner) => Type::Optional(Box::new(replace_self_type(*inner, owner))),
         Type::Reference { mutable, inner } => Type::Reference {
             mutable,
             inner: Box::new(replace_self_type(*inner, owner)),
@@ -2110,9 +2139,9 @@ fn type_contains_generic(ty: &Type, generics: &HashSet<String>) -> bool {
                     .iter()
                     .any(|argument| type_contains_generic(argument, generics))
         }
-        Type::Optional(inner)
-        | Type::Reference { inner, .. }
-        | Type::Pointer { inner, .. } => type_contains_generic(inner, generics),
+        Type::Optional(inner) | Type::Reference { inner, .. } | Type::Pointer { inner, .. } => {
+            type_contains_generic(inner, generics)
+        }
         Type::Tuple(items) => items
             .iter()
             .any(|item| type_contains_generic(item, generics)),
@@ -2138,13 +2167,12 @@ fn member_name(node: &SyntaxNode, source: &SourceFile) -> Option<(String, Span)>
     significant_direct_tokens(node)
         .into_iter()
         .rev()
-        .find(|token| {
-            matches!(
-                token.kind(),
-                TokenKind::Identifier | TokenKind::Keyword(_)
-            )
+        .find(|token| matches!(token.kind(), TokenKind::Identifier | TokenKind::Keyword(_)))
+        .and_then(|token| {
+            token
+                .text(source)
+                .map(|text| (text.to_owned(), token.span()))
         })
-        .and_then(|token| token.text(source).map(|text| (text.to_owned(), token.span())))
 }
 
 fn closest_name<'a>(candidates: &[&'a str], requested: &str) -> Option<&'a str> {
@@ -2167,8 +2195,7 @@ fn edit_distance(left: &str, right: &str) -> usize {
         for (right_index, right_char) in right_chars.iter().enumerate() {
             let deletion = previous[right_index + 1] + 1;
             let insertion = current[right_index] + 1;
-            let substitution =
-                previous[right_index] + usize::from(left_char != *right_char);
+            let substitution = previous[right_index] + usize::from(left_char != *right_char);
             current.push(deletion.min(insertion).min(substitution));
         }
         previous = current;
@@ -2178,10 +2205,9 @@ fn edit_distance(left: &str, right: &str) -> usize {
 
 fn builtin_type_names() -> Vec<&'static str> {
     vec![
-        "Bool", "Char", "Float", "F32", "F64", "I8", "I16", "I32", "I64",
-        "Int", "List", "Map", "Never", "Option", "Path", "Result", "Set",
-        "Shared", "String", "Task", "U8", "U16", "U32", "U64", "Unit", "Usize",
-        "Weak", "Self",
+        "Bool", "Char", "Float", "F32", "F64", "I8", "I16", "I32", "I64", "Int", "List", "Map",
+        "Never", "Option", "Path", "Result", "Set", "Shared", "String", "Task", "U8", "U16", "U32",
+        "U64", "Unit", "Usize", "Weak", "Self",
     ]
 }
 
@@ -2220,9 +2246,7 @@ fn types_compatible(expected: &Type, actual: &Type) -> bool {
                 mutable: actual_mutable,
                 inner: actual_inner,
             },
-        ) => {
-            expected_mutable == actual_mutable && types_compatible(expected_inner, actual_inner)
-        }
+        ) => expected_mutable == actual_mutable && types_compatible(expected_inner, actual_inner),
         (Type::Tuple(expected_items), Type::Tuple(actual_items)) => {
             expected_items.len() == actual_items.len()
                 && expected_items
@@ -2248,7 +2272,9 @@ fn unify_branch_types(types: &[Type]) -> Type {
     let Some(first) = concrete.next() else {
         return Type::Unit;
     };
-    if concrete.all(|candidate| types_compatible(first, candidate) && types_compatible(candidate, first)) {
+    if concrete
+        .all(|candidate| types_compatible(first, candidate) && types_compatible(candidate, first))
+    {
         first.clone()
     } else {
         Type::Unknown
@@ -2323,19 +2349,27 @@ fn first_direct_identifier(node: &SyntaxNode, source: &SourceFile) -> Option<(St
     significant_direct_tokens(node)
         .into_iter()
         .find(|token| token.kind() == TokenKind::Identifier)
-        .and_then(|token| token.text(source).map(|text| (text.to_owned(), token.span())))
+        .and_then(|token| {
+            token
+                .text(source)
+                .map(|text| (text.to_owned(), token.span()))
+        })
 }
 
 fn function_name(node: &SyntaxNode, source: &SourceFile) -> Option<(String, Span)> {
     let tokens = significant_direct_tokens(node);
-    let fn_index = tokens.iter().position(|token| {
-        token.kind() == TokenKind::Keyword(Keyword::Fn)
-    })?;
+    let fn_index = tokens
+        .iter()
+        .position(|token| token.kind() == TokenKind::Keyword(Keyword::Fn))?;
     tokens[fn_index + 1..]
         .iter()
         .copied()
         .find(|token| token.kind() == TokenKind::Identifier)
-        .and_then(|token| token.text(source).map(|text| (text.to_owned(), token.span())))
+        .and_then(|token| {
+            token
+                .text(source)
+                .map(|text| (text.to_owned(), token.span()))
+        })
 }
 
 fn generic_parameter_names(node: &SyntaxNode, source: &SourceFile) -> HashSet<String> {
@@ -2356,10 +2390,7 @@ fn generic_parameter_names(node: &SyntaxNode, source: &SourceFile) -> HashSet<St
     output
 }
 
-fn parameter_parts(
-    node: &SyntaxNode,
-    source: &SourceFile,
-) -> Option<(String, Span, String)> {
+fn parameter_parts(node: &SyntaxNode, source: &SourceFile) -> Option<(String, Span, String)> {
     let tokens = descendant_tokens(node);
     let name_token = tokens.iter().copied().find(|token| {
         matches!(
@@ -2368,7 +2399,9 @@ fn parameter_parts(
         )
     })?;
     let name = name_token.text(source)?.to_owned();
-    let colon = tokens.iter().position(|token| token.kind() == TokenKind::Colon);
+    let colon = tokens
+        .iter()
+        .position(|token| token.kind() == TokenKind::Colon);
     let Some(colon) = colon else {
         return Some((name, name_token.span(), String::new()));
     };
@@ -2388,14 +2421,22 @@ fn parameter_parts(
 }
 
 fn needs_type_space(current: &str, next: &str) -> bool {
-    (current.ends_with("mut") || current.ends_with("const")) && next.chars().next().map_or(false, |character| character.is_alphanumeric())
+    (current.ends_with("mut") || current.ends_with("const"))
+        && next
+            .chars()
+            .next()
+            .map_or(false, |character| character.is_alphanumeric())
 }
 
 fn pattern_name(node: &SyntaxNode, source: &SourceFile) -> Option<(String, Span)> {
     descendant_tokens(node)
         .into_iter()
         .find(|token| token.kind() == TokenKind::Identifier)
-        .and_then(|token| token.text(source).map(|text| (text.to_owned(), token.span())))
+        .and_then(|token| {
+            token
+                .text(source)
+                .map(|text| (text.to_owned(), token.span()))
+        })
 }
 
 fn direct_operator(node: &SyntaxNode) -> Option<TokenKind> {
@@ -2439,9 +2480,7 @@ fn collect_unknown_type_names(
                 collect_unknown_type_names(argument, known, generics, output);
             }
         }
-        Type::Optional(inner)
-        | Type::Reference { inner, .. }
-        | Type::Pointer { inner, .. } => {
+        Type::Optional(inner) | Type::Reference { inner, .. } | Type::Pointer { inner, .. } => {
             collect_unknown_type_names(inner, known, generics, output);
         }
         Type::Tuple(items) | Type::Function(items, _) => {
@@ -2566,7 +2605,9 @@ impl<'a> TypeTextParser<'a> {
         let boundary = remaining[word.len()..]
             .chars()
             .next()
-            .map_or(true, |character| !character.is_alphanumeric() && character != '_');
+            .map_or(true, |character| {
+                !character.is_alphanumeric() && character != '_'
+            });
         if boundary {
             self.position += word.len();
         }
@@ -2619,7 +2660,7 @@ mod tests {
     use nivra_sema::analyze;
     use nivra_source::SourceManager;
 
-    use super::{Type, TypeTextParser, check};
+    use super::{check, Type, TypeTextParser};
 
     fn check_text(text: &str) -> super::TypeCheckResult {
         let mut sources = SourceManager::new();
@@ -2654,15 +2695,27 @@ mod tests {
             "module test\nfn main() { let count = 2\n let ratio = 1.5\n let enabled = true\n }\n",
         );
         assert!(!result.has_errors(), "{:?}", result.diagnostics);
-        assert!(result.bindings.iter().any(|binding| binding.name == "count" && binding.ty == Type::Int));
-        assert!(result.bindings.iter().any(|binding| binding.name == "ratio" && binding.ty == Type::Float));
-        assert!(result.bindings.iter().any(|binding| binding.name == "enabled" && binding.ty == Type::Bool));
+        assert!(result
+            .bindings
+            .iter()
+            .any(|binding| binding.name == "count" && binding.ty == Type::Int));
+        assert!(result
+            .bindings
+            .iter()
+            .any(|binding| binding.name == "ratio" && binding.ty == Type::Float));
+        assert!(result
+            .bindings
+            .iter()
+            .any(|binding| binding.name == "enabled" && binding.ty == Type::Bool));
     }
 
     #[test]
     fn rejects_binding_type_mismatch() {
         let result = check_text("module test\nfn main() { let count: Int = \"two\"\n }\n");
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP001"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP001"));
     }
 
     #[test]
@@ -2678,7 +2731,10 @@ mod tests {
         let result = check_text(
             "module test\nfn add(a: Int, b: Int) -> Int { a + b }\nfn main() { add(1) }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP003"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP003"));
     }
 
     #[test]
@@ -2686,25 +2742,37 @@ mod tests {
         let result = check_text(
             "module test\nfn echo(value: Int) -> Int { value }\nfn main() { echo(\"wrong\") }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP004"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP004"));
     }
 
     #[test]
     fn rejects_non_boolean_condition() {
         let result = check_text("module test\nfn main() { if 1 { print(1) } }\n");
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP007"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP007"));
     }
 
     #[test]
     fn rejects_bad_return_type() {
         let result = check_text("module test\nfn answer() -> Int { \"forty-two\" }\n");
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP005"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP005"));
     }
 
     #[test]
     fn rejects_none_without_context() {
         let result = check_text("module test\nfn main() { let value = none\n }\n");
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP006"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP006"));
     }
 
     #[test]
@@ -2716,13 +2784,19 @@ mod tests {
     #[test]
     fn rejects_heterogeneous_array() {
         let result = check_text("module test\nfn main() { let values = [1, \"two\"]\n }\n");
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP009"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP009"));
     }
 
     #[test]
     fn rejects_assignment_to_let() {
         let result = check_text("module test\nfn main() { let value = 1\n value = 2\n }\n");
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP010"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP010"));
     }
 
     #[test]
@@ -2738,9 +2812,10 @@ mod tests {
             .unwrap_or_else(|| panic!("User nominal missing"));
         assert_eq!(user.fields.len(), 2);
         assert!(user.methods.iter().any(|method| method.name == "label"));
-        assert!(result.bindings.iter().any(|binding| {
-            binding.name == "label" && binding.ty == Type::String
-        }));
+        assert!(result
+            .bindings
+            .iter()
+            .any(|binding| { binding.name == "label" && binding.ty == Type::String }));
     }
 
     #[test]
@@ -2756,7 +2831,10 @@ mod tests {
         let result = check_text(
             "module test\nrecord Pair {\n left: Int\n right: Int\n}\nfn main() { let pair = Pair { left: 1 } }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM003"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM003"));
     }
 
     #[test]
@@ -2764,7 +2842,10 @@ mod tests {
         let result = check_text(
             "module test\nrecord User {\n name: String\n}\nfn main() { let user = User { title: \"x\", name: \"M\" } }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM004"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM004"));
     }
 
     #[test]
@@ -2772,7 +2853,10 @@ mod tests {
         let result = check_text(
             "module test\nrecord User {\n name: String\n}\nfn main() { let user = User { name: \"A\", name: \"B\" } }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM005"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM005"));
     }
 
     #[test]
@@ -2780,7 +2864,10 @@ mod tests {
         let result = check_text(
             "module test\nrecord User {\n age: Int\n}\nfn main() { let user = User { age: \"young\" } }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM006"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM006"));
     }
 
     #[test]
@@ -2790,12 +2877,10 @@ mod tests {
         );
         assert!(!result.has_errors(), "{:?}", result.diagnostics);
         assert!(result.bindings.iter().any(|binding| {
-            binding.name == "first"
-                && binding.ty == Type::Named("State".to_owned(), Vec::new())
+            binding.name == "first" && binding.ty == Type::Named("State".to_owned(), Vec::new())
         }));
         assert!(result.bindings.iter().any(|binding| {
-            binding.name == "second"
-                && binding.ty == Type::Named("State".to_owned(), Vec::new())
+            binding.name == "second" && binding.ty == Type::Named("State".to_owned(), Vec::new())
         }));
     }
 
@@ -2804,7 +2889,10 @@ mod tests {
         let result = check_text(
             "module test\nenum State {\n ready(String)\n}\nfn main() { let state = State.ready(1) }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM007"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM007"));
     }
 
     #[test]
@@ -2838,7 +2926,10 @@ mod tests {
         let result = check_text(
             "module test\nrecord User {\n name: String\n}\nfn main() { let user: User? = none\n let name = user.name\n }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM002"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM002"));
     }
 
     #[test]
@@ -2846,23 +2937,29 @@ mod tests {
         let result = check_text(
             "module test\nrecord User {\n name: String\n}\nfn main() { let user = User { name: \"M\" }\n user.name = \"N\"\n }\n",
         );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM008"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM008"));
     }
 
     #[test]
     fn rejects_unknown_constructor_target() {
-        let result = check_text(
-            "module test\nfn main() { let value = Missing { name: \"x\" } }\n",
-        );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM009"));
+        let result = check_text("module test\nfn main() { let value = Missing { name: \"x\" } }\n");
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM009"));
     }
 
     #[test]
     fn rejects_record_syntax_for_enum() {
-        let result = check_text(
-            "module test\nenum State { idle }\nfn main() { let value = State { } }\n",
-        );
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM010"));
+        let result =
+            check_text("module test\nenum State { idle }\nfn main() { let value = State { } }\n");
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "NOM010"));
     }
 
     #[test]
@@ -2876,4 +2973,3 @@ mod tests {
             .any(|diagnostic| diagnostic.code == "TYP005"));
     }
 }
-

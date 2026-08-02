@@ -4,26 +4,26 @@
 
 ```bash
 cd ~/storage/downloads
-rm -rf Nivra-D7-Nominal-Members-Final-GitHub-Ready
-unzip Nivra-D7-Nominal-Members-Final-GitHub-Ready.zip
+rm -rf Nivra-D7-Nominal-Members-Verified-Final-GitHub-Ready
+unzip Nivra-D7-Nominal-Members-Verified-Final-GitHub-Ready.zip
 ```
 
 ## Preserve the previous D7 Git history
 
 ```bash
-mv Nivra-D7-Nominal-Members-GitHub-Ready/.git \
-   Nivra-D7-Nominal-Members-Final-GitHub-Ready/.git
+mv Nivra-D7-Nominal-Members-Final-GitHub-Ready/.git \
+   Nivra-D7-Nominal-Members-Verified-Final-GitHub-Ready/.git
 ```
 
 ## Commit and push
 
 ```bash
-cd ~/storage/downloads/Nivra-D7-Nominal-Members-Final-GitHub-Ready
+cd ~/storage/downloads/Nivra-D7-Nominal-Members-Verified-Final-GitHub-Ready
 
 git config --global --add safe.directory "$PWD"
 
 git add -A
-git commit -m "fix: finalize D7 parser diagnostics and regression suite"
+git commit -m "fix: apply Rust 1.74 formatting and finalize D7 release"
 git push
 ```
 
@@ -39,7 +39,7 @@ GitHub → Nivra → Actions → Verify D7 Nominal Members
 pkg update -y
 pkg install rust python git unzip -y
 
-cd ~/storage/downloads/Nivra-D7-Nominal-Members-Final-GitHub-Ready
+cd ~/storage/downloads/Nivra-D7-Nominal-Members-Verified-Final-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 

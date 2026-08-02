@@ -35,6 +35,7 @@ required = [
     "tools/d7_report.py",
     "D7-BUILD-FIX-REPORT.md",
     "D7-FINAL-FIX-REPORT.md",
+    "D7-FORMAT-RELEASE-FIX-REPORT.md",
     ".github/workflows/verify-d7.yml",
 ]
 missing = [item for item in required if not (ROOT / item).is_file()]
@@ -256,6 +257,12 @@ for regression_test in [
         fail(f"D7 CLI regression test missing: {regression_test}")
 if "span: node.span()" not in types or "checks_method_bodies_against_their_signatures" not in types:
     fail("method signature-to-body mapping regression guard missing")
+termux_verify = (ROOT / "scripts/termux-verify.sh").read_text(encoding="utf-8")
+root_verify = (ROOT / "verify.sh").read_text(encoding="utf-8")
+if "NIVRA_APPLY_FORMAT" in termux_verify or "cargo fmt --all\n" in root_verify:
+    fail("verification must not silently rewrite unformatted Rust source")
+if "NIVRA_REQUIRE_FORMAT=1" not in termux_verify:
+    fail("Termux verifier must require committed Rust formatting")
 print("D6 build regressions and D7 ambiguity guards: PASS")
 
 workflow = (ROOT / ".github/workflows/verify-d7.yml").read_text(encoding="utf-8")

@@ -6,7 +6,7 @@
 //! diagnostics.
 
 use nivra_diagnostics::Diagnostic;
-use nivra_lexer::{Keyword, Lexed, Token, TokenKind, lex};
+use nivra_lexer::{lex, Keyword, Lexed, Token, TokenKind};
 use nivra_source::{SourceFile, Span};
 use nivra_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
@@ -111,29 +111,22 @@ impl<'a> Parser<'a> {
             self.bump_significant(&mut children);
         }
 
-        if self.at_keyword(Keyword::Async) && self.nth_kind(1) == TokenKind::Keyword(Keyword::Fn)
-        {
+        if self.at_keyword(Keyword::Async) && self.nth_kind(1) == TokenKind::Keyword(Keyword::Fn) {
             self.bump_significant(&mut children);
             return self.parse_function_with_prefix(children, SyntaxKind::FunctionDeclaration);
         }
-        if self.at_keyword(Keyword::Unsafe)
-            && self.nth_kind(1) == TokenKind::Keyword(Keyword::Fn)
-        {
+        if self.at_keyword(Keyword::Unsafe) && self.nth_kind(1) == TokenKind::Keyword(Keyword::Fn) {
             self.bump_significant(&mut children);
             return self.parse_function_with_prefix(children, SyntaxKind::FunctionDeclaration);
         }
 
         match self.current_kind() {
-            TokenKind::Keyword(Keyword::Module) => self.parse_line_declaration(
-                SyntaxKind::ModuleDeclaration,
-                children,
-                "module path",
-            ),
-            TokenKind::Keyword(Keyword::Use) => self.parse_line_declaration(
-                SyntaxKind::UseDeclaration,
-                children,
-                "import path",
-            ),
+            TokenKind::Keyword(Keyword::Module) => {
+                self.parse_line_declaration(SyntaxKind::ModuleDeclaration, children, "module path")
+            }
+            TokenKind::Keyword(Keyword::Use) => {
+                self.parse_line_declaration(SyntaxKind::UseDeclaration, children, "import path")
+            }
             TokenKind::Keyword(Keyword::Const) => {
                 self.parse_value_declaration(SyntaxKind::ConstDeclaration, children)
             }
@@ -201,7 +194,11 @@ impl<'a> Parser<'a> {
             self.bump_raw(&mut children);
         }
         if self.position == content_start {
-            self.error_here("PAR002", format!("expected {expected}"), "add the missing path");
+            self.error_here(
+                "PAR002",
+                format!("expected {expected}"),
+                "add the missing path",
+            );
         }
         if self.at_raw(TokenKind::Semicolon) {
             self.bump_raw(&mut children);
@@ -228,7 +225,11 @@ impl<'a> Parser<'a> {
         if !self.at_line_end() {
             children.push(SyntaxElement::Node(self.parse_expression(0)));
         } else {
-            self.error_here("PAR005", "expected an initializer expression", "write a value after `=`");
+            self.error_here(
+                "PAR005",
+                "expected an initializer expression",
+                "write a value after `=`",
+            );
         }
         self.eat_inline_trivia(&mut children);
         self.eat(TokenKind::Semicolon, &mut children);
@@ -282,7 +283,9 @@ impl<'a> Parser<'a> {
             }
             self.eat_inline_trivia(&mut variant);
             self.eat(TokenKind::Comma, &mut variant);
-            children.push(SyntaxElement::Node(self.node(SyntaxKind::EnumVariant, variant)));
+            children.push(SyntaxElement::Node(
+                self.node(SyntaxKind::EnumVariant, variant),
+            ));
             self.eat_trivia(&mut children);
         }
         self.expect_closing(TokenKind::RightBrace, &mut children, "enum declaration");
@@ -411,13 +414,22 @@ impl<'a> Parser<'a> {
         self.eat_trivia(&mut children);
         while !self.at(TokenKind::RightParen) && !self.at(TokenKind::Eof) {
             let mut parameter = Vec::new();
-            self.consume_until_top_level(&mut parameter, &[TokenKind::Comma, TokenKind::RightParen]);
+            self.consume_until_top_level(
+                &mut parameter,
+                &[TokenKind::Comma, TokenKind::RightParen],
+            );
             if parameter.iter().all(is_trivia_element) {
-                self.error_here("PAR002", "expected a function parameter", "remove the extra comma or add a parameter");
+                self.error_here(
+                    "PAR002",
+                    "expected a function parameter",
+                    "remove the extra comma or add a parameter",
+                );
             }
             self.eat_inline_trivia(&mut parameter);
             self.eat(TokenKind::Comma, &mut parameter);
-            children.push(SyntaxElement::Node(self.node(SyntaxKind::Parameter, parameter)));
+            children.push(SyntaxElement::Node(
+                self.node(SyntaxKind::Parameter, parameter),
+            ));
             self.eat_trivia(&mut children);
         }
         self.expect_closing(TokenKind::RightParen, &mut children, "parameter list");
@@ -487,7 +499,11 @@ impl<'a> Parser<'a> {
         }
 
         if children.iter().all(is_trivia_element) {
-            self.error_here("PAR002", "expected a type", "write an Edition 2026 type here");
+            self.error_here(
+                "PAR002",
+                "expected a type",
+                "write an Edition 2026 type here",
+            );
         }
         self.node(SyntaxKind::TypeReference, children)
     }
@@ -565,7 +581,11 @@ impl<'a> Parser<'a> {
                 children.push(SyntaxElement::Node(self.parse_expression(0)));
             }
         } else {
-            self.error_here("PAR002", "expected `=` in binding", "initialize the binding with `= expression`");
+            self.error_here(
+                "PAR002",
+                "expected `=` in binding",
+                "initialize the binding with `= expression`",
+            );
         }
         self.eat_inline_trivia(&mut children);
         self.eat(TokenKind::Semicolon, &mut children);
@@ -620,7 +640,11 @@ impl<'a> Parser<'a> {
         let mut children = Vec::new();
         self.consume_until_top_level(&mut children, stops);
         if children.iter().all(is_trivia_element) {
-            self.error_here("PAR002", "expected a pattern", "write a name or destructuring pattern");
+            self.error_here(
+                "PAR002",
+                "expected a pattern",
+                "write a name or destructuring pattern",
+            );
         }
         self.node(SyntaxKind::Pattern, children)
     }
@@ -793,7 +817,11 @@ impl<'a> Parser<'a> {
                 children.push(SyntaxElement::Node(self.parse_expression(0)));
             }
         }
-        self.expect_closing(TokenKind::RightParen, &mut children, "parenthesized expression");
+        self.expect_closing(
+            TokenKind::RightParen,
+            &mut children,
+            "parenthesized expression",
+        );
         self.node(
             if tuple {
                 SyntaxKind::TupleExpression
@@ -1007,17 +1035,16 @@ impl<'a> Parser<'a> {
         if depth > 0 {
             self.diagnostics.push(
                 Diagnostic::error(code, format!("unclosed {context}"))
-                    .with_primary(self.current_span(), format!("expected `{}` before end of file", close.name()))
+                    .with_primary(
+                        self.current_span(),
+                        format!("expected `{}` before end of file", close.name()),
+                    )
                     .with_help(format!("add the missing `{}`", close.name())),
             );
         }
     }
 
-    fn consume_until_top_level(
-        &mut self,
-        output: &mut Vec<SyntaxElement>,
-        stops: &[TokenKind],
-    ) {
+    fn consume_until_top_level(&mut self, output: &mut Vec<SyntaxElement>, stops: &[TokenKind]) {
         let mut paren = 0usize;
         let mut bracket = 0usize;
         let mut brace = 0usize;
@@ -1085,7 +1112,10 @@ impl<'a> Parser<'a> {
     fn recover_statement(&mut self) -> SyntaxNode {
         self.diagnostics.push(
             Diagnostic::error("PAR001", "unexpected token in statement context")
-                .with_primary(self.current_span(), "this token cannot continue the statement")
+                .with_primary(
+                    self.current_span(),
+                    "this token cannot continue the statement",
+                )
                 .with_help("finish the current statement or start a new one"),
         );
         let mut children = Vec::new();
@@ -1146,7 +1176,10 @@ impl<'a> Parser<'a> {
         expected: &'static str,
     ) {
         self.eat_trivia(output);
-        if matches!(self.raw_kind(), TokenKind::Identifier | TokenKind::Keyword(_)) {
+        if matches!(
+            self.raw_kind(),
+            TokenKind::Identifier | TokenKind::Keyword(_)
+        ) {
             self.bump_raw(output);
         } else {
             self.missing_expected(expected);
@@ -1162,12 +1195,7 @@ impl<'a> Parser<'a> {
         self.expect(TokenKind::Keyword(keyword), output, expected);
     }
 
-    fn expect(
-        &mut self,
-        kind: TokenKind,
-        output: &mut Vec<SyntaxElement>,
-        expected: &str,
-    ) {
+    fn expect(&mut self, kind: TokenKind, output: &mut Vec<SyntaxElement>, expected: &str) {
         self.eat_trivia(output);
         if self.at_raw(kind) {
             self.bump_raw(output);
@@ -1188,7 +1216,10 @@ impl<'a> Parser<'a> {
         } else {
             self.diagnostics.push(
                 Diagnostic::error("PAR003", format!("unclosed {context}"))
-                    .with_primary(self.current_span(), format!("expected `{}` here", kind.name()))
+                    .with_primary(
+                        self.current_span(),
+                        format!("expected `{}` here", kind.name()),
+                    )
                     .with_help(format!("add the missing `{}`", kind.name())),
             );
         }
@@ -1210,7 +1241,10 @@ impl<'a> Parser<'a> {
     ) {
         self.diagnostics.push(
             Diagnostic::error(code, message)
-                .with_primary(self.current_span(), "parser could not continue from this token")
+                .with_primary(
+                    self.current_span(),
+                    "parser could not continue from this token",
+                )
                 .with_help(help),
         );
     }
@@ -1321,8 +1355,7 @@ impl<'a> Parser<'a> {
             .skip(self.position)
             .find(|token| !token.kind.is_trivia())
             .is_some_and(|token| {
-                token.kind == TokenKind::Identifier
-                    && token.text(self.source) == Some(expected)
+                token.kind == TokenKind::Identifier && token.text(self.source) == Some(expected)
             })
     }
 
@@ -1413,10 +1446,9 @@ fn infix_binding_power(kind: TokenKind) -> Option<(u8, u8, SyntaxKind)> {
         TokenKind::Caret => (10, 11, SyntaxKind::BinaryExpression),
         TokenKind::Ampersand => (12, 13, SyntaxKind::BinaryExpression),
         TokenKind::EqualEqual | TokenKind::BangEqual => (14, 15, SyntaxKind::BinaryExpression),
-        TokenKind::Less
-        | TokenKind::LessEqual
-        | TokenKind::Greater
-        | TokenKind::GreaterEqual => (16, 17, SyntaxKind::BinaryExpression),
+        TokenKind::Less | TokenKind::LessEqual | TokenKind::Greater | TokenKind::GreaterEqual => {
+            (16, 17, SyntaxKind::BinaryExpression)
+        }
         TokenKind::ShiftLeft | TokenKind::ShiftRight => (18, 19, SyntaxKind::BinaryExpression),
         TokenKind::Plus | TokenKind::Minus => (20, 21, SyntaxKind::BinaryExpression),
         TokenKind::Star | TokenKind::Slash | TokenKind::Percent => {
@@ -1481,14 +1513,20 @@ mod tests {
             "fn broken() {\n    let first =\n    let second = 2\n    print(second)\n}\n",
         );
         assert!(result.has_errors());
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "PAR005"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "PAR005"));
         assert!(contains_kind(&result.root, SyntaxKind::CallExpression));
     }
 
     #[test]
     fn reports_unclosed_block() {
         let (_source, result) = parse_text("fn main() {\n    let value = 1\n");
-        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "PAR003"));
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "PAR003"));
     }
 
     #[test]
@@ -1540,9 +1578,8 @@ mod tests {
 
     #[test]
     fn does_not_confuse_if_blocks_with_record_construction() {
-        let (_source, result) = parse_text(
-            "fn main() { let enabled = true\n if enabled { print(\"yes\") } }\n",
-        );
+        let (_source, result) =
+            parse_text("fn main() { let enabled = true\n if enabled { print(\"yes\") } }\n");
         assert!(!result.has_errors(), "{:?}", result.diagnostics);
         assert!(contains_kind(&result.root, SyntaxKind::IfExpression));
         assert!(!contains_kind(&result.root, SyntaxKind::RecordExpression));

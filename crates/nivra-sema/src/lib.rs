@@ -418,10 +418,9 @@ impl<'a> Analyzer<'a> {
 
     fn install_prelude(&mut self) {
         for name in [
-            "Bool", "Char", "Float", "F32", "F64", "I8", "I16", "I32", "I64",
-            "Int", "List", "Map", "Never", "Option", "Path", "Result", "Set",
-            "Shared", "String", "Task", "U8", "U16", "U32", "U64", "Unit", "Usize",
-            "Weak",
+            "Bool", "Char", "Float", "F32", "F64", "I8", "I16", "I32", "I64", "Int", "List", "Map",
+            "Never", "Option", "Path", "Result", "Set", "Shared", "String", "Task", "U8", "U16",
+            "U32", "U64", "Unit", "Usize", "Weak",
         ] {
             self.define_unchecked(
                 self.prelude_scope,
@@ -662,7 +661,6 @@ impl<'a> Analyzer<'a> {
             }
         }
 
-
         for type_reference in node
             .child_nodes()
             .filter(|child| child.kind() == SyntaxKind::TypeReference)
@@ -850,7 +848,10 @@ impl<'a> Analyzer<'a> {
                 continue;
             }
             if inside && token.kind() == TokenKind::Identifier {
-                let skip = matches!(previous, Some(TokenKind::Colon) | Some(TokenKind::ColonColon));
+                let skip = matches!(
+                    previous,
+                    Some(TokenKind::Colon) | Some(TokenKind::ColonColon)
+                );
                 if !skip {
                     if let Some(name) = token.text(self.source) {
                         if is_binding_name(name) {
@@ -923,7 +924,10 @@ impl<'a> Analyzer<'a> {
 
     fn resolve_name_expression(&mut self, node: &SyntaxNode, scope: ScopeId) {
         let tokens = significant_direct_tokens(node);
-        if tokens.first().is_some_and(|token| token.kind() == TokenKind::Dot) {
+        if tokens
+            .first()
+            .is_some_and(|token| token.kind() == TokenKind::Dot)
+        {
             return;
         }
         let Some(token) = tokens.iter().find(|token| {
@@ -1041,10 +1045,16 @@ impl<'a> Analyzer<'a> {
                 .map_or(span, |symbol| symbol.span);
             let code = duplicate_code(kind);
             self.diagnostics.push(
-                Diagnostic::error(code, format!("duplicate {} name `{name}`", namespace.as_str()))
-                    .with_primary(span, "this declaration conflicts with an earlier name in the same scope")
-                    .with_secondary(previous_span, "the first declaration is here")
-                    .with_help("rename or remove one of the declarations"),
+                Diagnostic::error(
+                    code,
+                    format!("duplicate {} name `{name}`", namespace.as_str()),
+                )
+                .with_primary(
+                    span,
+                    "this declaration conflicts with an earlier name in the same scope",
+                )
+                .with_secondary(previous_span, "the first declaration is here")
+                .with_help("rename or remove one of the declarations"),
             );
             return None;
         }
@@ -1183,7 +1193,11 @@ fn first_direct_name(node: &SyntaxNode, source: &SourceFile) -> Option<(String, 
     significant_direct_tokens(node)
         .into_iter()
         .find(|token| token.kind() == TokenKind::Identifier)
-        .and_then(|token| token.text(source).map(|text| (text.to_owned(), token.span())))
+        .and_then(|token| {
+            token
+                .text(source)
+                .map(|text| (text.to_owned(), token.span()))
+        })
 }
 
 fn parameter_name(node: &SyntaxNode, source: &SourceFile) -> Option<(String, Span)> {
@@ -1195,7 +1209,11 @@ fn parameter_name(node: &SyntaxNode, source: &SourceFile) -> Option<(String, Spa
                 TokenKind::Identifier | TokenKind::Keyword(Keyword::SelfValue)
             )
         })
-        .and_then(|token| token.text(source).map(|text| (text.to_owned(), token.span())))
+        .and_then(|token| {
+            token
+                .text(source)
+                .map(|text| (text.to_owned(), token.span()))
+        })
 }
 
 fn path_after_keyword(
@@ -1247,7 +1265,11 @@ fn import_bindings(node: &SyntaxNode, source: &SourceFile) -> Vec<(String, Span)
             .iter()
             .take_while(|token| token.kind() != TokenKind::RightBrace)
             .filter(|token| token.kind() == TokenKind::Identifier)
-            .filter_map(|token| token.text(source).map(|name| (name.to_owned(), token.span())))
+            .filter_map(|token| {
+                token
+                    .text(source)
+                    .map(|name| (name.to_owned(), token.span()))
+            })
             .collect();
     }
 
@@ -1255,7 +1277,11 @@ fn import_bindings(node: &SyntaxNode, source: &SourceFile) -> Vec<(String, Span)
         .iter()
         .rev()
         .find(|token| token.kind() == TokenKind::Identifier)
-        .and_then(|token| token.text(source).map(|name| vec![(name.to_owned(), token.span())]))
+        .and_then(|token| {
+            token
+                .text(source)
+                .map(|name| vec![(name.to_owned(), token.span())])
+        })
         .unwrap_or_default()
 }
 
@@ -1288,9 +1314,9 @@ fn pattern_binding_tokens(node: &SyntaxNode, source: &SourceFile) -> Vec<SyntaxT
             continue;
         }
         let previous = index.checked_sub(1).and_then(|value| tokens.get(value));
-        if previous.is_some_and(|value| {
-            matches!(value.kind(), TokenKind::Dot | TokenKind::ColonColon)
-        }) {
+        if previous
+            .is_some_and(|value| matches!(value.kind(), TokenKind::Dot | TokenKind::ColonColon))
+        {
             continue;
         }
         let Some(name) = token.text(source) else {
@@ -1339,7 +1365,7 @@ mod tests {
     use nivra_parser::parse;
     use nivra_source::SourceManager;
 
-    use super::{Namespace, SymbolKind, SymbolOrigin, analyze};
+    use super::{analyze, Namespace, SymbolKind, SymbolOrigin};
 
     fn semantic(source_text: &str) -> super::SemanticResult {
         let mut sources = SourceManager::new();
@@ -1398,19 +1424,26 @@ mod tests {
             .iter()
             .find(|item| item.code == "SEM003")
             .unwrap_or_else(|| panic!("missing semantic diagnostic"));
-        assert!(diagnostic.help.as_deref().is_some_and(|help| help.contains("message")));
+        assert!(diagnostic
+            .help
+            .as_deref()
+            .is_some_and(|help| help.contains("message")));
     }
 
     #[test]
     fn parameters_resolve_inside_function() {
         let result = semantic("module demo\nfn echo(value: Int) { print(value) }\n");
         assert!(!result.has_errors());
-        assert!(result.resolutions.iter().any(|item| item.name == "value" && item.symbol.is_some()));
+        assert!(result
+            .resolutions
+            .iter()
+            .any(|item| item.name == "value" && item.symbol.is_some()));
     }
 
     #[test]
     fn nested_blocks_resolve_parent_bindings() {
-        let result = semantic("module demo\nfn main() { let outer = 1\n if true { print(outer) } }\n");
+        let result =
+            semantic("module demo\nfn main() { let outer = 1\n if true { print(outer) } }\n");
         assert!(!result.has_errors());
     }
 
@@ -1422,25 +1455,31 @@ mod tests {
 
     #[test]
     fn for_pattern_is_visible_in_loop_body() {
-        let result = semantic("module demo\nfn main(values: List<Int>) { for value in values { print(value) } }\n");
+        let result = semantic(
+            "module demo\nfn main(values: List<Int>) { for value in values { print(value) } }\n",
+        );
         assert!(!result.has_errors());
     }
 
     #[test]
     fn match_arm_pattern_is_visible_in_arm() {
-        let result = semantic("module demo\nfn main(value: Int) { match value { item => print(item), } }\n");
+        let result =
+            semantic("module demo\nfn main(value: Int) { match value { item => print(item), } }\n");
         assert!(!result.has_errors());
     }
 
     #[test]
     fn closure_parameter_is_visible_in_body() {
-        let result = semantic("module demo\nfn main(values: List<Int>) { values.map(|item| item) }\n");
+        let result =
+            semantic("module demo\nfn main(values: List<Int>) { values.map(|item| item) }\n");
         assert!(!result.has_errors());
     }
 
     #[test]
     fn task_group_handle_is_visible_in_body() {
-        let result = semantic("module demo\nfn main() { task_group group { group.spawn async { print(1) } } }\n");
+        let result = semantic(
+            "module demo\nfn main() { task_group group { group.spawn async { print(1) } } }\n",
+        );
         assert!(!result.has_errors());
     }
 
@@ -1448,9 +1487,9 @@ mod tests {
     fn imports_create_visible_symbols() {
         let result = semantic("module demo\nuse std.fs\nfn main() { fs.read_text(\"a\") }\n");
         assert!(!result.has_errors());
-        assert!(result.user_symbols().any(|symbol| {
-            symbol.name == "fs" && symbol.origin == SymbolOrigin::Import
-        }));
+        assert!(result
+            .user_symbols()
+            .any(|symbol| { symbol.name == "fs" && symbol.origin == SymbolOrigin::Import }));
     }
 
     #[test]
@@ -1468,15 +1507,17 @@ mod tests {
     #[test]
     fn prelude_names_are_not_user_symbols() {
         let result = semantic("module demo\nfn main() { print(1) }\n");
-        assert!(result.symbols.iter().any(|symbol| {
-            symbol.name == "print" && symbol.kind == SymbolKind::Builtin
-        }));
+        assert!(result
+            .symbols
+            .iter()
+            .any(|symbol| { symbol.name == "print" && symbol.kind == SymbolKind::Builtin }));
         assert!(!result.user_symbols().any(|symbol| symbol.name == "print"));
     }
 
     #[test]
     fn type_references_link_to_known_types() {
-        let result = semantic("module demo\nrecord User {}\nfn load(user: User) -> User { user }\n");
+        let result =
+            semantic("module demo\nrecord User {}\nfn load(user: User) -> User { user }\n");
         assert!(result.resolutions.iter().any(|resolution| {
             resolution.name == "User" && resolution.namespace == Namespace::Type
         }));

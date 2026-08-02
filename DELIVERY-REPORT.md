@@ -9,7 +9,7 @@
 - Workspace crates: 8
 - Third-party Rust dependencies: 0
 - Minimum Rust: 1.74
-- Status before user verification: FINAL BUILD-FIX RELEASE CANDIDATE
+- Status before user verification: VERIFIED-FORMAT RELEASE CANDIDATE
 
 ## GitHub Actions build correction
 
@@ -26,6 +26,16 @@ The final revision aligns the NOM001 explanation with its CLI contract and fixes
 the parser's empty-constructor leading-trivia ambiguity so enum record syntax
 reliably reaches NOM010 validation. Dedicated parser, type-checker, and CLI tests
 now guard both cases before the full suite.
+
+
+## Final formatting correction
+
+The latest uploaded run passed Rust toolchain installation, Cargo dependency
+validation, and D7 structural preflight, then stopped exclusively at
+`cargo fmt --all -- --check`. The complete Rust 1.74 rustfmt output from that run
+contained 159 hunks across eight Rust files. Every reported hunk is applied in
+this revision. Termux verification no longer auto-formats source, so formatting
+drift cannot be hidden locally.
 
 ## Implemented
 

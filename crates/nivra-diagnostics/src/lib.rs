@@ -95,11 +95,7 @@ impl Diagnostic {
 
     /// Creates a diagnostic.
     #[must_use]
-    pub fn new(
-        severity: Severity,
-        code: impl Into<String>,
-        message: impl Into<String>,
-    ) -> Self {
+    pub fn new(severity: Severity, code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
             code: code.into(),
             severity,
@@ -208,8 +204,7 @@ impl Renderer {
                             width = gutter_width
                         );
 
-                        let caret_width =
-                            label_width_on_first_line(source, label.span).max(1);
+                        let caret_width = label_width_on_first_line(source, label.span).max(1);
                         let prefix = " ".repeat(position.column.saturating_sub(1));
                         let carets = "^".repeat(caret_width);
                         let _ = writeln!(
@@ -285,12 +280,7 @@ impl Renderer {
             json_field(&mut output, "message", &label.message, false);
 
             if let Some(source) = sources.get(label.span.source()) {
-                json_field(
-                    &mut output,
-                    "path",
-                    &source.path().to_string_lossy(),
-                    false,
-                );
+                json_field(&mut output, "path", &source.path().to_string_lossy(), false);
                 if let Some(position) = source.line_column(label.span.start()) {
                     output.push_str(&format!(
                         ",\"line\":{},\"column\":{}",
@@ -331,10 +321,7 @@ impl Renderer {
         format!("[{body}]")
     }
 
-    fn secondary_labels<'a>(
-        self,
-        diagnostic: &'a Diagnostic,
-    ) -> impl Iterator<Item = &'a Label> {
+    fn secondary_labels<'a>(self, diagnostic: &'a Diagnostic) -> impl Iterator<Item = &'a Label> {
         diagnostic.labels.iter().filter(|label| !label.primary)
     }
 }
@@ -351,9 +338,9 @@ fn label_width_on_first_line(source: &nivra_source::SourceFile, span: Span) -> u
     if start.line == end.line {
         end.column.saturating_sub(start.column)
     } else {
-        source
-            .line_text(start.line)
-            .map_or(1, |line| line.chars().count().saturating_sub(start.column - 1))
+        source.line_text(start.line).map_or(1, |line| {
+            line.chars().count().saturating_sub(start.column - 1)
+        })
     }
 }
 
@@ -394,7 +381,7 @@ impl fmt::Display for Severity {
 mod tests {
     use nivra_source::{SourceManager, Span};
 
-    use super::{Diagnostic, Renderer, Severity, error_count};
+    use super::{error_count, Diagnostic, Renderer, Severity};
 
     #[test]
     fn renders_phone_friendly_human_diagnostic() {

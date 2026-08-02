@@ -16,6 +16,8 @@
 - [x] D6 dependency and reserved-keyword regressions are permanently guarded.
 - [x] D7 embedded Rust strings reject invalid literal suffixes before Cargo runs.
 - [x] The corrected unknown-variant suggestion fixture contains escaped inner quotes.
+- [x] Rust 1.74 formatting output from the uploaded Actions log is fully applied.
+- [x] Termux verification checks formatting without modifying committed source.
 
 ## Manual
 
