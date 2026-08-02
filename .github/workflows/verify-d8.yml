@@ -1,0 +1,117 @@
+name: Verify D8 Generics and Traits
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Compile, generics, traits, CLI, release
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.74.0 --profile minimal --component rustfmt
+          rustup default 1.74.0
+          rustc --version
+          cargo --version
+          rustfmt --version
+
+      - name: Validate local dependency graph
+        run: |
+          python3 tools/d6_dependency_lint.py
+          cargo metadata --locked --format-version 1 --no-deps > /dev/null
+
+      - name: Validate D8 source preflight
+        run: python3 tools/d8_structure_lint.py
+
+      - name: Normalize Rust formatting on runner
+        run: cargo fmt --all
+
+      - name: Compile every workspace target
+        run: cargo check --workspace --all-targets --locked
+
+      - name: Run focused D8 parser regressions
+        run: |
+          cargo test -p nivra-parser parses_explicit_generic_call_arguments --locked
+          cargo test -p nivra-parser keeps_comparisons_out_of_generic_argument_parsing --locked
+          cargo test -p nivra-parser parses_nested_generic_arguments_with_shift_right_token --locked
+          cargo test -p nivra-types preserves_nested_explicit_generic_argument_types --locked
+
+      - name: Run focused D8 type regressions
+        run: |
+          cargo test -p nivra-types infers_generic_function_arguments --locked
+          cargo test -p nivra-types accepts_where_clause_trait_bound --locked
+          cargo test -p nivra-types accepts_default_trait_method_using_required_method --locked
+          cargo test -p nivra-types rejects_ambiguous_trait_method_selection --locked
+          cargo test -p nivra-types rejects_generic_traits_until_the_feature_is_defined --locked
+
+      - name: Run focused D8 CLI regressions
+        run: |
+          cargo test -p nivra-cli --test cli check_accepts_inferred_generic_function_call --locked
+          cargo test -p nivra-cli --test cli check_accepts_explicit_generic_function_call --locked
+          cargo test -p nivra-cli --test cli check_accepts_nested_explicit_generic_argument --locked
+          cargo test -p nivra-cli --test cli check_accepts_concrete_default_trait_method --locked
+          cargo test -p nivra-cli --test cli check_rejects_unsatisfied_generic_trait_bound --locked
+          cargo test -p nivra-cli --test cli check_rejects_invalid_generic_constraint_parameter --locked
+          cargo test -p nivra-cli --test cli check_rejects_generic_trait_declaration --locked
+
+      - name: Run complete Rust test suite
+        run: cargo test --workspace --all-targets --locked --no-fail-fast
+
+      - name: Run cumulative golden verifier
+        env:
+          NIVRA_SKIP_RUNNER_FORMAT: "1"
+        run: bash verify.sh
+
+      - name: Build release workspace
+        run: cargo build --workspace --release --locked
+
+      - name: Run release D8 smoke suite
+        env:
+          NIVRA_BIN: ${{ github.workspace }}/target/release/nivra
+        run: bash scripts/d8-smoke.sh
+
+      - name: Generate D8 reports
+        run: |
+          python3 tools/d2_report.py > D2-ARCHITECTURE-REPORT.txt
+          python3 tools/d3_report.py > D3-COMPILER-FOUNDATION-REPORT.txt
+          python3 tools/d4_report.py > D4-PARSER-AST-REPORT.txt
+          python3 tools/d5_report.py > D5-SEMANTIC-REPORT.txt
+          python3 tools/d6_report.py > D6-TYPE-CHECKER-REPORT.txt
+          python3 tools/d7_report.py > D7-NOMINAL-MEMBERS-REPORT.txt
+          python3 tools/d8_report.py > D8-GENERICS-TRAITS-REPORT.txt
+          ./target/release/nivra doctor > D8-NIVRA-DOCTOR.txt
+          ./target/release/nivra typecheck examples/d8/05_complete_generics_traits_tour.nva --functions --types --nominals --traits > D8-TYPE-REPORT.txt
+          ./target/release/nivra typecheck examples/d8/05_complete_generics_traits_tour.nva --json > D8-TYPE-GRAPH.json
+          python3 -m json.tool D8-TYPE-GRAPH.json > /dev/null
+
+      - name: Upload D8 Linux artifact and reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: nivra-d8-linux-x86_64
+          path: |
+            target/release/nivra
+            D2-ARCHITECTURE-REPORT.txt
+            D3-COMPILER-FOUNDATION-REPORT.txt
+            D4-PARSER-AST-REPORT.txt
+            D5-SEMANTIC-REPORT.txt
+            D6-TYPE-CHECKER-REPORT.txt
+            D7-NOMINAL-MEMBERS-REPORT.txt
+            D8-GENERICS-TRAITS-REPORT.txt
+            D8-NIVRA-DOCTOR.txt
+            D8-TYPE-REPORT.txt
+            D8-TYPE-GRAPH.json
+            MANUAL-VERIFICATION.md
+          if-no-files-found: error
+          retention-days: 14

@@ -1,24 +1,16 @@
-# D7 Manual Verification After GitHub Actions Is Green
+# D8 Manual Verification
 
-## 1. Install phone requirements
+Run these checks only after GitHub Actions shows a green result for
+`Verify D8 Generics and Traits`.
 
-```bash
-pkg update -y
-pkg install rust python git unzip -y
-```
-
-## 2. Run complete Termux-safe verification
+## Full Termux verification
 
 ```bash
-cd ~/storage/downloads/Nivra-D7-Nominal-Members-Verified-Final-GitHub-Ready
+cd ~/storage/downloads/Nivra-D8-Generics-Traits-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
-The project is copied to:
-
-```text
-~/nivra-d7-verification
-```
+The project is copied to `~/nivra-d8-verification` before Cargo runs.
 
 Expected ending:
 
@@ -29,118 +21,67 @@ D3 regression: PASS
 D4 regression: PASS
 D5 regression: PASS
 D6 regression: PASS
-D7 structure: PASS
+D7 regression: PASS
+D8 structure: PASS
+Rust compilation: PASS
 Rust tests: PASS
-D7 CLI smoke tests: PASS
-★★★★★ D7 GOLDEN BUILD
+D8 CLI smoke tests: PASS
+★★★★★ D8 GOLDEN BUILD
 ```
 
-## 3. Check CLI identity
+## CLI identity
 
 ```bash
-cd ~/nivra-d7-verification
+cd ~/nivra-d8-verification
 ./target/debug/nivra --version
 ./target/debug/nivra doctor
 ```
 
-Expected:
+Expected version:
 
 ```text
-nivra 0.7.0 (nominal types and members D7)
-D7 status: OPERATIONAL
+nivra 0.8.0 (generics and traits D8)
 ```
 
-## 4. Check the complete valid tour
+## Complete valid tour
 
 ```bash
-./target/debug/nivra check \
-  examples/d7/05_complete_nominal_tour.nva
+./target/debug/nivra check examples/d8/05_complete_generics_traits_tour.nva
 ```
 
-Expected ending:
+Expected ending: `0 errors`.
 
-```text
-0 errors
-```
-
-## 5. Inspect nominal types and members
+## Generic and trait report
 
 ```bash
 ./target/debug/nivra typecheck \
-  examples/d7/05_complete_nominal_tour.nva \
-  --functions --types --nominals
+  examples/d8/05_complete_generics_traits_tour.nva \
+  --functions --types --nominals --traits | sed -n '1,260p'
 ```
 
-Confirm the report includes:
+Confirm that `identity<T>`, `Box<T>`, `Display`, and its implementations appear.
 
-```text
-record Profile
-field name: String
-field score: Int = <default>
-method add_score
-method is_active
-variant online(Profile)
-```
-
-## 6. Inspect lossless record-construction CST
+## Representative diagnostics
 
 ```bash
-./target/debug/nivra parse \
-  examples/d7/01_records_and_construction.nva \
-  --tree | grep -E 'record_expression|record_field_initializer'
+./target/debug/nivra check examples/d8/invalid/01_wrong_generic_arity.nva; echo $?
+./target/debug/nivra check examples/d8/invalid/04_unsatisfied_bound.nva; echo $?
+./target/debug/nivra check examples/d8/invalid/06_generic_trait_deferred.nva; echo $?
+./target/debug/nivra check examples/d8/invalid/09_missing_trait_method.nva; echo $?
+./target/debug/nivra check examples/d8/invalid/11_ambiguous_trait_method.nva; echo $?
+./target/debug/nivra check examples/d8/invalid/12_orphan_rule.nva; echo $?
 ```
 
-Both node names must appear.
+Expected codes respectively: GEN001, GEN004, GEN006, TRT003, TRT005, TRT006.
+Each command must exit with code 1.
 
-## 7. Check representative diagnostics
+## JSON graph
 
 ```bash
 ./target/debug/nivra typecheck \
-  examples/d7/invalid/01_unknown_member.nva
-echo $?
-
-./target/debug/nivra typecheck \
-  examples/d7/invalid/03_missing_required_field.nva
-echo $?
-
-./target/debug/nivra typecheck \
-  examples/d7/invalid/07_enum_variant_payload.nva
-echo $?
-
-./target/debug/nivra typecheck \
-  examples/d7/invalid/08_immutable_member_mutation.nva
-echo $?
-```
-
-Expected codes and exit status:
-
-```text
-NOM001 → 1
-NOM003 → 1
-NOM007 → 1
-NOM008 → 1
-```
-
-## 8. Validate JSON nominal graph
-
-```bash
-./target/debug/nivra typecheck \
-  examples/d7/05_complete_nominal_tour.nva \
+  examples/d8/05_complete_generics_traits_tour.nva \
   --json | python3 -m json.tool >/dev/null
-
 echo $?
 ```
 
-Expected:
-
-```text
-0
-```
-
-## Pass message
-
-After all checks pass:
-
-```text
-GG D7 Passed
-```
+Expected: `0`.

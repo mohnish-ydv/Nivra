@@ -1,0 +1,30 @@
+module examples.d8.generic_impls
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+record Label {
+    text: String
+}
+
+impl Display for Label {
+    fn display(self: &Self) -> String {
+        self.text
+    }
+}
+
+record Box<T> {
+    value: T
+}
+
+impl<T> Box<T> where T: Display {
+    fn render(self: &Self) -> String {
+        self.value.display()
+    }
+}
+
+fn main() {
+    let boxed = Box { value: Label { text: "ready" } }
+    let output = boxed.render()
+}

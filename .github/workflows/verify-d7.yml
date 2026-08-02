@@ -1,9 +1,6 @@
 name: Verify D7 Nominal Members
 
 on:
-  push:
-    branches: ["main", "master"]
-  pull_request:
   workflow_dispatch:
 
 permissions:

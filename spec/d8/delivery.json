@@ -1,0 +1,11 @@
+{
+  "delivery": "D8",
+  "version": "0.8.0",
+  "edition": "2026",
+  "status": "implementation",
+  "title": "Generics and Trait Constraints",
+  "builds_on": "D7",
+  "rust_version": "1.74.0",
+  "workspace_crates": 8,
+  "external_rust_dependencies": 0
+}

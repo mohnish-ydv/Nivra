@@ -1,0 +1,5 @@
+module examples.d8.invalid.generic_trait_deferred
+
+trait Convert<T> {
+    fn convert(self: &Self) -> T
+}

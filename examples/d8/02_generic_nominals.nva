@@ -1,0 +1,25 @@
+module examples.d8.generic_nominals
+
+record Box<T> {
+    value: T
+}
+
+enum Maybe<T> {
+    empty
+    some(T)
+}
+
+impl<T> Box<T> {
+    fn get(self: &Self) -> T {
+        self.value
+    }
+}
+
+fn main() {
+    let inferred = Box { value: 7 }
+    let explicit = Box<String> { value: "Nivra" }
+    let number = inferred.get()
+    let text = explicit.get()
+    let present = Maybe.some(number)
+    let absent = Maybe<String>.empty
+}

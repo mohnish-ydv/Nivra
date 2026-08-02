@@ -1,0 +1,9 @@
+module examples.d8.invalid.cannot_infer_generic
+
+extern "C" {
+    fn make<T>() -> T
+}
+
+fn main() {
+    let value = make()
+}

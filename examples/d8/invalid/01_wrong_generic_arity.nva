@@ -1,0 +1,7 @@
+module examples.d8.invalid.wrong_generic_arity
+
+fn identity<T>(value: T) -> T { value }
+
+fn main() {
+    let value = identity<Int, String>(7)
+}

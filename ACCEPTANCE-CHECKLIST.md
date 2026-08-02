@@ -1,37 +1,40 @@
-# D7 Acceptance Checklist
+# D8 Acceptance Checklist
 
 ## Automated
 
-- [x] D1–D6 structural regressions remain valid.
-- [x] Workspace and lockfile use version 0.7.0.
+- [x] D1–D7 structural regressions remain valid.
+- [x] Workspace and lockfile use version 0.8.0.
 - [x] No registry dependency is introduced.
-- [x] Record construction has dedicated lossless CST nodes.
-- [x] Nominal type, field, variant, and method models exist.
-- [x] `Self` substitution and mutable receiver checks exist.
-- [x] NOM001–NOM010 are implemented and explained.
-- [x] Five valid and ten invalid D7 fixtures are included.
-- [x] At least 98 cumulative Rust tests are present.
-- [x] GitHub Actions compiles all targets before running all tests.
-- [x] CLI smoke tests cover valid programs, every nominal diagnostic, reports, and JSON.
-- [x] D6 dependency and reserved-keyword regressions are permanently guarded.
-- [x] D7 embedded Rust strings reject invalid literal suffixes before Cargo runs.
-- [x] The corrected unknown-variant suggestion fixture contains escaped inner quotes.
-- [x] Rust 1.74 formatting output from the uploaded Actions log is fully applied.
-- [x] Termux verification checks formatting without modifying committed source.
+- [x] Generic arguments have a dedicated lossless CST node.
+- [x] `<` comparisons are not misclassified as generic arguments.
+- [x] Nested closing `>>` is handled in generic lists.
+- [x] Generic functions and nominal types support explicit and inferred arguments.
+- [x] Inline bounds and `where` constraints are normalized.
+- [x] Required/default trait methods and `Self` substitution are modeled.
+- [x] Implementation signatures, required methods, coherence, and orphan rules are checked.
+- [x] Ambiguous method selection never depends on declaration order.
+- [x] Unsupported generic traits/methods fail explicitly with GEN006.
+- [x] GEN001–GEN006 and TRT001–TRT006 are implemented and explained.
+- [x] Five valid and twelve invalid D8 fixtures are included.
+- [x] At least 135 cumulative Rust tests are present.
+- [x] GitHub Actions normalizes formatting before compiling every target.
+- [x] Focused parser, type-checker, and CLI regressions run before the full suite.
+- [x] The complete suite uses `--no-fail-fast`.
+- [x] Release build, CLI smoke suite, reports, and JSON validation are gated.
 
 ## Manual
 
-- [ ] `Verify D7 Nominal Members` is green.
-- [ ] `bash scripts/termux-verify.sh` prints the D7 golden marker.
-- [ ] Complete nominal tour returns zero errors.
-- [ ] `--nominals` lists fields, variants, and methods.
-- [ ] NOM001, NOM003, NOM007, and NOM008 are manually observed.
-- [ ] Nominal JSON passes `python3 -m json.tool`.
+- [ ] `Verify D8 Generics and Traits` is green.
+- [ ] `bash scripts/termux-verify.sh` prints the D8 golden marker.
+- [ ] Complete D8 tour returns zero errors.
+- [ ] `--functions --types --nominals --traits` shows substitutions and implementations.
+- [ ] GEN001, GEN004, GEN006, TRT003, TRT005, and TRT006 are manually observed.
+- [ ] D8 JSON passes `python3 -m json.tool`.
 
 ## Gate
 
-D8 begins only after the user reports:
+D9 begins only after the user reports:
 
 ```text
-GG D7 Passed
+GG D8 Passed
 ```

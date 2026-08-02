@@ -1,0 +1,11 @@
+module examples.d8.invalid.trait_signature_mismatch
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+record User { name: String }
+
+impl Display for User {
+    fn display(self: &Self) -> Int { 1 }
+}

@@ -1,0 +1,22 @@
+{
+  "stages": [
+    "collect nominal declarations",
+    "collect traits",
+    "collect callable signatures",
+    "collect implementations",
+    "validate generic constraints",
+    "validate implementations",
+    "attach methods",
+    "type-check bodies"
+  ],
+  "syntax_nodes": [
+    "generic_parameter_list",
+    "generic_argument_list",
+    "where_clause"
+  ],
+  "cli": [
+    "nivra check",
+    "nivra typecheck --functions --types --nominals --traits",
+    "nivra typecheck --json"
+  ]
+}

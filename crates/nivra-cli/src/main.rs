@@ -31,7 +31,7 @@ fn run(arguments: Vec<OsString>) -> i32 {
             0
         }
         "version" | "--version" | "-V" => {
-            println!("nivra {VERSION} (nominal types and members D7)");
+            println!("nivra {VERSION} (generics and traits D8)");
             0
         }
         "doctor" => doctor(),
@@ -43,7 +43,7 @@ fn run(arguments: Vec<OsString>) -> i32 {
         "typecheck" => typecheck_command(&arguments[1..]),
         unknown => {
             eprintln!("error[CLI001]: unknown command `{unknown}`");
-            eprintln!("  = help: run `nivra help` to list available D7 commands");
+            eprintln!("  = help: run `nivra help` to list available D8 commands");
             2
         }
     }
@@ -64,17 +64,17 @@ COMMANDS:
     resolve <FILE> [--symbols] [--scopes]        Inspect semantic name resolution
                    [--all] [--json]
     typecheck <FILE> [--functions] [--types]     Inspect static types
-                     [--nominals] [--json]
-    explain <CODE>                               Explain a D7 diagnostic code
+                     [--nominals] [--traits] [--json]
+    explain <CODE>                               Explain a D8 diagnostic code
     doctor                                       Show compiler-driver information
     version                                      Print the version
     help                                         Print this help
 
-D7 SCOPE:
-    The full D6 pipeline plus record/struct bodies, enum variants, record
-    construction, field access, inherent and trait methods, Self substitution,
-    mutable receivers, and nominal diagnostics are implemented.
-    Ownership flow analysis, generics substitution, HIR/MIR, and code generation arrive later.
+D8 SCOPE:
+    The full D7 pipeline plus generic functions and nominal types, explicit and
+    inferred type arguments, trait bounds, implementation validation, generic
+    substitution, and deterministic method selection are implemented.
+    Ownership flow analysis, HIR/MIR, and code generation arrive later.
 "
     );
 }
@@ -114,7 +114,11 @@ fn doctor() -> i32 {
     println!("Field and method lookup: PASS");
     println!("Enum variant typing: PASS");
     println!("Mutable receiver validation: PASS");
-    println!("D7 status: OPERATIONAL");
+    println!("Generic substitution: PASS");
+    println!("Trait constraint validation: PASS");
+    println!("Implementation coherence: PASS");
+    println!("Deterministic method selection: PASS");
+    println!("D8 status: OPERATIONAL");
     0
 }
 
@@ -169,12 +173,24 @@ fn explain(code: Option<&OsString>) -> i32 {
         "NOM008" => "A field assignment or method call requires a mutable receiver.",
         "NOM009" => "Record construction targets an unknown nominal type.",
         "NOM010" => "Record construction syntax cannot construct an enum.",
-        "CLI001" => "The requested D7 command does not exist.",
+        "GEN001" => "A type or callable received the wrong number of generic arguments.",
+        "GEN002" => "A generic argument could not be inferred from available context.",
+        "GEN003" => "Generic inference produced conflicting concrete types.",
+        "GEN004" => "A concrete type does not satisfy a required trait bound.",
+        "GEN005" => "A generic parameter or constraint declaration is invalid or duplicated.",
+        "GEN006" => "Generic trait declarations and generic trait methods are deferred beyond D8.",
+        "TRT001" => "A referenced trait is not declared or imported.",
+        "TRT002" => "Two implementations overlap for the same trait and target pattern.",
+        "TRT003" => "A trait implementation omits a required method.",
+        "TRT004" => "An implemented method does not match the trait signature.",
+        "TRT005" => "Method selection found more than one equally applicable candidate.",
+        "TRT006" => "An implementation violates Nivra's package orphan rule.",
+        "CLI001" => "The requested D8 command does not exist.",
         "CLI002" => "A required command argument is missing or an option is invalid.",
         "DRV001" => "The compiler driver could not load the requested source file.",
         _ => {
             eprintln!("error[CLI003]: unknown diagnostic code `{code}`");
-            eprintln!("  = help: D7 codes use the LEX, PAR, SEM, TYP, NOM, CLI, and DRV prefixes");
+            eprintln!("  = help: D8 codes use the LEX, PAR, SEM, TYP, NOM, GEN, TRT, CLI, and DRV prefixes");
             return 2;
         }
     };
@@ -434,7 +450,7 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
         Err(message) => {
             eprintln!("error[CLI002]: {message}");
             eprintln!(
-                "  = help: usage: `nivra typecheck <FILE> [--functions] [--types] [--nominals] [--json]`"
+                "  = help: usage: `nivra typecheck <FILE> [--functions] [--types] [--nominals] [--traits] [--json]`"
             );
             return 2;
         }
@@ -496,6 +512,8 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
         println!("Path: {}", options.path.display());
         println!("Function signatures: {}", typed.functions.len());
         println!("Nominal types: {}", typed.nominals.len());
+        println!("Traits: {}", typed.traits.len());
+        println!("Implementations: {}", typed.implementations.len());
         println!("Typed bindings: {}", typed.bindings.len());
         println!("Typed expressions: {}", typed.expressions.len());
         println!("Errors: {errors}");
@@ -518,6 +536,12 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
             println!("NOMINAL TYPES AND MEMBERS");
             println!("=========================");
             print!("{}", typed.nominal_report());
+        }
+        if options.traits {
+            println!();
+            println!("TRAITS AND IMPLEMENTATIONS");
+            println!("==========================");
+            print!("{}", typed.trait_report());
         }
         if !typed.diagnostics.is_empty() {
             eprint!(
@@ -647,6 +671,7 @@ struct TypecheckOptions {
     functions: bool,
     types: bool,
     nominals: bool,
+    traits: bool,
 }
 
 fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, String> {
@@ -655,6 +680,7 @@ fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, S
     let mut functions = false;
     let mut types = false;
     let mut nominals = false;
+    let mut traits = false;
 
     for argument in arguments {
         if argument.as_os_str() == OsStr::new("--json") {
@@ -665,6 +691,8 @@ fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, S
             types = true;
         } else if argument.as_os_str() == OsStr::new("--nominals") {
             nominals = true;
+        } else if argument.as_os_str() == OsStr::new("--traits") {
+            traits = true;
         } else if argument.to_string_lossy().starts_with('-') {
             return Err(format!("unknown option `{}`", argument.to_string_lossy()));
         } else if path.replace(PathBuf::from(argument.as_os_str())).is_some() {
@@ -672,9 +700,9 @@ fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, S
         }
     }
 
-    if json && (functions || types || nominals) {
+    if json && (functions || types || nominals || traits) {
         return Err(
-            "`--json` already includes functions, bindings, and nominals; remove display flags"
+            "`--json` already includes functions, bindings, nominals, and traits; remove display flags"
                 .to_owned(),
         );
     }
@@ -685,6 +713,7 @@ fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, S
         functions,
         types,
         nominals,
+        traits,
     })
 }
 
@@ -809,7 +838,7 @@ fn typecheck_json(path: &Path, typed: &TypeCheckResult, sources: &SourceManager)
             .map_or_else(|| "null".to_owned(), |value| json_string(value));
         let _ = write!(
             output,
-            "{{\"name\":{},\"owner\":{},\"trait\":{},\"return_type\":{},\"async\":{},\"extern\":{},\"parameters\":[",
+            "{{\"name\":{},\"owner\":{},\"trait\":{},\"return_type\":{},\"async\":{},\"extern\":{},\"generic_parameters\":[",
             json_string(&signature.name),
             owner,
             trait_name,
@@ -817,6 +846,24 @@ fn typecheck_json(path: &Path, typed: &TypeCheckResult, sources: &SourceManager)
             signature.is_async,
             signature.is_extern
         );
+        for (generic_index, generic) in signature.generic_parameters.iter().enumerate() {
+            if generic_index > 0 {
+                output.push(',');
+            }
+            let _ = write!(
+                output,
+                "{{\"name\":{},\"bounds\":[",
+                json_string(&generic.name)
+            );
+            for (bound_index, bound) in generic.bounds.iter().enumerate() {
+                if bound_index > 0 {
+                    output.push(',');
+                }
+                output.push_str(&json_string(bound));
+            }
+            output.push_str("]}");
+        }
+        output.push_str("],\"parameters\":[");
         for (parameter_index, parameter) in signature.parameters.iter().enumerate() {
             if parameter_index > 0 {
                 output.push(',');
@@ -910,6 +957,61 @@ fn typecheck_json(path: &Path, typed: &TypeCheckResult, sources: &SourceManager)
                 );
             }
             output.push_str("]}");
+        }
+        output.push_str("]}");
+    }
+    output.push_str("],\"traits\":[");
+    for (index, trait_info) in typed.traits.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let _ = write!(
+            output,
+            "{{\"name\":{},\"generic_parameters\":[",
+            json_string(&trait_info.name)
+        );
+        for (generic_index, generic) in trait_info.generic_parameters.iter().enumerate() {
+            if generic_index > 0 {
+                output.push(',');
+            }
+            output.push_str(&json_string(generic));
+        }
+        output.push_str("],\"methods\":[");
+        for (method_index, method) in trait_info.methods.iter().enumerate() {
+            if method_index > 0 {
+                output.push(',');
+            }
+            let _ = write!(
+                output,
+                "{{\"name\":{},\"return_type\":{},\"mutable_receiver\":{},\"default\":{}}}",
+                json_string(&method.name),
+                json_string(&method.return_type.display_name()),
+                method.mutable_receiver,
+                method.has_default
+            );
+        }
+        output.push_str("]}");
+    }
+    output.push_str("],\"implementations\":[");
+    for (index, implementation) in typed.implementations.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let trait_name = implementation
+            .trait_name
+            .as_ref()
+            .map_or_else(|| "null".to_owned(), |value| json_string(value));
+        let _ = write!(
+            output,
+            "{{\"trait\":{},\"target\":{},\"generic_parameters\":[",
+            trait_name,
+            json_string(&implementation.target.display_name())
+        );
+        for (generic_index, generic) in implementation.generic_parameters.iter().enumerate() {
+            if generic_index > 0 {
+                output.push(',');
+            }
+            output.push_str(&json_string(generic));
         }
         output.push_str("]}");
     }

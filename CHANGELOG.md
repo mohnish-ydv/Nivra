@@ -1,5 +1,27 @@
 # Changelog
 
+## D8 — 2026-08-02
+
+### Added
+
+- generic functions and nominal types
+- explicit and locally inferred generic arguments
+- nested generic argument CST support
+- recursive generic substitution
+- inline and where-clause trait constraints
+- required and default trait methods
+- implementation validation, coherence, and orphan checks
+- deterministic method selection
+- GEN001–GEN006 and TRT001–TRT006 diagnostics
+- D8 reports, fixtures, smoke tests, and GitHub Actions
+
+### Changed
+
+- workspace version to 0.8.0
+- typecheck reports now include traits and implementations
+- runner normalizes Rust formatting before compile-all-targets
+- complete tests use --no-fail-fast
+
 ## D7 Formatting and Release Fix — 2026-08-02
 
 ### Fixed

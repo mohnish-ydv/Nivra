@@ -1,0 +1,24 @@
+module examples.d8.trait_bounds
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+record User {
+    name: String
+}
+
+impl Display for User {
+    fn display(self: &Self) -> String {
+        self.name
+    }
+}
+
+fn render<T: Display>(value: T) -> String {
+    value.display()
+}
+
+fn main() {
+    let user = User { name: "Nivra" }
+    let text = render(user)
+}

@@ -1,0 +1,9 @@
+module examples.d8.invalid.invalid_generic_constraint
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+fn choose<T>(value: T) -> T where U: Display {
+    value
+}

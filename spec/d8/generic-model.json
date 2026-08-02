@@ -1,0 +1,36 @@
+{
+  "generic_parameters": [
+    "functions",
+    "records",
+    "structs",
+    "enums",
+    "inherent impls",
+    "trait impls"
+  ],
+  "argument_modes": [
+    "explicit",
+    "locally inferred"
+  ],
+  "substitution_targets": [
+    "parameters",
+    "returns",
+    "fields",
+    "variants",
+    "methods",
+    "implementation targets"
+  ],
+  "rules": [
+    "exact generic arity",
+    "conflict detection",
+    "no unconstrained inference",
+    "nested generic types",
+    "where-clause bounds"
+  ],
+  "deferred": [
+    "generic traits",
+    "generic trait methods",
+    "specialization",
+    "higher-kinded types",
+    "default type parameters"
+  ]
+}

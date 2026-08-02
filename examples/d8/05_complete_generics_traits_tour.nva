@@ -1,0 +1,51 @@
+module examples.d8.complete_generics_traits_tour
+
+trait Display {
+    fn display(self: &Self) -> String
+
+    fn debug(self: &Self) -> String {
+        self.display()
+    }
+}
+
+record User {
+    name: String
+}
+
+record Box<T> {
+    value: T
+}
+
+enum LoadState<T> {
+    idle
+    ready(T)
+}
+
+impl Display for User {
+    fn display(self: &Self) -> String {
+        self.name
+    }
+}
+
+impl<T> Box<T> where T: Display {
+    fn render(self: &Self) -> String {
+        self.value.debug()
+    }
+}
+
+fn identity<T>(value: T) -> T {
+    value
+}
+
+fn render<T>(value: T) -> String where T: Display {
+    value.display()
+}
+
+fn main() {
+    let user = User { name: "Nivra Developer" }
+    let debug_text = user.debug()
+    let boxed = Box<User> { value: user }
+    let output = boxed.render()
+    let copied = identity<String>(output)
+    let state = LoadState.ready(copied)
+}

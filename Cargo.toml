@@ -12,13 +12,13 @@ members = [
 ]
 
 [workspace.package]
-version = "0.7.0"
+version = "0.8.0"
 edition = "2021"
 rust-version = "1.74"
 license = "Apache-2.0"
 authors = ["Mohnish Raj"]
 repository = "https://github.com/mohnish-ydv/Nivra"
-description = "Nivra programming language nominal types and member checking foundation"
+description = "Nivra programming language generics and trait constraints foundation"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

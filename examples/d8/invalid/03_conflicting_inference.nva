@@ -1,0 +1,7 @@
+module examples.d8.invalid.conflicting_inference
+
+fn same<T>(left: T, right: T) -> T { left }
+
+fn main() {
+    let value = same(1, "one")
+}

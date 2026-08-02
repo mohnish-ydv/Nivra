@@ -1,0 +1,6 @@
+module examples.d8.invalid.orphan_rule
+
+use external.Display
+use external.User
+
+impl Display for User {}

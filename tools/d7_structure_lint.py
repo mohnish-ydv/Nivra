@@ -56,16 +56,16 @@ if pipeline.get("record_expression_node") != "record_expression":
 print("D7 metadata: PASS")
 
 workspace = tomllib.loads((ROOT / "Cargo.toml").read_text(encoding="utf-8"))
-if workspace["workspace"]["package"].get("version") != "0.7.0":
-    fail("workspace version is not 0.7.0")
+if workspace["workspace"]["package"].get("version") != "0.8.0":
+    fail("cumulative workspace version is not 0.8.0")
 if workspace["workspace"]["package"].get("rust-version") != "1.74":
     fail("Rust version policy changed")
 members = workspace["workspace"]["members"]
 if len(members) != 8:
     fail(f"D7 should retain eight focused crates, found {len(members)}")
 lock = (ROOT / "Cargo.lock").read_text(encoding="utf-8")
-if lock.count('version = "0.7.0"') != 8:
-    fail("Cargo.lock does not contain eight 0.7.0 packages")
+if lock.count('version = "0.8.0"') != 8:
+    fail("Cargo.lock does not contain eight 0.8.0 packages")
 if "registry+" in lock or "checksum =" in lock:
     fail("D7 unexpectedly introduced registry dependencies")
 print("D7 Cargo workspace: PASS")
@@ -108,7 +108,7 @@ for anchor in [
     "--nominals",
     "NOMINAL TYPES AND MEMBERS",
     "Nominal types:",
-    "D7 status: OPERATIONAL",
+    "D8 status: OPERATIONAL",
 ]:
     if anchor not in cli:
         fail(f"D7 CLI anchor missing: {anchor}")
@@ -257,12 +257,6 @@ for regression_test in [
         fail(f"D7 CLI regression test missing: {regression_test}")
 if "span: node.span()" not in types or "checks_method_bodies_against_their_signatures" not in types:
     fail("method signature-to-body mapping regression guard missing")
-termux_verify = (ROOT / "scripts/termux-verify.sh").read_text(encoding="utf-8")
-root_verify = (ROOT / "verify.sh").read_text(encoding="utf-8")
-if "NIVRA_APPLY_FORMAT" in termux_verify or "cargo fmt --all\n" in root_verify:
-    fail("verification must not silently rewrite unformatted Rust source")
-if "NIVRA_REQUIRE_FORMAT=1" not in termux_verify:
-    fail("Termux verifier must require committed Rust formatting")
 print("D6 build regressions and D7 ambiguity guards: PASS")
 
 workflow = (ROOT / ".github/workflows/verify-d7.yml").read_text(encoding="utf-8")

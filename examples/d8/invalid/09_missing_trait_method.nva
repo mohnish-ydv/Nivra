@@ -1,0 +1,9 @@
+module examples.d8.invalid.missing_trait_method
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+record User { name: String }
+
+impl Display for User {}

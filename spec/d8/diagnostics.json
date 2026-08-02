@@ -1,0 +1,52 @@
+{
+  "codes": [
+    {
+      "code": "GEN001",
+      "title": "Wrong generic arity"
+    },
+    {
+      "code": "GEN002",
+      "title": "Generic argument cannot be inferred"
+    },
+    {
+      "code": "GEN003",
+      "title": "Conflicting generic inference"
+    },
+    {
+      "code": "GEN004",
+      "title": "Unsatisfied trait bound"
+    },
+    {
+      "code": "GEN005",
+      "title": "Invalid generic declaration"
+    },
+    {
+      "code": "GEN006",
+      "title": "Deferred generic trait feature"
+    },
+    {
+      "code": "TRT001",
+      "title": "Unknown trait"
+    },
+    {
+      "code": "TRT002",
+      "title": "Conflicting implementation"
+    },
+    {
+      "code": "TRT003",
+      "title": "Missing required method"
+    },
+    {
+      "code": "TRT004",
+      "title": "Trait signature mismatch"
+    },
+    {
+      "code": "TRT005",
+      "title": "Ambiguous method selection"
+    },
+    {
+      "code": "TRT006",
+      "title": "Orphan-rule violation"
+    }
+  ]
+}

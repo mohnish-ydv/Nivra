@@ -17,7 +17,7 @@ fn temporary_source(name: &str, content: &str) -> PathBuf {
 }
 
 #[test]
-fn version_reports_d7_foundation() {
+fn version_reports_d8_foundation() {
     let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
         .arg("--version")
         .output()
@@ -25,8 +25,8 @@ fn version_reports_d7_foundation() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("nivra 0.7.0"));
-    assert!(stdout.contains("D7"));
+    assert!(stdout.contains("nivra 0.8.0"));
+    assert!(stdout.contains("D8"));
 }
 
 #[test]
@@ -444,4 +444,191 @@ fn explain_supports_nominal_diagnostics() {
 
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("member"));
+}
+
+#[test]
+fn check_accepts_inferred_generic_function_call() {
+    let path = temporary_source(
+        "generic_call.nva",
+        "module test\nfn identity<T>(value: T) -> T { value }\nfn main() { let number = identity(7)\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stdout).contains("0 errors"));
+}
+
+#[test]
+fn check_rejects_unsatisfied_generic_trait_bound() {
+    let path = temporary_source(
+        "trait_bound.nva",
+        "module test\ntrait Display { fn display(self: &Self) -> String }\nfn render<T: Display>(value: T) -> String { value.display() }\nfn main() { render(7) }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("GEN004"));
+}
+
+#[test]
+fn typecheck_reports_traits_and_implementations() {
+    let path = temporary_source(
+        "traits.nva",
+        "module test\ntrait Display { fn display(self: &Self) -> String }\nrecord User { name: String }\nimpl Display for User { fn display(self: &Self) -> String { self.name } }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("typecheck")
+        .arg(&path)
+        .arg("--traits")
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("trait Display"));
+    assert!(stdout.contains("impl Display for User"));
+}
+
+#[test]
+fn typecheck_json_contains_generic_and_trait_graphs() {
+    let path = temporary_source(
+        "generic_trait_json.nva",
+        "module test\ntrait Display { fn display(self: &Self) -> String }\nfn identity<T>(value: T) -> T { value }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("typecheck")
+        .arg(&path)
+        .arg("--json")
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("\"generic_parameters\":["));
+    assert!(stdout.contains("\"traits\":["));
+    assert!(stdout.contains("\"implementations\":["));
+}
+
+#[test]
+fn explain_supports_d8_generic_and_trait_diagnostics() {
+    for code in ["GEN001", "GEN004", "GEN006", "TRT003", "TRT006"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+            .arg("explain")
+            .arg(code)
+            .output()
+            .unwrap_or_else(|error| panic!("{error}"));
+        assert!(output.status.success());
+        assert!(!output.stdout.is_empty());
+    }
+}
+
+#[test]
+fn check_accepts_explicit_generic_function_call() {
+    let path = temporary_source(
+        "explicit_generic_call.nva",
+        "module test\nfn identity<T>(value: T) -> T { value }\nfn main() { let number = identity<Int>(7)\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stdout).contains("0 errors"));
+}
+
+
+#[test]
+fn check_rejects_invalid_generic_constraint_parameter() {
+    let path = temporary_source(
+        "invalid_generic_constraint.nva",
+        "module test\ntrait Display { fn display(self: &Self) -> String }\nfn choose<T>(value: T) -> T where U: Display { value }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("GEN005"));
+}
+
+#[test]
+fn check_accepts_nested_explicit_generic_argument() {
+    let path = temporary_source(
+        "nested_generic_argument.nva",
+        "module test\nextern \"C\" { fn make<T>() -> T }\nfn main() { let items = make<List<Int>>() }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn check_accepts_concrete_default_trait_method() {
+    let path = temporary_source(
+        "default_trait_method.nva",
+        "module test\ntrait Display { fn display(self: &Self) -> String\n fn debug(self: &Self) -> String { self.display() } }\nrecord User { name: String }\nimpl Display for User { fn display(self: &Self) -> String { self.name } }\nfn main() { let user = User { name: \"Nivra\" }\n let text = user.debug()\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn check_rejects_generic_trait_declaration() {
+    let path = temporary_source(
+        "generic_trait.nva",
+        "module test\ntrait Convert<T> { fn convert(self: &Self) -> T }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("GEN006"));
 }

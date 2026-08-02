@@ -1,77 +1,48 @@
-# D7 Delivery Report
+# D8 Delivery Report
 
-## Delivery identity
+## Delivery
 
-- Delivery: D7
-- Version: 0.7.0
-- Title: Nominal Types and Member Checking
-- Builds on: verified D1–D6
-- Workspace crates: 8
-- Third-party Rust dependencies: 0
-- Minimum Rust: 1.74
-- Status before user verification: VERIFIED-FORMAT RELEASE CANDIDATE
+- Delivery: D8
+- Version: 0.8.0
+- Builds on: verified D7
+- Scope: generic substitution and non-generic trait constraints
+- Workspace: eight local Rust crates
+- Third-party Rust dependencies: none
+- Rust policy: 1.74
 
-## GitHub Actions build correction
+## Implemented outcomes
 
-The first D7 CI run exposed one Rust source-syntax defect in a unit test:
-an embedded Nivra string used unescaped quotes around `done`. The corrected
-fixture uses `State.redy(\"done\")`; `redy` remains intentionally misspelled
-to test NOM001 suggestions. An early Rust-string suffix preflight now prevents
-this class of defect from reaching Cargo compilation again.
+1. Generic-parameter and generic-argument CST support.
+2. Generic functions with explicit and local inference.
+3. Generic records, structs, enums, and implementation targets.
+4. Recursive substitution through all D8 type forms.
+5. Inline trait bounds and `where` clauses.
+6. Required and default trait methods.
+7. Trait implementation indexing and `Self` replacement.
+8. Required-method and signature validation.
+9. Exact-pattern coherence and package orphan checking.
+10. Deterministic method lookup with ambiguity diagnostics.
+11. Twelve new diagnostic codes and dedicated fixtures.
+12. Human/JSON reports, CLI smoke tests, and cumulative CI.
 
-## Final GitHub Actions corrections
+## Reliability changes after D7
 
-The no-fail-fast run compiled every target and exposed two remaining test failures.
-The final revision aligns the NOM001 explanation with its CLI contract and fixes
-the parser's empty-constructor leading-trivia ambiguity so enum record syntax
-reliably reaches NOM010 validation. Dedicated parser, type-checker, and CLI tests
-now guard both cases before the full suite.
+D8 does not make committed formatting a pre-compilation failure. The runner first
+executes `cargo fmt --all`, then compiles every workspace target. Focused parser,
+type, and CLI regressions run before the complete `--no-fail-fast` suite. This
+prevents a cosmetic formatting mismatch from hiding compiler or behavior failures.
 
+## Deliberate boundaries
 
-## Final formatting correction
+- Generic traits and generic trait methods emit GEN006.
+- Coherence checks exact canonical target patterns, not specialization overlap.
+- Trait-qualified call syntax is not yet available.
+- Ownership/move/borrow flow is not part of D8.
+- HIR, MIR, C11 generation, LLVM generation, and executable output are future work.
 
-The latest uploaded run passed Rust toolchain installation, Cargo dependency
-validation, and D7 structural preflight, then stopped exclusively at
-`cargo fmt --all -- --check`. The complete Rust 1.74 rustfmt output from that run
-contained 159 hunks across eight Rust files. Every reported hunk is applied in
-this revision. Termux verification no longer auto-formats source, so formatting
-drift cannot be hidden locally.
+## Verification evidence bundled
 
-## Implemented
-
-1. Lossless record-construction parsing.
-2. Record, struct, and enum body indexing.
-3. Field types, defaults, and visibility metadata.
-4. Unit and tuple-payload enum variant typing.
-5. Inherent and trait implementation method collection.
-6. `Self` substitution in method signatures.
-7. Field and method lookup on nominal values.
-8. Mutable receiver and member-assignment validation.
-9. Constructor missing/unknown/duplicate/type checks.
-10. NOM001–NOM010 diagnostics.
-11. `nivra typecheck --nominals`.
-12. Nominal data in JSON output.
-13. Cumulative D1–D7 CI and Termux verification.
-
-## Regression protections
-
-D7 retains permanent guards for both D6 failures:
-
-- `nivra-types` declares its parser test dependency.
-- reserved keyword `ok` is never used as a normal binding in the primitive test.
-
-D7 also adds a parser ambiguity test proving that `if enabled { ... }` is not
-misclassified as a record constructor.
-
-## Deliberate limitations
-
-- Generic nominal constructors use recovery types; complete substitution is D8.
-- Cross-module visibility checks are deferred.
-- Trait selection and overlapping implementation analysis are deferred.
-- Record-payload enum variants are not field-typed yet.
-- No ownership-flow checker or code generation is claimed.
-
-## Acceptance
-
-The delivery passes only after GitHub Actions is green and the manual Termux
-verification ends with `★★★★★ D7 GOLDEN BUILD`.
+The archive includes structural validation for all cumulative deliveries, Cargo
+and lockfile graph checks, Rust lexical integrity checks, 135 test declarations,
+17 D8 fixtures, workflow contracts, shell/Python validation, and clean archive
+verification. GitHub Actions remains the authoritative Rust 1.74 compile/test gate.

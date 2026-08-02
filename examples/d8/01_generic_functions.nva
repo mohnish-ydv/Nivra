@@ -1,0 +1,15 @@
+module examples.d8.generic_functions
+
+fn identity<T>(value: T) -> T {
+    value
+}
+
+fn pair<T, U>(first: T, second: U) -> (T, U) {
+    (first, second)
+}
+
+fn main() {
+    let number = identity(7)
+    let title = identity<String>("Nivra")
+    let entry = pair(number, title)
+}

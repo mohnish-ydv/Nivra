@@ -85,8 +85,8 @@ required_members = {
 if members != required_members:
     fail(f"D6 workspace members mismatch: {sorted(members ^ required_members)}")
 package = workspace["workspace"]["package"]
-if package.get("version") != "0.7.0":
-    fail("workspace version is not 0.7.0")
+if package.get("version") != "0.8.0":
+    fail("workspace version is not 0.8.0")
 if package.get("rust-version") != "1.74":
     fail("minimum Rust version changed unexpectedly")
 if workspace["workspace"]["lints"]["rust"].get("unsafe_code") != "forbid":
@@ -135,10 +135,10 @@ for package_name in [
 ]:
     if f'name = "{package_name}"' not in lock:
         fail(f"Cargo.lock missing {package_name}")
-if lock.count('version = "0.7.0"') != 8:
-    fail("Cargo.lock does not contain eight 0.7.0 packages")
+if lock.count('version = "0.8.0"') != 8:
+    fail("Cargo.lock does not contain eight 0.8.0 packages")
 types_lock_match = re.search(
-    r'name = "nivra-types"\nversion = "0\.7\.0"\ndependencies = \[\n(?P<body>.*?)\n\]',
+    r'name = "nivra-types"\nversion = "0\.8\.0"\ndependencies = \[\n(?P<body>.*?)\n\]',
     lock,
     re.DOTALL,
 )
@@ -308,7 +308,7 @@ for rust_path in all_rust_paths:
             stripped
             and stripped == previous
             and not stripped.endswith((";", ",", "{", "}"))
-            and stripped not in {")", "]"}
+            and stripped not in {")", "]", "})"}
             and not stripped.startswith("//")
         ):
             fail(

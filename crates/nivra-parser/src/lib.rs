@@ -317,6 +317,9 @@ impl<'a> Parser<'a> {
 
     fn parse_impl(&mut self, mut children: Vec<SyntaxElement>) -> SyntaxNode {
         self.bump_significant(&mut children);
+        if self.at(TokenKind::Less) {
+            children.push(SyntaxElement::Node(self.parse_generic_parameters()));
+        }
         while !self.at(TokenKind::LeftBrace) && !self.at(TokenKind::Eof) {
             if self.at_keyword(Keyword::Where) {
                 children.push(SyntaxElement::Node(self.parse_where_clause()));
@@ -352,6 +355,7 @@ impl<'a> Parser<'a> {
         if self.at(TokenKind::Arrow) {
             self.bump_significant(&mut children);
             children.push(SyntaxElement::Node(self.parse_type_until(&[
+                TokenKind::Keyword(Keyword::Where),
                 TokenKind::LeftBrace,
                 TokenKind::RightBrace,
                 TokenKind::Semicolon,
@@ -406,6 +410,18 @@ impl<'a> Parser<'a> {
             "generic parameter list",
         );
         self.node(SyntaxKind::GenericParameterList, children)
+    }
+
+    fn parse_generic_arguments(&mut self) -> SyntaxNode {
+        let mut children = Vec::new();
+        self.consume_balanced(
+            &mut children,
+            TokenKind::Less,
+            TokenKind::Greater,
+            "PAR003",
+            "generic argument list",
+        );
+        self.node(SyntaxKind::GenericArgumentList, children)
     }
 
     fn parse_parameter_list(&mut self) -> SyntaxNode {
@@ -680,6 +696,9 @@ impl<'a> Parser<'a> {
                 let mut children = vec![SyntaxElement::Node(left)];
                 self.bump_significant(&mut children);
                 self.expect_identifier_or_keyword(&mut children, "member name");
+                if self.at(TokenKind::Less) && self.looks_like_generic_argument_list() {
+                    children.push(SyntaxElement::Node(self.parse_generic_arguments()));
+                }
                 left = self.node(SyntaxKind::MemberExpression, children);
                 continue;
             }
@@ -791,6 +810,9 @@ impl<'a> Parser<'a> {
         while self.at(TokenKind::ColonColon) {
             self.bump_significant(&mut children);
             self.expect_identifier_or_keyword(&mut children, "path segment");
+        }
+        if self.at(TokenKind::Less) && self.looks_like_generic_argument_list() {
+            children.push(SyntaxElement::Node(self.parse_generic_arguments()));
         }
         self.node(SyntaxKind::NameExpression, children)
     }
@@ -951,6 +973,62 @@ impl<'a> Parser<'a> {
             children.push(SyntaxElement::Node(self.parse_expression(0)));
         }
         self.node(SyntaxKind::ClosureExpression, children)
+    }
+
+    fn looks_like_generic_argument_list(&self) -> bool {
+        if !self.at(TokenKind::Less) {
+            return false;
+        }
+
+        let mut index = self.position;
+        let mut depth = 0usize;
+        while let Some(token) = self.tokens.get(index) {
+            if token.kind.is_trivia() {
+                index += 1;
+                continue;
+            }
+            match token.kind {
+                TokenKind::Less => depth += 1,
+                TokenKind::Greater => {
+                    depth = depth.saturating_sub(1);
+                    if depth == 0 {
+                        return self.tokens[index + 1..]
+                            .iter()
+                            .find(|next| !next.kind.is_trivia())
+                            .is_some_and(|next| {
+                                matches!(
+                                    next.kind,
+                                    TokenKind::LeftParen
+                                        | TokenKind::LeftBrace
+                                        | TokenKind::Dot
+                                        | TokenKind::ColonColon
+                                )
+                            });
+                    }
+                }
+                TokenKind::ShiftRight if depth >= 2 => {
+                    depth -= 2;
+                    if depth == 0 {
+                        return self.tokens[index + 1..]
+                            .iter()
+                            .find(|next| !next.kind.is_trivia())
+                            .is_some_and(|next| {
+                                matches!(
+                                    next.kind,
+                                    TokenKind::LeftParen
+                                        | TokenKind::LeftBrace
+                                        | TokenKind::Dot
+                                        | TokenKind::ColonColon
+                                )
+                            });
+                    }
+                }
+                TokenKind::Eof | TokenKind::Newline if depth == 0 => return false,
+                _ => {}
+            }
+            index += 1;
+        }
+        false
     }
 
     fn looks_like_record_expression(&self, left: &SyntaxNode) -> bool {
@@ -1593,4 +1671,74 @@ mod tests {
         assert_eq!(result.root.lossless_text(&source), text);
         assert!(contains_kind(&result.root, SyntaxKind::RecordExpression));
     }
+
+    #[test]
+    fn parses_explicit_generic_call_arguments() {
+        let text = "fn identity<T>(value: T) -> T { value }\nfn main() { let value = identity<Int>(1) }\n";
+        let (source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(result.root.lossless_text(&source), text);
+        assert!(contains_kind(
+            &result.root,
+            SyntaxKind::GenericArgumentList
+        ));
+        assert!(contains_kind(&result.root, SyntaxKind::CallExpression));
+    }
+
+    #[test]
+    fn keeps_comparisons_out_of_generic_argument_parsing() {
+        let text = "fn main() { let value = left < right && right > limit }\n";
+        let (_source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert!(!contains_kind(
+            &result.root,
+            SyntaxKind::GenericArgumentList
+        ));
+        assert!(contains_kind(&result.root, SyntaxKind::BinaryExpression));
+    }
+
+    #[test]
+    fn preserves_impl_generic_parameter_nodes() {
+        let text = "record Box<T> { value: T }\nimpl<T> Box<T> { fn get(self: &Self) -> T { self.value } }\n";
+        let (source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(result.root.lossless_text(&source), text);
+        let count = format!("{:?}", result.root)
+            .matches("GenericParameterList")
+            .count();
+        assert!(count >= 2);
+    }
+
+    #[test]
+    fn parses_where_clause_after_return_type() {
+        let text = "fn render<T>(value: T) -> String where T: Display { value.display() }\n";
+        let (source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(result.root.lossless_text(&source), text);
+        assert!(contains_kind(&result.root, SyntaxKind::WhereClause));
+        assert!(contains_kind(&result.root, SyntaxKind::TypeReference));
+    }
+
+    #[test]
+    fn parses_explicit_generic_method_arguments() {
+        let text = "fn main() { value.convert<String>() }\n";
+        let (source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(result.root.lossless_text(&source), text);
+        assert!(contains_kind(&result.root, SyntaxKind::MemberExpression));
+        assert!(contains_kind(&result.root, SyntaxKind::GenericArgumentList));
+    }
+
+    #[test]
+    fn parses_nested_generic_arguments_with_shift_right_token() {
+        let text = "fn main() { let value = make<Box<List<Int>>>() }\n";
+        let (source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(result.root.lossless_text(&source), text);
+        assert!(contains_kind(
+            &result.root,
+            SyntaxKind::GenericArgumentList
+        ));
+    }
+
 }

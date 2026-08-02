@@ -1,0 +1,15 @@
+module examples.d8.invalid.conflicting_implementation
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+record User { name: String }
+
+impl Display for User {
+    fn display(self: &Self) -> String { self.name }
+}
+
+impl Display for User {
+    fn display(self: &Self) -> String { self.name }
+}

@@ -1,0 +1,5 @@
+module examples.d8.invalid.unknown_trait
+
+fn render<T: MissingTrait>(value: T) -> T {
+    value
+}

@@ -1,0 +1,24 @@
+{
+  "traits": [
+    "required methods",
+    "default methods",
+    "Self substitution",
+    "immutable and mutable receivers"
+  ],
+  "implementations": [
+    "signature validation",
+    "required-method validation",
+    "exact-pattern coherence",
+    "package orphan rule"
+  ],
+  "selection": [
+    "inherent method priority",
+    "single applicable trait method",
+    "ambiguity diagnostic"
+  ],
+  "bound_sources": [
+    "inline parameter bounds",
+    "where clauses",
+    "implementation where clauses"
+  ]
+}

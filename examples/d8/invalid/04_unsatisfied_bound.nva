@@ -1,0 +1,13 @@
+module examples.d8.invalid.unsatisfied_bound
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+fn render<T: Display>(value: T) -> String {
+    value.display()
+}
+
+fn main() {
+    let text = render(7)
+}

@@ -15,3 +15,10 @@ D7-NIVRA-DOCTOR.txt
 D7-NOMINAL-REPORT.txt
 D7-TYPECHECK.json
 .nivra-d7-smoke/
+.nivra-d8-smoke/
+.nivra-d8-report.txt
+.nivra-d8-graph.json
+D8-*-REPORT.txt
+D8-NIVRA-DOCTOR.txt
+D8-TYPE-REPORT.txt
+D8-TYPE-GRAPH.json
