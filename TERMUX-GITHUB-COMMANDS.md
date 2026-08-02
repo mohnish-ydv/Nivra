@@ -4,26 +4,26 @@
 
 ```bash
 cd ~/storage/downloads
-rm -rf Nivra-D7-Nominal-Members-GitHub-Ready
-unzip Nivra-D7-Nominal-Members-GitHub-Ready.zip
+rm -rf Nivra-D7-Nominal-Members-Build-Fix-GitHub-Ready
+unzip Nivra-D7-Nominal-Members-Build-Fix-GitHub-Ready.zip
 ```
 
-## Preserve D6 Git history
+## Preserve the previous D7 Git history
 
 ```bash
-mv Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready/.git \
-   Nivra-D7-Nominal-Members-GitHub-Ready/.git
+mv Nivra-D7-Nominal-Members-GitHub-Ready/.git \
+   Nivra-D7-Nominal-Members-Build-Fix-GitHub-Ready/.git
 ```
 
 ## Commit and push
 
 ```bash
-cd ~/storage/downloads/Nivra-D7-Nominal-Members-GitHub-Ready
+cd ~/storage/downloads/Nivra-D7-Nominal-Members-Build-Fix-GitHub-Ready
 
 git config --global --add safe.directory "$PWD"
 
 git add -A
-git commit -m "feat: implement Nivra D7 nominal types and members"
+git commit -m "fix: repair D7 Rust test string and preflight"
 git push
 ```
 
@@ -39,7 +39,7 @@ GitHub → Nivra → Actions → Verify D7 Nominal Members
 pkg update -y
 pkg install rust python git unzip -y
 
-cd ~/storage/downloads/Nivra-D7-Nominal-Members-GitHub-Ready
+cd ~/storage/downloads/Nivra-D7-Nominal-Members-Build-Fix-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 

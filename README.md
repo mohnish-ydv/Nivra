@@ -1,5 +1,8 @@
 # Nivra D7 — Nominal Types and Member Checking
 
+> **Build-fix revision:** repairs the GitHub Actions Rust string-literal failure
+> in the unknown-enum-variant suggestion test and adds an early source preflight.
+
 Nivra is a statically typed, compiled general-purpose language designed to
 deliver native power without recurring developer pain.
 

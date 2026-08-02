@@ -7,7 +7,7 @@
 - Cargo/TOML and lockfile consistency
 - local-only dependency graph
 - Rust 1.74 compatibility marker scan
-- Rust delimiter and archive-corruption scan
+- Rust delimiter, string-suffix, and archive-corruption scan
 - shell syntax validation
 - Python tool compilation
 - 5 valid and 10 invalid fixture inventory
@@ -36,3 +36,10 @@ The delivery is not declared user-passed until that workflow and phone checks ar
 - method signature-to-body span mapping normalized to the declaration span
 - dedicated method return-type regression test added
 - record-expression versus `if`-block ambiguity regression retained
+
+## Build-fix regression
+
+- reproduced the uploaded CI failure from the unescaped nested string
+- corrected `State.redy(\"done\")`
+- added a source-preflight assertion that rejects the original broken spelling
+- moved the D7 source preflight ahead of Cargo compilation in CI

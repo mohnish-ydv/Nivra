@@ -14,6 +14,8 @@
 - [x] GitHub Actions compiles all targets before running all tests.
 - [x] CLI smoke tests cover valid programs, every nominal diagnostic, reports, and JSON.
 - [x] D6 dependency and reserved-keyword regressions are permanently guarded.
+- [x] D7 embedded Rust strings reject invalid literal suffixes before Cargo runs.
+- [x] The corrected unknown-variant suggestion fixture contains escaped inner quotes.
 
 ## Manual
 

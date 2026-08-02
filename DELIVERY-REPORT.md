@@ -9,7 +9,15 @@
 - Workspace crates: 8
 - Third-party Rust dependencies: 0
 - Minimum Rust: 1.74
-- Status before user verification: RELEASE CANDIDATE
+- Status before user verification: BUILD-FIX RELEASE CANDIDATE
+
+## GitHub Actions build correction
+
+The first D7 CI run exposed one Rust source-syntax defect in a unit test:
+an embedded Nivra string used unescaped quotes around `done`. The corrected
+fixture uses `State.redy(\"done\")`; `redy` remains intentionally misspelled
+to test NOM001 suggestions. An early Rust-string suffix preflight now prevents
+this class of defect from reaching Cargo compilation again.
 
 ## Implemented
 

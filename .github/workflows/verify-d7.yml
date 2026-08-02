@@ -32,6 +32,9 @@ jobs:
           python3 tools/d6_dependency_lint.py
           cargo metadata --locked --format-version 1 --no-deps > /dev/null
 
+      - name: Validate D7 source preflight
+        run: python3 tools/d7_structure_lint.py
+
       - name: Compile every workspace target
         run: cargo check --workspace --all-targets --locked
 

@@ -2723,7 +2723,9 @@ mod tests {
     fn rejects_assignment_to_let() {
         let result = check_text("module test\nfn main() { let value = 1\n value = 2\n }\n");
         assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP010"));
-    }    #[test]
+    }
+
+    #[test]
     fn indexes_record_fields_and_methods() {
         let result = check_text(
             "module test\nrecord User {\n name: String\n age: Int = 0\n}\nimpl User {\n fn label(self: &Self) -> String { self.name }\n}\nfn main() { let user = User { name: \"M\" }\n let label = user.label()\n let age = user.age\n }\n",
@@ -2821,7 +2823,7 @@ mod tests {
     #[test]
     fn rejects_unknown_enum_variant_with_suggestion() {
         let result = check_text(
-            "module test\nenum State { ready(String) }\nfn main() { let state = State.redy("done") }\n",
+            "module test\nenum State { ready(String) }\nfn main() { let state = State.redy(\"done\") }\n",
         );
         let diagnostic = result
             .diagnostics

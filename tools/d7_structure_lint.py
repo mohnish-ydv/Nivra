@@ -33,6 +33,7 @@ required = [
     "docs/48-D7-TO-D8-GATE.md",
     "scripts/d7-smoke.sh",
     "tools/d7_report.py",
+    "D7-BUILD-FIX-REPORT.md",
     ".github/workflows/verify-d7.yml",
 ]
 missing = [item for item in required if not (ROOT / item).is_file()]
@@ -178,7 +179,16 @@ def check_rust(path: Path, text: str) -> None:
             if c == "\\":
                 i += 2
                 continue
-            if (state == "string" and c == '"') or (state == "char" and c == "'"):
+            if state == "string" and c == '"':
+                following = text[i + 1] if i + 1 < len(text) else ""
+                if following.isalnum() or following == "_":
+                    line = text.count("\n", 0, i) + 1
+                    fail(
+                        f"invalid Rust string-literal suffix in "
+                        f"{path.relative_to(ROOT)} at line {line}"
+                    )
+                state = "code"
+            elif state == "char" and c == "'":
                 state = "code"
             i += 1
             continue
@@ -220,6 +230,10 @@ print("D7 Rust lexical preflight: PASS")
 # Guard the two D6 failures and D7 parser ambiguity.
 if "let ok = true" in types:
     fail("reserved keyword `ok` reintroduced as a binding")
+if 'State.redy("done")' in types:
+    fail("unescaped nested string regression reintroduced in enum-variant test")
+if 'State.redy(\\\"done\\\")' not in types:
+    fail("corrected enum-variant suggestion test fixture is missing")
 types_manifest = tomllib.loads((ROOT / "crates/nivra-types/Cargo.toml").read_text(encoding="utf-8"))
 parser_dev = types_manifest.get("dev-dependencies", {}).get("nivra-parser")
 if not isinstance(parser_dev, dict) or parser_dev.get("path") != "../nivra-parser":
@@ -234,6 +248,7 @@ workflow = (ROOT / ".github/workflows/verify-d7.yml").read_text(encoding="utf-8"
 for anchor in [
     "rustup toolchain install 1.74.0",
     "cargo metadata --locked --format-version 1 --no-deps",
+    "python3 tools/d7_structure_lint.py",
     "cargo check --workspace --all-targets --locked",
     "cargo test --workspace --all-targets --locked --no-fail-fast",
     "bash verify.sh",

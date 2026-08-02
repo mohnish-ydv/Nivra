@@ -1,5 +1,20 @@
 # Changelog
 
+## D7 Build Fix — 2026-08-02
+
+### Fixed
+
+- escaped the embedded `"done"` string in the unknown enum-variant suggestion test
+- repaired the Rust parser errors and invalid string-literal suffix reported by CI
+- separated the adjacent D6/D7 test attributes for clean source formatting
+
+### Hardened
+
+- detect invalid identifier-like suffixes after Rust string literals
+- guard the corrected `State.redy(\"done\")` regression fixture
+- run D7 source preflight before Cargo compilation in GitHub Actions
+- document the exact root cause in `D7-BUILD-FIX-REPORT.md`
+
 ## D7 — 2026-08-02
 
 ### Added
