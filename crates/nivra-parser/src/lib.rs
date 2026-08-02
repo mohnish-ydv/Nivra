@@ -936,6 +936,7 @@ impl<'a> Parser<'a> {
             return false;
         }
         left.lossless_text(self.source)
+            .trim()
             .rsplit("::")
             .next()
             .and_then(|segment| segment.chars().next())
@@ -1547,4 +1548,12 @@ mod tests {
         assert!(!contains_kind(&result.root, SyntaxKind::RecordExpression));
     }
 
+    #[test]
+    fn parses_empty_record_construction_after_leading_trivia() {
+        let text = "record Empty {}\nfn main() { let value = Empty { } }\n";
+        let (source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(result.root.lossless_text(&source), text);
+        assert!(contains_kind(&result.root, SyntaxKind::RecordExpression));
+    }
 }

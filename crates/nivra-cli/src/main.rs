@@ -157,7 +157,7 @@ fn explain(code: Option<&OsString>) -> i32 {
         "TYP008" => "A declared type is malformed, unknown, or not imported.",
         "TYP009" => "Array elements must have one compatible element type.",
         "TYP010" => "An immutable `let` binding cannot be assigned a new value.",
-        "NOM001" => "The requested field, method, or enum variant does not exist.",
+        "NOM001" => "The requested member (field, method, or enum variant) does not exist.",
         "NOM002" => "Member access requires a concrete nominal value and explicit optional handling.",
         "NOM003" => "A required record or struct field is missing from construction.",
         "NOM004" => "A constructor initializer names a field that the type does not declare.",

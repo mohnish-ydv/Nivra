@@ -34,6 +34,7 @@ required = [
     "scripts/d7-smoke.sh",
     "tools/d7_report.py",
     "D7-BUILD-FIX-REPORT.md",
+    "D7-FINAL-FIX-REPORT.md",
     ".github/workflows/verify-d7.yml",
 ]
 missing = [item for item in required if not (ROOT / item).is_file()]
@@ -138,8 +139,8 @@ print("D7 fixtures: PASS")
 all_rust_paths = sorted((ROOT / "crates").rglob("*.rs"))
 all_rust = "\n".join(path.read_text(encoding="utf-8") for path in all_rust_paths)
 test_count = len(re.findall(r"#\[test\]", all_rust))
-if test_count < 96:
-    fail(f"expected at least 96 cumulative Rust tests, found {test_count}")
+if test_count < 98:
+    fail(f"expected at least 98 cumulative Rust tests, found {test_count}")
 if re.search(r"(?m)^\s*unsafe\s*\{", all_rust):
     fail("unsafe Rust block found")
 for forbidden in [".unwrap()", ".expect(", "std::sync::LazyLock", ".is_none_or("]:
@@ -240,6 +241,19 @@ if not isinstance(parser_dev, dict) or parser_dev.get("path") != "../nivra-parse
     fail("nivra-types parser test dependency regressed")
 if "does_not_confuse_if_blocks_with_record_construction" not in parser:
     fail("record-expression/if-block ambiguity regression test missing")
+if '.trim()\n            .rsplit("::")' not in parser:
+    fail("empty record-construction leading-trivia fix is missing")
+if "parses_empty_record_construction_after_leading_trivia" not in parser:
+    fail("empty record-construction parser regression test missing")
+if '"NOM001" => "The requested member (field, method, or enum variant) does not exist."' not in cli:
+    fail("NOM001 public explanation does not include the member concept")
+cli_tests = (ROOT / "crates/nivra-cli/tests/cli.rs").read_text(encoding="utf-8")
+for regression_test in [
+    "check_rejects_enum_record_construction_syntax",
+    "explain_supports_nominal_diagnostics",
+]:
+    if regression_test not in cli_tests:
+        fail(f"D7 CLI regression test missing: {regression_test}")
 if "span: node.span()" not in types or "checks_method_bodies_against_their_signatures" not in types:
     fail("method signature-to-body mapping regression guard missing")
 print("D6 build regressions and D7 ambiguity guards: PASS")
@@ -249,7 +263,12 @@ for anchor in [
     "rustup toolchain install 1.74.0",
     "cargo metadata --locked --format-version 1 --no-deps",
     "python3 tools/d7_structure_lint.py",
+    "cargo fmt --all -- --check",
     "cargo check --workspace --all-targets --locked",
+    "cargo test -p nivra-parser parses_empty_record_construction_after_leading_trivia --locked",
+    "cargo test -p nivra-types rejects_record_syntax_for_enum --locked",
+    "cargo test -p nivra-cli --test cli explain_supports_nominal_diagnostics --locked",
+    "cargo test -p nivra-cli --test cli check_rejects_enum_record_construction_syntax --locked",
     "cargo test --workspace --all-targets --locked --no-fail-fast",
     "bash verify.sh",
     "cargo build --workspace --release --locked",

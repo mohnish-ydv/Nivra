@@ -12,7 +12,7 @@
 - Python tool compilation
 - 5 valid and 10 invalid fixture inventory
 - NOM001–NOM010 source/CLI coverage
-- 96 Rust test inventory
+- 98 Rust test inventory
 - record-expression versus `if`-block ambiguity guard
 - D6 dependency and reserved-keyword regression guards
 - clean ZIP extraction and CRC verification
@@ -43,3 +43,10 @@ The delivery is not declared user-passed until that workflow and phone checks ar
 - corrected `State.redy(\"done\")`
 - added a source-preflight assertion that rejects the original broken spelling
 - moved the D7 source preflight ahead of Cargo compilation in CI
+
+## Final GitHub-log corrections
+
+- all eight workspace targets compiled on Rust 1.74.0 in the uploaded run
+- NOM001 explanation contract corrected
+- empty record-expression trivia ambiguity corrected
+- focused parser, type-checker, and CLI regressions added

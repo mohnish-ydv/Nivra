@@ -35,15 +35,24 @@ jobs:
       - name: Validate D7 source preflight
         run: python3 tools/d7_structure_lint.py
 
+      - name: Verify Rust formatting
+        run: cargo fmt --all -- --check
+
       - name: Compile every workspace target
         run: cargo check --workspace --all-targets --locked
+
+      - name: Run root-cause regression tests
+        run: |
+          cargo test -p nivra-parser parses_empty_record_construction_after_leading_trivia --locked
+          cargo test -p nivra-types rejects_record_syntax_for_enum --locked
+          cargo test -p nivra-cli --test cli explain_supports_nominal_diagnostics --locked
+          cargo test -p nivra-cli --test cli check_rejects_enum_record_construction_syntax --locked
 
       - name: Run complete Rust test suite
         run: cargo test --workspace --all-targets --locked --no-fail-fast
 
       - name: Run cumulative golden verifier
         env:
-          NIVRA_APPLY_FORMAT: "1"
           NIVRA_REQUIRE_FORMAT: "1"
         run: bash verify.sh
 

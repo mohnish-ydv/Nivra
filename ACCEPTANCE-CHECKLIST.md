@@ -10,7 +10,7 @@
 - [x] `Self` substitution and mutable receiver checks exist.
 - [x] NOM001–NOM010 are implemented and explained.
 - [x] Five valid and ten invalid D7 fixtures are included.
-- [x] At least 96 cumulative Rust tests are present.
+- [x] At least 98 cumulative Rust tests are present.
 - [x] GitHub Actions compiles all targets before running all tests.
 - [x] CLI smoke tests cover valid programs, every nominal diagnostic, reports, and JSON.
 - [x] D6 dependency and reserved-keyword regressions are permanently guarded.

@@ -1,5 +1,22 @@
 # Changelog
 
+## D7 Final Build Fix — 2026-08-02
+
+### Fixed
+
+- NOM001 explanation now explicitly describes an unknown `member`
+- empty uppercase nominal construction such as `State { }` now parses as a record expression even when leading trivia is preserved
+- enum record-construction syntax now reaches the type checker and emits NOM010
+
+### Hardened
+
+- added lossless empty-constructor parser regression
+- added direct CLI NOM010 conformance test
+- added four focused root-cause tests before the complete workspace suite
+- added Rust formatting verification before compilation
+- increased cumulative Rust test inventory to 98
+- documented the complete two-failure GitHub log analysis in `D7-FINAL-FIX-REPORT.md`
+
 ## D7 Build Fix — 2026-08-02
 
 ### Fixed

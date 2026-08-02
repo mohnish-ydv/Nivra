@@ -9,7 +9,7 @@
 - Workspace crates: 8
 - Third-party Rust dependencies: 0
 - Minimum Rust: 1.74
-- Status before user verification: BUILD-FIX RELEASE CANDIDATE
+- Status before user verification: FINAL BUILD-FIX RELEASE CANDIDATE
 
 ## GitHub Actions build correction
 
@@ -18,6 +18,14 @@ an embedded Nivra string used unescaped quotes around `done`. The corrected
 fixture uses `State.redy(\"done\")`; `redy` remains intentionally misspelled
 to test NOM001 suggestions. An early Rust-string suffix preflight now prevents
 this class of defect from reaching Cargo compilation again.
+
+## Final GitHub Actions corrections
+
+The no-fail-fast run compiled every target and exposed two remaining test failures.
+The final revision aligns the NOM001 explanation with its CLI contract and fixes
+the parser's empty-constructor leading-trivia ambiguity so enum record syntax
+reliably reaches NOM010 validation. Dedicated parser, type-checker, and CLI tests
+now guard both cases before the full suite.
 
 ## Implemented
 

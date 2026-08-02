@@ -403,6 +403,22 @@ fn check_accepts_enum_variant_payload() {
 }
 
 #[test]
+fn check_rejects_enum_record_construction_syntax() {
+    let path = temporary_source(
+        "enum_record_syntax.nva",
+        "module test\nenum State { idle }\nfn main() { let value = State { } }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("NOM010"));
+}
+
+#[test]
 fn explain_supports_nominal_diagnostics() {
     let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
         .arg("explain")

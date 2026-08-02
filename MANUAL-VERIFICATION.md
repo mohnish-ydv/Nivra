@@ -10,7 +10,7 @@ pkg install rust python git unzip -y
 ## 2. Run complete Termux-safe verification
 
 ```bash
-cd ~/storage/downloads/Nivra-D7-Nominal-Members-Build-Fix-GitHub-Ready
+cd ~/storage/downloads/Nivra-D7-Nominal-Members-Final-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
