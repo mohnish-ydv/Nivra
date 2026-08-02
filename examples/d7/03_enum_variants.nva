@@ -1,0 +1,17 @@
+module examples.d7.enums
+
+enum LoadState {
+    idle
+    loading
+    ready(String)
+    failed(String, Int)
+}
+
+fn main() -> Unit {
+    let first = LoadState.idle
+    let second = LoadState.ready("complete")
+    let third = LoadState.failed("network", 503)
+    print(first)
+    print(second)
+    print(third)
+}

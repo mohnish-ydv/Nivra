@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "delivery": "D7",
+  "version": "0.7.0",
+  "title": "Nominal Types and Member Checking",
+  "builds_on": [
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "D6"
+  ],
+  "status": "implementation",
+  "features": [
+    "record_construction",
+    "field_lookup",
+    "field_mutation",
+    "enum_variants",
+    "inherent_methods",
+    "trait_impl_methods",
+    "self_substitution",
+    "mutable_receivers"
+  ]
+}

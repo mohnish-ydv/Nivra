@@ -1,0 +1,9 @@
+module examples.d7.invalid.missing_field
+record Pair {
+    left: Int
+    right: Int
+}
+fn main() -> Unit {
+    let pair = Pair { left: 1 }
+    print(pair)
+}

@@ -19,7 +19,7 @@ fn temporary_source(name: &str, content: &str) -> PathBuf {
 }
 
 #[test]
-fn version_reports_d6_foundation() {
+fn version_reports_d7_foundation() {
     let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
         .arg("--version")
         .output()
@@ -27,8 +27,8 @@ fn version_reports_d6_foundation() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("nivra 0.6.0"));
-    assert!(stdout.contains("D6"));
+    assert!(stdout.contains("nivra 0.7.0"));
+    assert!(stdout.contains("D7"));
 }
 
 #[test]
@@ -340,4 +340,76 @@ fn explain_describes_type_error() {
 
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("parameter type"));
+}
+
+
+#[test]
+fn typecheck_reports_nominal_members() {
+    let path = temporary_source(
+        "nominals.nva",
+        "module test\nrecord User {\n name: String\n age: Int = 0\n}\nimpl User {\n fn label(self: &Self) -> String { self.name }\n}\nfn main() { let user = User { name: \"M\" }\n let label = user.label()\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("typecheck")
+        .arg(&path)
+        .arg("--nominals")
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("record User"));
+    assert!(stdout.contains("field name: String"));
+    assert!(stdout.contains("method label"));
+}
+
+#[test]
+fn check_rejects_missing_record_field() {
+    let path = temporary_source(
+        "missing_field.nva",
+        "module test\nrecord Pair {\n left: Int\n right: Int\n}\nfn main() { let pair = Pair { left: 1 } }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("NOM003"));
+}
+
+#[test]
+fn check_accepts_enum_variant_payload() {
+    let path = temporary_source(
+        "enum_variant.nva",
+        "module test\nenum State {\n idle\n ready(String)\n}\nfn main() { let state = State.ready(\"done\")\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn explain_supports_nominal_diagnostics() {
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("explain")
+        .arg("NOM001")
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("member"));
 }

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "nominal_kinds": [
+    "record",
+    "struct",
+    "enum"
+  ],
+  "record_construction": {
+    "syntax": "Type { field: expression }",
+    "defaulted_fields_may_be_omitted": true,
+    "unknown_fields": "error",
+    "duplicate_fields": "error"
+  },
+  "member_lookup": {
+    "fields": true,
+    "methods": true,
+    "enum_variants": true,
+    "optional_requires_handling": true
+  },
+  "methods": {
+    "inherent_impl": true,
+    "trait_impl": true,
+    "self_substitution": true,
+    "mutable_receiver": "&mut Self"
+  },
+  "limitations": [
+    "generic constructor substitution is recovery-only",
+    "cross-module privacy is deferred",
+    "record-payload enum variants are deferred"
+  ]
+}

@@ -1,0 +1,21 @@
+module examples.d7.traits
+
+record User {
+    name: String
+}
+
+trait Display {
+    fn display(self: &Self) -> String
+}
+
+impl Display for User {
+    fn display(self: &Self) -> String {
+        self.name
+    }
+}
+
+fn main() -> Unit {
+    let user = User { name: "Nivra" }
+    let label = user.display()
+    print(label)
+}

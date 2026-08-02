@@ -632,6 +632,10 @@ impl<'a> Parser<'a> {
             if self.has_line_break_before_significant() {
                 break;
             }
+            if self.at(TokenKind::LeftBrace) && self.looks_like_record_expression(&left) {
+                left = self.parse_record_expression(left);
+                continue;
+            }
             if self.at(TokenKind::LeftParen) {
                 let mut children = vec![SyntaxElement::Node(left)];
                 children.push(SyntaxElement::Node(self.parse_argument_list()));
@@ -919,6 +923,43 @@ impl<'a> Parser<'a> {
             children.push(SyntaxElement::Node(self.parse_expression(0)));
         }
         self.node(SyntaxKind::ClosureExpression, children)
+    }
+
+    fn looks_like_record_expression(&self, left: &SyntaxNode) -> bool {
+        if left.kind() != SyntaxKind::NameExpression || !self.at(TokenKind::LeftBrace) {
+            return false;
+        }
+        if self.nth_kind(1) == TokenKind::Identifier && self.nth_kind(2) == TokenKind::Colon {
+            return true;
+        }
+        if self.nth_kind(1) != TokenKind::RightBrace {
+            return false;
+        }
+        left.lossless_text(self.source)
+            .rsplit("::")
+            .next()
+            .and_then(|segment| segment.chars().next())
+            .is_some_and(char::is_uppercase)
+    }
+
+    fn parse_record_expression(&mut self, left: SyntaxNode) -> SyntaxNode {
+        let mut children = vec![SyntaxElement::Node(left)];
+        self.expect(TokenKind::LeftBrace, &mut children, "`{`");
+        self.eat_trivia(&mut children);
+        while !self.at(TokenKind::RightBrace) && !self.at(TokenKind::Eof) {
+            let mut field = Vec::new();
+            self.expect_identifier(&mut field, "record field name");
+            self.expect(TokenKind::Colon, &mut field, "`:`");
+            field.push(SyntaxElement::Node(self.parse_expression(0)));
+            self.eat_inline_trivia(&mut field);
+            self.eat(TokenKind::Comma, &mut field);
+            children.push(SyntaxElement::Node(
+                self.node(SyntaxKind::RecordFieldInitializer, field),
+            ));
+            self.eat_trivia(&mut children);
+        }
+        self.expect_closing(TokenKind::RightBrace, &mut children, "record expression");
+        self.node(SyntaxKind::RecordExpression, children)
     }
 
     fn parse_argument_list(&mut self) -> SyntaxNode {
@@ -1480,6 +1521,30 @@ mod tests {
         assert!(contains_kind(&result.root, SyntaxKind::ClosureExpression));
         assert!(contains_kind(&result.root, SyntaxKind::AsyncExpression));
         assert!(contains_kind(&result.root, SyntaxKind::TaskGroupExpression));
+    }
+
+    #[test]
+    fn parses_record_construction_losslessly() {
+        let text =
+            "record User {\n name: String\n age: Int\n}\nfn main() { let user = User { name: \"M\", age: 13 } }\n";
+        let (source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(result.root.lossless_text(&source), text);
+        assert!(contains_kind(&result.root, SyntaxKind::RecordExpression));
+        assert!(contains_kind(
+            &result.root,
+            SyntaxKind::RecordFieldInitializer
+        ));
+    }
+
+    #[test]
+    fn does_not_confuse_if_blocks_with_record_construction() {
+        let (_source, result) = parse_text(
+            "fn main() { let enabled = true\n if enabled { print(\"yes\") } }\n",
+        );
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert!(contains_kind(&result.root, SyntaxKind::IfExpression));
+        assert!(!contains_kind(&result.root, SyntaxKind::RecordExpression));
     }
 
 }

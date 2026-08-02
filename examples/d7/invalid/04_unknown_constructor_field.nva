@@ -1,0 +1,6 @@
+module examples.d7.invalid.unknown_field
+record User { name: String }
+fn main() -> Unit {
+    let user = User { name: "M", title: "Developer" }
+    print(user)
+}

@@ -1,0 +1,6 @@
+module examples.d7.invalid.enum_record
+enum State { idle }
+fn main() -> Unit {
+    let state = State { }
+    print(state)
+}

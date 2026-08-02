@@ -1,7 +1,7 @@
 //! Type representation and first static type-checking pass for Nivra Edition 2026.
 //!
-//! D6 validates primitive and nominal types, function signatures, local inference,
-//! operators, calls, conditions, arrays, assignments, and returns. Unknown types are
+//! D7 extends the D6 checker with record/struct bodies, constructors, enum variants,
+//! fields, methods, `Self`, and mutable receivers. Unknown types are
 //! retained as recovery values so one unsupported member or generic operation does
 //! not produce a wall of follow-on diagnostics.
 
@@ -14,7 +14,7 @@ use nivra_sema::{Namespace, SemanticResult, SymbolKind};
 use nivra_source::{SourceFile, Span};
 use nivra_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
-/// Static type used by the D6 checker.
+/// Static type used by the D7 checker.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Type {
     Unknown,
@@ -131,6 +131,8 @@ pub struct ParameterType {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FunctionSignature {
     pub name: String,
+    pub owner: Option<String>,
+    pub trait_name: Option<String>,
     pub parameters: Vec<ParameterType>,
     pub return_type: Type,
     pub span: Span,
@@ -155,10 +157,71 @@ pub struct TypedExpression {
     pub span: Span,
 }
 
-/// Complete D6 type-check result.
+/// Kind of a declared nominal type.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum NominalKind {
+    Record,
+    Struct,
+    Enum,
+}
+
+impl NominalKind {
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Record => "record",
+            Self::Struct => "struct",
+            Self::Enum => "enum",
+        }
+    }
+}
+
+/// One record or struct field.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FieldInfo {
+    pub name: String,
+    pub ty: Type,
+    pub span: Span,
+    pub has_default: bool,
+    pub public: bool,
+}
+
+/// One enum variant and its positional payload.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct VariantInfo {
+    pub name: String,
+    pub payload: Vec<Type>,
+    pub span: Span,
+}
+
+/// One method attached through an inherent or trait implementation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MethodInfo {
+    pub name: String,
+    pub parameters: Vec<ParameterType>,
+    pub return_type: Type,
+    pub span: Span,
+    pub mutable_receiver: bool,
+    pub trait_name: Option<String>,
+}
+
+/// Indexed nominal type body.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct NominalTypeInfo {
+    pub name: String,
+    pub kind: NominalKind,
+    pub generic_parameters: Vec<String>,
+    pub fields: Vec<FieldInfo>,
+    pub variants: Vec<VariantInfo>,
+    pub methods: Vec<MethodInfo>,
+    pub span: Span,
+}
+
+/// Complete D7 type-check result.
 #[derive(Clone, Debug)]
 pub struct TypeCheckResult {
     pub functions: Vec<FunctionSignature>,
+    pub nominals: Vec<NominalTypeInfo>,
     pub bindings: Vec<BindingType>,
     pub expressions: Vec<TypedExpression>,
     pub diagnostics: Vec<Diagnostic>,
@@ -176,7 +239,11 @@ impl TypeCheckResult {
     pub fn function_report(&self) -> String {
         let mut output = String::new();
         for signature in &self.functions {
-            let _ = write!(output, "fn {}(", signature.name);
+            if let Some(owner) = &signature.owner {
+                let _ = write!(output, "fn {owner}.{}(", signature.name);
+            } else {
+                let _ = write!(output, "fn {}(", signature.name);
+            }
             for (index, parameter) in signature.parameters.iter().enumerate() {
                 if index > 0 {
                     output.push_str(", ");
@@ -211,6 +278,62 @@ impl TypeCheckResult {
         }
         output
     }
+
+    /// Produces a deterministic nominal-type and member report.
+    #[must_use]
+    pub fn nominal_report(&self) -> String {
+        let mut output = String::new();
+        for nominal in &self.nominals {
+            let _ = write!(output, "{} {}", nominal.kind.name(), nominal.name);
+            if !nominal.generic_parameters.is_empty() {
+                let _ = write!(output, "<{}>", nominal.generic_parameters.join(", "));
+            }
+            let _ = writeln!(output, " @ {}..{}", nominal.span.start(), nominal.span.end());
+            for field in &nominal.fields {
+                let _ = writeln!(
+                    output,
+                    "  field {}: {}{}{}",
+                    field.name,
+                    field.ty,
+                    if field.has_default { " = <default>" } else { "" },
+                    if field.public { " pub" } else { "" }
+                );
+            }
+            for variant in &nominal.variants {
+                if variant.payload.is_empty() {
+                    let _ = writeln!(output, "  variant {}", variant.name);
+                } else {
+                    let payload = variant
+                        .payload
+                        .iter()
+                        .map(Type::display_name)
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    let _ = writeln!(output, "  variant {}({payload})", variant.name);
+                }
+            }
+            for method in &nominal.methods {
+                let parameters = method
+                    .parameters
+                    .iter()
+                    .map(|parameter| format!("{}: {}", parameter.name, parameter.ty))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                let _ = writeln!(
+                    output,
+                    "  method {}({parameters}) -> {}{}{}",
+                    method.name,
+                    method.return_type,
+                    if method.mutable_receiver { " mut-self" } else { "" },
+                    method
+                        .trait_name
+                        .as_ref()
+                        .map_or(String::new(), |name| format!(" trait={name}"))
+                );
+            }
+        }
+        output
+    }
 }
 
 /// Runs D6 type checking after parsing and name resolution have succeeded.
@@ -235,6 +358,8 @@ struct Checker<'a> {
     known_types: HashSet<String>,
     functions: Vec<FunctionSignature>,
     function_lookup: HashMap<String, usize>,
+    nominals: Vec<NominalTypeInfo>,
+    nominal_lookup: HashMap<String, usize>,
     constants: HashMap<String, Type>,
     scopes: Vec<HashMap<String, LocalBinding>>,
     bindings: Vec<BindingType>,
@@ -265,6 +390,8 @@ impl<'a> Checker<'a> {
             known_types,
             functions: Vec::new(),
             function_lookup: HashMap::new(),
+            nominals: Vec::new(),
+            nominal_lookup: HashMap::new(),
             constants: HashMap::new(),
             scopes: Vec::new(),
             bindings: Vec::new(),
@@ -276,7 +403,9 @@ impl<'a> Checker<'a> {
     }
 
     fn run(mut self, root: &SyntaxNode) -> TypeCheckResult {
+        self.collect_nominals(root);
         self.collect_signatures(root);
+        self.attach_methods();
         self.collect_constants(root);
         for node in root.child_nodes() {
             match node.kind() {
@@ -301,35 +430,157 @@ impl<'a> Checker<'a> {
         }
         TypeCheckResult {
             functions: self.functions,
+            nominals: self.nominals,
             bindings: self.bindings,
             expressions: self.expressions,
             diagnostics: self.diagnostics,
         }
     }
 
-    fn collect_signatures(&mut self, root: &SyntaxNode) {
-        self.collect_signatures_in(root, false);
-    }
+    fn collect_nominals(&mut self, root: &SyntaxNode) {
+        for node in root.child_nodes() {
+            let kind = match node.kind() {
+                SyntaxKind::RecordDeclaration => NominalKind::Record,
+                SyntaxKind::StructDeclaration => NominalKind::Struct,
+                SyntaxKind::EnumDeclaration => NominalKind::Enum,
+                _ => continue,
+            };
+            let Some((name, span)) = first_direct_identifier(node, self.source) else {
+                continue;
+            };
+            let mut generic_parameters = generic_parameter_names(node, self.source)
+                .into_iter()
+                .collect::<Vec<_>>();
+            generic_parameters.sort();
+            let generic_set = generic_parameters.iter().cloned().collect::<HashSet<_>>();
+            let mut fields = Vec::new();
+            let mut variants = Vec::new();
 
-    fn collect_signatures_in(&mut self, parent: &SyntaxNode, extern_context: bool) {
-        for node in parent.child_nodes() {
-            match node.kind() {
-                SyntaxKind::FunctionDeclaration | SyntaxKind::ExternFunction => {
-                    if let Some(signature) = self.signature_from_node(
-                        node,
-                        extern_context || node.kind() == SyntaxKind::ExternFunction,
-                    ) {
-                        let index = self.functions.len();
-                        let _ = self.function_lookup.insert(signature.name.clone(), index);
-                        self.functions.push(signature);
+            if matches!(kind, NominalKind::Record | NominalKind::Struct) {
+                if let Some(field_list) = node
+                    .child_nodes()
+                    .find(|child| child.kind() == SyntaxKind::FieldList)
+                {
+                    for field in field_list
+                        .child_nodes()
+                        .filter(|child| child.kind() == SyntaxKind::Field)
+                    {
+                        if let Some((field_name, field_span, type_text, has_default, public)) =
+                            field_declaration_parts(field, self.source)
+                        {
+                            let ty = self.parse_declared_type(
+                                &type_text,
+                                field.span(),
+                                &generic_set,
+                            );
+                            fields.push(FieldInfo {
+                                name: field_name,
+                                ty,
+                                span: field_span,
+                                has_default,
+                                public,
+                            });
+                        }
                     }
                 }
-                SyntaxKind::ExternBlock => self.collect_signatures_in(node, true),
-                SyntaxKind::TraitDeclaration | SyntaxKind::ImplDeclaration => {
-                    self.collect_signatures_in(node, false);
+            } else {
+                for variant in node
+                    .child_nodes()
+                    .filter(|child| child.kind() == SyntaxKind::EnumVariant)
+                {
+                    if let Some((variant_name, variant_span, payload_texts)) =
+                        enum_variant_parts(variant, self.source)
+                    {
+                        let payload = payload_texts
+                            .iter()
+                            .map(|text| {
+                                self.parse_declared_type(text, variant.span(), &generic_set)
+                            })
+                            .collect();
+                        variants.push(VariantInfo {
+                            name: variant_name,
+                            payload,
+                            span: variant_span,
+                        });
+                    }
+                }
+            }
+
+            let index = self.nominals.len();
+            let _ = self.nominal_lookup.insert(name.clone(), index);
+            self.nominals.push(NominalTypeInfo {
+                name,
+                kind,
+                generic_parameters,
+                fields,
+                variants,
+                methods: Vec::new(),
+                span,
+            });
+        }
+    }
+
+    fn collect_signatures(&mut self, root: &SyntaxNode) {
+        for node in root.child_nodes() {
+            match node.kind() {
+                SyntaxKind::FunctionDeclaration => {
+                    self.collect_one_signature(node, false, None, None, true);
+                }
+                SyntaxKind::ExternBlock => {
+                    for function in node.child_nodes() {
+                        if function.kind() == SyntaxKind::ExternFunction {
+                            self.collect_one_signature(function, true, None, None, true);
+                        }
+                    }
+                }
+                SyntaxKind::TraitDeclaration => {
+                    let owner = first_direct_identifier(node, self.source)
+                        .map(|(name, _)| name);
+                    for function in node.child_nodes() {
+                        if function.kind() == SyntaxKind::FunctionDeclaration {
+                            self.collect_one_signature(
+                                function,
+                                false,
+                                owner.clone(),
+                                owner.clone(),
+                                false,
+                            );
+                        }
+                    }
+                }
+                SyntaxKind::ImplDeclaration => {
+                    let (target, trait_name) = impl_header(node, self.source);
+                    for function in node.child_nodes() {
+                        if function.kind() == SyntaxKind::FunctionDeclaration {
+                            self.collect_one_signature(
+                                function,
+                                false,
+                                target.clone(),
+                                trait_name.clone(),
+                                false,
+                            );
+                        }
+                    }
                 }
                 _ => {}
             }
+        }
+    }
+
+    fn collect_one_signature(
+        &mut self,
+        node: &SyntaxNode,
+        is_extern: bool,
+        owner: Option<String>,
+        trait_name: Option<String>,
+        top_level: bool,
+    ) {
+        if let Some(signature) = self.signature_from_node(node, is_extern, owner, trait_name) {
+            let index = self.functions.len();
+            if top_level {
+                let _ = self.function_lookup.insert(signature.name.clone(), index);
+            }
+            self.functions.push(signature);
         }
     }
 
@@ -337,8 +588,10 @@ impl<'a> Checker<'a> {
         &mut self,
         node: &SyntaxNode,
         is_extern: bool,
+        owner: Option<String>,
+        trait_name: Option<String>,
     ) -> Option<FunctionSignature> {
-        let (name, span) = function_name(node, self.source)?;
+        let (name, _name_span) = function_name(node, self.source)?;
         let generic_names = generic_parameter_names(node, self.source);
         let mut parameters = Vec::new();
         if let Some(list) = node
@@ -354,11 +607,14 @@ impl<'a> Checker<'a> {
                 else {
                     continue;
                 };
-                let ty = if type_text.trim().is_empty() {
+                let mut ty = if type_text.trim().is_empty() {
                     Type::Unknown
                 } else {
                     self.parse_declared_type(&type_text, parameter.span(), &generic_names)
                 };
+                if let Some(owner_name) = &owner {
+                    ty = replace_self_type(ty, owner_name);
+                }
                 parameters.push(ParameterType {
                     name: parameter_name,
                     ty,
@@ -366,23 +622,68 @@ impl<'a> Checker<'a> {
                 });
             }
         }
-        let return_type = node
+        let mut return_type = node
             .child_nodes()
             .find(|child| child.kind() == SyntaxKind::TypeReference)
             .map_or(Type::Unit, |type_node| {
                 self.parse_type_node(type_node, &generic_names)
             });
+        if let Some(owner_name) = &owner {
+            return_type = replace_self_type(return_type, owner_name);
+        }
         let is_async = significant_direct_tokens(node).iter().any(|token| {
             token.kind() == TokenKind::Keyword(Keyword::Async)
         });
         Some(FunctionSignature {
             name,
+            owner,
+            trait_name,
             parameters,
             return_type,
-            span,
+            span: node.span(),
             is_async,
             is_extern,
         })
+    }
+
+    fn attach_methods(&mut self) {
+        let signatures = self.functions.clone();
+        for signature in signatures {
+            let Some(owner) = signature.owner.clone() else {
+                continue;
+            };
+            let Some(index) = self.nominal_lookup.get(&owner).copied() else {
+                continue;
+            };
+            let receiver = signature
+                .parameters
+                .first()
+                .filter(|parameter| parameter.name == "self");
+            let mutable_receiver = receiver.is_some_and(|parameter| {
+                matches!(
+                    &parameter.ty,
+                    Type::Reference {
+                        mutable: true,
+                        ..
+                    }
+                )
+            });
+            let parameters = if receiver.is_some() {
+                signature.parameters.iter().skip(1).cloned().collect()
+            } else {
+                signature.parameters.clone()
+            };
+            if let Some(nominal) = self.nominals.get_mut(index) {
+                nominal.methods.push(MethodInfo {
+                    name: signature.name,
+                    parameters,
+                    return_type: signature.return_type,
+                    span: signature.span,
+                    mutable_receiver,
+                    trait_name: signature.trait_name,
+                });
+            }
+        }
     }
 
     fn collect_constants(&mut self, root: &SyntaxNode) {
@@ -430,9 +731,9 @@ impl<'a> Checker<'a> {
             return;
         };
         let signature = self
-            .function_lookup
-            .get(&name)
-            .and_then(|index| self.functions.get(*index))
+            .functions
+            .iter()
+            .find(|signature| signature.name == name && signature.span == node.span())
             .cloned();
         let Some(signature) = signature else {
             return;
@@ -688,10 +989,9 @@ impl<'a> Checker<'a> {
                 .child_nodes()
                 .find(|child| child.kind() == SyntaxKind::Block)
                 .map_or(Type::Unit, |child| self.infer_block(child, true)),
-            SyntaxKind::MemberExpression
-            | SyntaxKind::ClosureExpression
-            | SyntaxKind::RecordExpression
-            | SyntaxKind::RangeExpression => {
+            SyntaxKind::MemberExpression => self.infer_member(node),
+            SyntaxKind::RecordExpression => self.infer_record_expression(node),
+            SyntaxKind::ClosureExpression | SyntaxKind::RangeExpression => {
                 for child in node.child_nodes() {
                     self.infer_expression(child);
                 }
@@ -854,6 +1154,14 @@ impl<'a> Checker<'a> {
                         .with_help("declare it with `var` when mutation is required"),
                 );
             }
+        } else if children[0].kind() == SyntaxKind::MemberExpression
+            && !self.is_mutable_place(children[0])
+        {
+            self.diagnostics.push(
+                Diagnostic::error("NOM008", "cannot assign through an immutable member access")
+                    .with_primary(children[0].span(), "the receiver is not mutable")
+                    .with_help("bind the record with `var` or use an `&mut` receiver"),
+            );
         }
         self.require_assignable(
             &left_type,
@@ -962,16 +1270,394 @@ impl<'a> Checker<'a> {
             }
         }
 
+        if let Some(result) = self.infer_enum_variant_call(callee, &arguments, node.span()) {
+            return result;
+        }
+
         let callee_type = self.infer_expression(callee);
         if let Type::Function(parameters, result) = callee_type {
-            if parameters.len() == arguments.len() {
-                for ((argument, actual), expected) in arguments.iter().zip(parameters.iter()) {
-                    self.require_assignable(expected, actual, argument.span(), "call argument", "TYP004");
-                }
+            if parameters.len() != arguments.len() {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        "TYP003",
+                        format!(
+                            "call expects {} argument(s), found {}",
+                            parameters.len(),
+                            arguments.len()
+                        ),
+                    )
+                    .with_primary(node.span(), "wrong number of arguments")
+                    .with_help("add or remove arguments to match the callable signature"),
+                );
+            }
+            for ((argument, actual), expected) in arguments.iter().zip(parameters.iter()) {
+                self.require_assignable(
+                    expected,
+                    actual,
+                    argument.span(),
+                    "call argument",
+                    "TYP004",
+                );
             }
             *result
         } else {
             Type::Unknown
+        }
+    }
+
+    fn infer_enum_variant_call(
+        &mut self,
+        callee: &SyntaxNode,
+        arguments: &[(&SyntaxNode, Type)],
+        call_span: Span,
+    ) -> Option<Type> {
+        if callee.kind() != SyntaxKind::MemberExpression {
+            return None;
+        }
+        let base = callee.child_nodes().next()?;
+        if base.kind() != SyntaxKind::NameExpression {
+            return None;
+        }
+        let type_name = significant_text(base, self.source);
+        let index = self.nominal_lookup.get(&type_name).copied()?;
+        let nominal = self.nominals.get(index)?.clone();
+        if nominal.kind != NominalKind::Enum {
+            return None;
+        }
+        let (variant_name, _) = member_name(callee, self.source)?;
+        let variant = nominal
+            .variants
+            .iter()
+            .find(|variant| variant.name == variant_name)?
+            .clone();
+        let generic_names = nominal
+            .generic_parameters
+            .iter()
+            .cloned()
+            .collect::<HashSet<_>>();
+        let payload = variant
+            .payload
+            .iter()
+            .cloned()
+            .map(|ty| erase_generic_parameters(ty, &generic_names))
+            .collect::<Vec<_>>();
+
+        if payload.len() != arguments.len() {
+            self.diagnostics.push(
+                Diagnostic::error(
+                    "NOM007",
+                    format!(
+                        "enum variant `{}.{}` expects {} payload value(s), found {}",
+                        nominal.name,
+                        variant.name,
+                        payload.len(),
+                        arguments.len()
+                    ),
+                )
+                .with_primary(call_span, "wrong enum variant payload")
+                .with_secondary(variant.span, "variant declared here")
+                .with_help("match the number and types of the declared variant payload"),
+            );
+        }
+        for ((argument, actual), expected) in arguments.iter().zip(payload.iter()) {
+            if !types_compatible(expected, actual) {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        "NOM007",
+                        format!(
+                            "enum variant `{}.{}` expects `{expected}`, found `{actual}`",
+                            nominal.name, variant.name
+                        ),
+                    )
+                    .with_primary(argument.span(), "wrong enum variant payload type")
+                    .with_secondary(variant.span, "variant declared here")
+                    .with_help(format!("provide a `{expected}` payload value")),
+                );
+            }
+        }
+
+        Some(Type::Named(
+            nominal.name,
+            vec![Type::Unknown; nominal.generic_parameters.len()],
+        ))
+    }
+
+    fn infer_member(&mut self, node: &SyntaxNode) -> Type {
+        let children = node.child_nodes().collect::<Vec<_>>();
+        let Some(base_node) = children.first().copied() else {
+            return Type::Error;
+        };
+        let Some((member, member_span)) = member_name(node, self.source) else {
+            return Type::Error;
+        };
+
+        if base_node.kind() == SyntaxKind::NameExpression {
+            let type_name = significant_text(base_node, self.source);
+            if let Some(index) = self.nominal_lookup.get(&type_name).copied() {
+                if let Some(nominal) = self.nominals.get(index).cloned() {
+                    if nominal.kind == NominalKind::Enum {
+                        if let Some(variant) = nominal
+                            .variants
+                            .iter()
+                            .find(|variant| variant.name == member)
+                        {
+                            let generic_names = nominal
+                                .generic_parameters
+                                .iter()
+                                .cloned()
+                                .collect::<HashSet<_>>();
+                            let result = Type::Named(
+                                nominal.name.clone(),
+                                vec![Type::Unknown; nominal.generic_parameters.len()],
+                            );
+                            if variant.payload.is_empty() {
+                                return result;
+                            }
+                            let payload = variant
+                                .payload
+                                .iter()
+                                .cloned()
+                                .map(|ty| erase_generic_parameters(ty, &generic_names))
+                                .collect();
+                            return Type::Function(payload, Box::new(result));
+                        }
+                        let candidates = nominal
+                            .variants
+                            .iter()
+                            .map(|variant| variant.name.as_str())
+                            .collect::<Vec<_>>();
+                        let mut diagnostic = Diagnostic::error(
+                            "NOM001",
+                            format!("enum `{}` has no variant `{member}`", nominal.name),
+                        )
+                        .with_primary(member_span, "unknown enum variant");
+                        if let Some(suggestion) = closest_name(&candidates, &member) {
+                            diagnostic =
+                                diagnostic.with_help(format!("did you mean `{suggestion}`?"));
+                        } else {
+                            diagnostic = diagnostic.with_help("use a declared enum variant");
+                        }
+                        self.diagnostics.push(diagnostic);
+                        return Type::Error;
+                    }
+                }
+            }
+        }
+
+        let base_type = self.infer_expression(base_node);
+        if base_type.is_recovery() {
+            return Type::Unknown;
+        }
+        if matches!(base_type, Type::Optional(_)) {
+            self.diagnostics.push(
+                Diagnostic::error(
+                    "NOM002",
+                    format!("cannot access member `{member}` through an optional value"),
+                )
+                .with_primary(member_span, "optional values must be handled before member access")
+                .with_help("use `if let`, `match`, or another explicit optional operation"),
+            );
+            return Type::Error;
+        }
+        let Some(nominal_name) = nominal_name_from_type(&base_type) else {
+            self.diagnostics.push(
+                Diagnostic::error(
+                    "NOM002",
+                    format!("type `{base_type}` does not expose nominal members"),
+                )
+                .with_primary(member_span, "member lookup requires a record, struct, or enum value")
+                .with_help("access a declared nominal type or use a supported built-in operation"),
+            );
+            return Type::Error;
+        };
+        let Some(index) = self.nominal_lookup.get(&nominal_name).copied() else {
+            return Type::Unknown;
+        };
+        let Some(nominal) = self.nominals.get(index).cloned() else {
+            return Type::Unknown;
+        };
+
+        if let Some(field) = nominal.fields.iter().find(|field| field.name == member) {
+            return field.ty.clone();
+        }
+        if let Some(method) = nominal.methods.iter().find(|method| method.name == member) {
+            if method.mutable_receiver && !self.is_mutable_place(base_node) {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        "NOM008",
+                        format!("method `{}` requires a mutable receiver", method.name),
+                    )
+                    .with_primary(base_node.span(), "this receiver is immutable")
+                    .with_secondary(method.span, "mutable receiver declared here")
+                    .with_help("bind the value with `var` or pass it through `&mut`"),
+                );
+            }
+            return Type::Function(
+                method
+                    .parameters
+                    .iter()
+                    .map(|parameter| parameter.ty.clone())
+                    .collect(),
+                Box::new(method.return_type.clone()),
+            );
+        }
+
+        let available = nominal
+            .fields
+            .iter()
+            .map(|field| field.name.as_str())
+            .chain(nominal.methods.iter().map(|method| method.name.as_str()))
+            .collect::<Vec<_>>();
+        let mut diagnostic = Diagnostic::error(
+            "NOM001",
+            format!("type `{}` has no member `{member}`", nominal.name),
+        )
+        .with_primary(member_span, "unknown member");
+        if let Some(suggestion) = closest_name(&available, &member) {
+            diagnostic = diagnostic.with_help(format!("did you mean `{suggestion}`?"));
+        } else {
+            diagnostic = diagnostic.with_help("use a declared field or method");
+        }
+        self.diagnostics.push(diagnostic);
+        Type::Error
+    }
+
+    fn infer_record_expression(&mut self, node: &SyntaxNode) -> Type {
+        let children = node.child_nodes().collect::<Vec<_>>();
+        let Some(target) = children.first().copied() else {
+            return Type::Error;
+        };
+        let type_name = significant_text(target, self.source);
+        let Some(index) = self.nominal_lookup.get(&type_name).copied() else {
+            self.diagnostics.push(
+                Diagnostic::error(
+                    "NOM009",
+                    format!("cannot construct unknown nominal type `{type_name}`"),
+                )
+                .with_primary(target.span(), "no local record or struct has this name")
+                .with_help("declare or import the type before constructing it"),
+            );
+            for initializer in children.iter().skip(1) {
+                for expression in initializer.child_nodes() {
+                    self.infer_expression(expression);
+                }
+            }
+            return Type::Error;
+        };
+        let Some(nominal) = self.nominals.get(index).cloned() else {
+            return Type::Error;
+        };
+        if nominal.kind == NominalKind::Enum {
+            self.diagnostics.push(
+                Diagnostic::error(
+                    "NOM010",
+                    format!("enum `{}` cannot be constructed with record syntax", nominal.name),
+                )
+                .with_primary(target.span(), "use a declared enum variant")
+                .with_help(format!("construct a variant such as `{}.<variant>(...)`", nominal.name)),
+            );
+            return Type::Error;
+        }
+
+        let generic_names = nominal
+            .generic_parameters
+            .iter()
+            .cloned()
+            .collect::<HashSet<_>>();
+        let mut initialized = HashSet::new();
+        for initializer in children
+            .iter()
+            .skip(1)
+            .copied()
+            .filter(|child| child.kind() == SyntaxKind::RecordFieldInitializer)
+        {
+            let Some((field_name, field_span)) =
+                first_direct_identifier(initializer, self.source)
+            else {
+                continue;
+            };
+            let expression = initializer
+                .child_nodes()
+                .find(|child| is_expression_kind(child.kind()));
+            let actual = expression.map_or(Type::Unknown, |child| self.infer_expression(child));
+            if !initialized.insert(field_name.clone()) {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        "NOM005",
+                        format!("field `{field_name}` is initialized more than once"),
+                    )
+                    .with_primary(field_span, "duplicate field initializer")
+                    .with_help("remove one of the repeated initializers"),
+                );
+                continue;
+            }
+            let Some(field) = nominal.fields.iter().find(|field| field.name == field_name) else {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        "NOM004",
+                        format!("type `{}` has no field `{field_name}`", nominal.name),
+                    )
+                    .with_primary(field_span, "unknown constructor field")
+                    .with_help("use one of the fields declared on the type"),
+                );
+                continue;
+            };
+            if !type_contains_generic(&field.ty, &generic_names) {
+                if let Some(expression) = expression {
+                    self.require_assignable(
+                        &field.ty,
+                        &actual,
+                        expression.span(),
+                        &format!("field `{field_name}`"),
+                        "NOM006",
+                    );
+                }
+            }
+        }
+
+        for field in &nominal.fields {
+            if !field.has_default && !initialized.contains(&field.name) {
+                self.diagnostics.push(
+                    Diagnostic::error(
+                        "NOM003",
+                        format!("missing required field `{}` for `{}`", field.name, nominal.name),
+                    )
+                    .with_primary(node.span(), "record construction is incomplete")
+                    .with_secondary(field.span, "required field declared here")
+                    .with_help(format!("add `{}: <value>`", field.name)),
+                );
+            }
+        }
+
+        Type::Named(
+            nominal.name,
+            vec![Type::Unknown; nominal.generic_parameters.len()],
+        )
+    }
+
+    fn is_mutable_place(&self, node: &SyntaxNode) -> bool {
+        match node.kind() {
+            SyntaxKind::NameExpression => {
+                let name = significant_text(node, self.source);
+                self.lookup_local(&name).is_some_and(|binding| {
+                    binding.mutable
+                        || matches!(
+                            &binding.ty,
+                            Type::Reference {
+                                mutable: true,
+                                ..
+                            }
+                        )
+                })
+            }
+            SyntaxKind::MemberExpression => node
+                .child_nodes()
+                .next()
+                .is_some_and(|base| self.is_mutable_place(base)),
+            SyntaxKind::PrefixExpression => {
+                significant_text(node, self.source).starts_with("&mut")
+            }
+            _ => false,
         }
     }
 
@@ -1213,6 +1899,281 @@ impl<'a> Checker<'a> {
     fn lookup_local(&self, name: &str) -> Option<&LocalBinding> {
         self.scopes.iter().rev().find_map(|scope| scope.get(name))
     }
+}
+
+fn field_declaration_parts(
+    node: &SyntaxNode,
+    source: &SourceFile,
+) -> Option<(String, Span, String, bool, bool)> {
+    let tokens = descendant_tokens(node);
+    let public = tokens
+        .iter()
+        .any(|token| token.kind() == TokenKind::Keyword(Keyword::Pub));
+    let name_token = tokens
+        .iter()
+        .copied()
+        .find(|token| token.kind() == TokenKind::Identifier)?;
+    let name = name_token.text(source)?.to_owned();
+    let colon = tokens.iter().position(|token| token.kind() == TokenKind::Colon)?;
+    let mut type_text = String::new();
+    let mut has_default = false;
+    for token in &tokens[colon + 1..] {
+        if token.kind() == TokenKind::Equal {
+            has_default = true;
+            break;
+        }
+        if let Some(text) = token.text(source) {
+            if needs_type_space(&type_text, text) {
+                type_text.push(' ');
+            }
+            type_text.push_str(text);
+        }
+    }
+    if type_text.trim().is_empty() {
+        return None;
+    }
+    Some((name, name_token.span(), type_text, has_default, public))
+}
+
+fn enum_variant_parts(
+    node: &SyntaxNode,
+    source: &SourceFile,
+) -> Option<(String, Span, Vec<String>)> {
+    let tokens = descendant_tokens(node);
+    let name_token = tokens
+        .iter()
+        .copied()
+        .find(|token| token.kind() == TokenKind::Identifier)?;
+    let name = name_token.text(source)?.to_owned();
+    let name_index = tokens
+        .iter()
+        .position(|token| token.span() == name_token.span())?;
+    let remaining = &tokens[name_index + 1..];
+    let open = remaining
+        .iter()
+        .position(|token| token.kind() == TokenKind::LeftParen);
+    let Some(open) = open else {
+        return Some((name, name_token.span(), Vec::new()));
+    };
+    let close = remaining
+        .iter()
+        .rposition(|token| token.kind() == TokenKind::RightParen);
+    let Some(close) = close else {
+        return Some((name, name_token.span(), Vec::new()));
+    };
+    if close <= open {
+        return Some((name, name_token.span(), Vec::new()));
+    }
+    let mut payload = Vec::new();
+    let mut current = String::new();
+    let mut angle_depth = 0usize;
+    let mut paren_depth = 0usize;
+    let mut bracket_depth = 0usize;
+    for token in &remaining[open + 1..close] {
+        match token.kind() {
+            TokenKind::Less => angle_depth += 1,
+            TokenKind::Greater if angle_depth > 0 => angle_depth -= 1,
+            TokenKind::ShiftRight if angle_depth > 0 => {
+                angle_depth = angle_depth.saturating_sub(2);
+            }
+            TokenKind::LeftParen => paren_depth += 1,
+            TokenKind::RightParen if paren_depth > 0 => paren_depth -= 1,
+            TokenKind::LeftBracket => bracket_depth += 1,
+            TokenKind::RightBracket if bracket_depth > 0 => bracket_depth -= 1,
+            TokenKind::Comma if angle_depth == 0 && paren_depth == 0 && bracket_depth == 0 => {
+                if !current.trim().is_empty() {
+                    payload.push(current.trim().to_owned());
+                }
+                current.clear();
+                continue;
+            }
+            _ => {}
+        }
+        if let Some(text) = token.text(source) {
+            if needs_type_space(&current, text) {
+                current.push(' ');
+            }
+            current.push_str(text);
+        }
+    }
+    if !current.trim().is_empty() {
+        payload.push(current.trim().to_owned());
+    }
+    Some((name, name_token.span(), payload))
+}
+
+fn impl_header(node: &SyntaxNode, source: &SourceFile) -> (Option<String>, Option<String>) {
+    let tokens = significant_direct_tokens(node);
+    let identifiers = tokens
+        .iter()
+        .filter(|token| token.kind() == TokenKind::Identifier)
+        .filter_map(|token| token.text(source).map(str::to_owned))
+        .collect::<Vec<_>>();
+    let has_for = tokens
+        .iter()
+        .any(|token| token.kind() == TokenKind::Keyword(Keyword::For));
+    if has_for && identifiers.len() >= 2 {
+        (
+            identifiers.last().cloned(),
+            identifiers.first().cloned(),
+        )
+    } else {
+        (identifiers.first().cloned(), None)
+    }
+}
+
+fn replace_self_type(ty: Type, owner: &str) -> Type {
+    match ty {
+        Type::Named(name, arguments) if name == "Self" && arguments.is_empty() => {
+            Type::Named(owner.to_owned(), Vec::new())
+        }
+        Type::Named(name, arguments) => Type::Named(
+            name,
+            arguments
+                .into_iter()
+                .map(|argument| replace_self_type(argument, owner))
+                .collect(),
+        ),
+        Type::Optional(inner) => {
+            Type::Optional(Box::new(replace_self_type(*inner, owner)))
+        }
+        Type::Reference { mutable, inner } => Type::Reference {
+            mutable,
+            inner: Box::new(replace_self_type(*inner, owner)),
+        },
+        Type::Pointer { mutable, inner } => Type::Pointer {
+            mutable,
+            inner: Box::new(replace_self_type(*inner, owner)),
+        },
+        Type::Tuple(items) => Type::Tuple(
+            items
+                .into_iter()
+                .map(|item| replace_self_type(item, owner))
+                .collect(),
+        ),
+        Type::Function(parameters, result) => Type::Function(
+            parameters
+                .into_iter()
+                .map(|parameter| replace_self_type(parameter, owner))
+                .collect(),
+            Box::new(replace_self_type(*result, owner)),
+        ),
+        other => other,
+    }
+}
+
+fn erase_generic_parameters(ty: Type, generics: &HashSet<String>) -> Type {
+    match ty {
+        Type::Named(name, arguments) if generics.contains(&name) && arguments.is_empty() => {
+            Type::Unknown
+        }
+        Type::Named(name, arguments) => Type::Named(
+            name,
+            arguments
+                .into_iter()
+                .map(|argument| erase_generic_parameters(argument, generics))
+                .collect(),
+        ),
+        Type::Optional(inner) => {
+            Type::Optional(Box::new(erase_generic_parameters(*inner, generics)))
+        }
+        Type::Reference { mutable, inner } => Type::Reference {
+            mutable,
+            inner: Box::new(erase_generic_parameters(*inner, generics)),
+        },
+        Type::Pointer { mutable, inner } => Type::Pointer {
+            mutable,
+            inner: Box::new(erase_generic_parameters(*inner, generics)),
+        },
+        Type::Tuple(items) => Type::Tuple(
+            items
+                .into_iter()
+                .map(|item| erase_generic_parameters(item, generics))
+                .collect(),
+        ),
+        Type::Function(parameters, result) => Type::Function(
+            parameters
+                .into_iter()
+                .map(|parameter| erase_generic_parameters(parameter, generics))
+                .collect(),
+            Box::new(erase_generic_parameters(*result, generics)),
+        ),
+        other => other,
+    }
+}
+
+fn type_contains_generic(ty: &Type, generics: &HashSet<String>) -> bool {
+    match ty {
+        Type::Named(name, arguments) => {
+            (generics.contains(name) && arguments.is_empty())
+                || arguments
+                    .iter()
+                    .any(|argument| type_contains_generic(argument, generics))
+        }
+        Type::Optional(inner)
+        | Type::Reference { inner, .. }
+        | Type::Pointer { inner, .. } => type_contains_generic(inner, generics),
+        Type::Tuple(items) => items
+            .iter()
+            .any(|item| type_contains_generic(item, generics)),
+        Type::Function(parameters, result) => {
+            parameters
+                .iter()
+                .any(|parameter| type_contains_generic(parameter, generics))
+                || type_contains_generic(result, generics)
+        }
+        _ => false,
+    }
+}
+
+fn nominal_name_from_type(ty: &Type) -> Option<String> {
+    match ty {
+        Type::Named(name, _) => Some(name.clone()),
+        Type::Reference { inner, .. } => nominal_name_from_type(inner),
+        _ => None,
+    }
+}
+
+fn member_name(node: &SyntaxNode, source: &SourceFile) -> Option<(String, Span)> {
+    significant_direct_tokens(node)
+        .into_iter()
+        .rev()
+        .find(|token| {
+            matches!(
+                token.kind(),
+                TokenKind::Identifier | TokenKind::Keyword(_)
+            )
+        })
+        .and_then(|token| token.text(source).map(|text| (text.to_owned(), token.span())))
+}
+
+fn closest_name<'a>(candidates: &[&'a str], requested: &str) -> Option<&'a str> {
+    candidates
+        .iter()
+        .copied()
+        .map(|candidate| (edit_distance(candidate, requested), candidate))
+        .filter(|(distance, candidate)| {
+            *distance <= 3 || *distance * 2 <= candidate.len().max(requested.len())
+        })
+        .min_by_key(|(distance, candidate)| (*distance, candidate.len()))
+        .map(|(_, candidate)| candidate)
+}
+
+fn edit_distance(left: &str, right: &str) -> usize {
+    let right_chars = right.chars().collect::<Vec<_>>();
+    let mut previous = (0..=right_chars.len()).collect::<Vec<_>>();
+    for (left_index, left_char) in left.chars().enumerate() {
+        let mut current = vec![left_index + 1];
+        for (right_index, right_char) in right_chars.iter().enumerate() {
+            let deletion = previous[right_index + 1] + 1;
+            let insertion = current[right_index] + 1;
+            let substitution =
+                previous[right_index] + usize::from(left_char != *right_char);
+            current.push(deletion.min(insertion).min(substitution));
+        }
+        previous = current;
+    }
+    previous[right_chars.len()]
 }
 
 fn builtin_type_names() -> Vec<&'static str> {
@@ -1762,5 +2723,155 @@ mod tests {
     fn rejects_assignment_to_let() {
         let result = check_text("module test\nfn main() { let value = 1\n value = 2\n }\n");
         assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "TYP010"));
+    }    #[test]
+    fn indexes_record_fields_and_methods() {
+        let result = check_text(
+            "module test\nrecord User {\n name: String\n age: Int = 0\n}\nimpl User {\n fn label(self: &Self) -> String { self.name }\n}\nfn main() { let user = User { name: \"M\" }\n let label = user.label()\n let age = user.age\n }\n",
+        );
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        let user = result
+            .nominals
+            .iter()
+            .find(|nominal| nominal.name == "User")
+            .unwrap_or_else(|| panic!("User nominal missing"));
+        assert_eq!(user.fields.len(), 2);
+        assert!(user.methods.iter().any(|method| method.name == "label"));
+        assert!(result.bindings.iter().any(|binding| {
+            binding.name == "label" && binding.ty == Type::String
+        }));
+    }
+
+    #[test]
+    fn accepts_mutable_field_assignment_and_mutating_method() {
+        let result = check_text(
+            "module test\nrecord User {\n name: String\n}\nimpl User {\n fn rename(self: &mut Self, name: String) -> Unit { self.name = name }\n}\nfn main() { var user = User { name: \"before\" }\n user.rename(\"after\")\n user.name = \"done\"\n }\n",
+        );
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    }
+
+    #[test]
+    fn rejects_missing_record_field() {
+        let result = check_text(
+            "module test\nrecord Pair {\n left: Int\n right: Int\n}\nfn main() { let pair = Pair { left: 1 } }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM003"));
+    }
+
+    #[test]
+    fn rejects_unknown_record_field() {
+        let result = check_text(
+            "module test\nrecord User {\n name: String\n}\nfn main() { let user = User { title: \"x\", name: \"M\" } }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM004"));
+    }
+
+    #[test]
+    fn rejects_duplicate_record_initializer() {
+        let result = check_text(
+            "module test\nrecord User {\n name: String\n}\nfn main() { let user = User { name: \"A\", name: \"B\" } }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM005"));
+    }
+
+    #[test]
+    fn rejects_wrong_record_field_type() {
+        let result = check_text(
+            "module test\nrecord User {\n age: Int\n}\nfn main() { let user = User { age: \"young\" } }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM006"));
+    }
+
+    #[test]
+    fn resolves_enum_unit_and_payload_variants() {
+        let result = check_text(
+            "module test\nenum State {\n idle\n ready(String)\n}\nfn main() { let first = State.idle\n let second = State.ready(\"done\")\n }\n",
+        );
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert!(result.bindings.iter().any(|binding| {
+            binding.name == "first"
+                && binding.ty == Type::Named("State".to_owned(), Vec::new())
+        }));
+        assert!(result.bindings.iter().any(|binding| {
+            binding.name == "second"
+                && binding.ty == Type::Named("State".to_owned(), Vec::new())
+        }));
+    }
+
+    #[test]
+    fn rejects_wrong_enum_payload_type() {
+        let result = check_text(
+            "module test\nenum State {\n ready(String)\n}\nfn main() { let state = State.ready(1) }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM007"));
+    }
+
+    #[test]
+    fn rejects_unknown_member_with_suggestion() {
+        let result = check_text(
+            "module test\nrecord User {\n name: String\n}\nfn main() { let user = User { name: \"M\" }\n let value = user.nam\n }\n",
+        );
+        let diagnostic = result
+            .diagnostics
+            .iter()
+            .find(|diagnostic| diagnostic.code == "NOM001")
+            .unwrap_or_else(|| panic!("NOM001 missing"));
+        assert!(diagnostic.help.iter().any(|help| help.contains("name")));
+    }
+
+    #[test]
+    fn rejects_unknown_enum_variant_with_suggestion() {
+        let result = check_text(
+            "module test\nenum State { ready(String) }\nfn main() { let state = State.redy("done") }\n",
+        );
+        let diagnostic = result
+            .diagnostics
+            .iter()
+            .find(|diagnostic| diagnostic.code == "NOM001")
+            .unwrap_or_else(|| panic!("NOM001 missing"));
+        assert!(diagnostic.help.iter().any(|help| help.contains("ready")));
+    }
+
+    #[test]
+    fn rejects_optional_member_access() {
+        let result = check_text(
+            "module test\nrecord User {\n name: String\n}\nfn main() { let user: User? = none\n let name = user.name\n }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM002"));
+    }
+
+    #[test]
+    fn rejects_mutation_through_immutable_record() {
+        let result = check_text(
+            "module test\nrecord User {\n name: String\n}\nfn main() { let user = User { name: \"M\" }\n user.name = \"N\"\n }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM008"));
+    }
+
+    #[test]
+    fn rejects_unknown_constructor_target() {
+        let result = check_text(
+            "module test\nfn main() { let value = Missing { name: \"x\" } }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM009"));
+    }
+
+    #[test]
+    fn rejects_record_syntax_for_enum() {
+        let result = check_text(
+            "module test\nenum State { idle }\nfn main() { let value = State { } }\n",
+        );
+        assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "NOM010"));
+    }
+
+    #[test]
+    fn checks_method_bodies_against_their_signatures() {
+        let result = check_text(
+            "module test\nrecord User { name: String }\nimpl User { fn broken(self: &Self) -> Int { self.name } }\n",
+        );
+        assert!(result
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TYP005"));
     }
 }
+

@@ -1,68 +1,68 @@
-# Nivra — D6 Static Type-Checker Foundation (Build Fix)
+# Nivra D7 — Nominal Types and Member Checking
 
-> **Mission:** Power without the pain.
+Nivra is a statically typed, compiled general-purpose language designed to
+deliver native power without recurring developer pain.
 
-This is the corrected cumulative D6 archive. It repairs the GitHub Actions
-`E0432` failure caused by an undeclared parser dependency in `nivra-types` tests
-and adds a repository-wide Cargo dependency preflight so the same class of error
-is detected before Rust compilation.
+D7 turns nominal type names into checked type bodies. The compiler now understands
+record and struct fields, record construction, enum variants, inherent methods,
+trait implementation methods, `Self`, field mutation, and mutable receivers.
 
-## Cumulative delivery status
+## Current executable pipeline
 
-- **D1:** mission, developer pain map, constitution, syntax direction
-- **D2:** type/memory/error/concurrency architecture and Specification Draft 0.2
-- **D3:** Rust workspace, source manager, diagnostics, lexer, first CLI
-- **D4:** lossless CST parser, typed AST foundation, recovery, `nivra parse`
-- **D5:** scopes, symbols, module indexing, name resolution, `nivra resolve`
-- **D6:** static type representation, signatures, local inference, operator/call/
-  condition/assignment/return validation, and `nivra typecheck`
-- **D6 build fix:** declares the test-only `nivra-parser` edge in both
-  `Cargo.toml` and `Cargo.lock`; validates all local imports and lock edges
+```text
+UTF-8 source
+  → lossless lexer
+  → error-recovering CST parser
+  → semantic name resolution
+  → static type checking
+  → nominal body and member checking
+```
 
-## D6 operational commands
+## D7 commands
 
 ```bash
 nivra check file.nva
 nivra typecheck file.nva
-nivra typecheck file.nva --functions --types
+nivra typecheck file.nva --functions --types --nominals
 nivra typecheck file.nva --json
-nivra resolve file.nva --symbols --scopes
 nivra parse file.nva --tree
-nivra lex file.nva --trivia
-nivra explain TYP004
+nivra explain NOM001
 nivra doctor
 ```
 
-## Workspace
+## D7 implementation highlights
 
-D6 contains eight local-only Rust crates:
+- record and struct body indexing
+- required and defaulted fields
+- named record construction
+- field access and field type checking
+- mutable field assignment rules
+- unit and tuple-payload enum variants
+- enum variant arity/type checking
+- inherent and trait implementation methods
+- `Self` replacement with implementation target
+- `&mut Self` receiver enforcement
+- nearby-name suggestions for unknown members
+- NOM001–NOM010 diagnostics
+- human and JSON nominal reports
+- 8 zero-third-party-dependency Rust crates
+- pinned Rust 1.74 CI
+- Android + Termux verification
 
-- `nivra-source`
-- `nivra-diagnostics`
-- `nivra-lexer`
-- `nivra-syntax`
-- `nivra-parser`
-- `nivra-sema`
-- `nivra-types`
-- `nivra-cli`
-
-There are no third-party Rust runtime dependencies.
-
-## Verify on Android + Termux
+## Verify
 
 ```bash
 bash scripts/termux-verify.sh
 ```
 
-Expected final marker after actual Rust compilation and tests:
+Expected final marker:
 
 ```text
-★★★★★ D6 GOLDEN BUILD
+★★★★★ D7 GOLDEN BUILD
 ```
 
-Read `D6-BUILD-FIX-REPORT.md` for the exact root cause and
-`MANUAL-VERIFICATION.md` for post-Actions checks.
+## Deliberate boundaries
 
-## Final build-fix evidence
-
-See `D6-FINAL-BUILD-FIX-REPORT.md` for the reserved-keyword test failure, correction, and hardened CI sequence.
+D7 does not yet claim full generic substitution, cross-module privacy,
+trait-selection solving, ownership-flow checking, HIR/MIR, code generation, or
+execution. Those remain gated future work.

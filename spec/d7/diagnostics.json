@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "codes": [
+    {
+      "code": "NOM001",
+      "title": "Unknown member"
+    },
+    {
+      "code": "NOM002",
+      "title": "Invalid member base"
+    },
+    {
+      "code": "NOM003",
+      "title": "Missing required field"
+    },
+    {
+      "code": "NOM004",
+      "title": "Unknown constructor field"
+    },
+    {
+      "code": "NOM005",
+      "title": "Duplicate constructor field"
+    },
+    {
+      "code": "NOM006",
+      "title": "Constructor field type mismatch"
+    },
+    {
+      "code": "NOM007",
+      "title": "Enum variant payload mismatch"
+    },
+    {
+      "code": "NOM008",
+      "title": "Immutable receiver or member assignment"
+    },
+    {
+      "code": "NOM009",
+      "title": "Unknown constructor target"
+    },
+    {
+      "code": "NOM010",
+      "title": "Enum used with record construction syntax"
+    }
+  ]
+}

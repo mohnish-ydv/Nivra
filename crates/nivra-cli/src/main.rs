@@ -31,7 +31,7 @@ fn run(arguments: Vec<OsString>) -> i32 {
             0
         }
         "version" | "--version" | "-V" => {
-            println!("nivra {VERSION} (static type-checker foundation D6)");
+            println!("nivra {VERSION} (nominal types and members D7)");
             0
         }
         "doctor" => doctor(),
@@ -43,7 +43,7 @@ fn run(arguments: Vec<OsString>) -> i32 {
         "typecheck" => typecheck_command(&arguments[1..]),
         unknown => {
             eprintln!("error[CLI001]: unknown command `{unknown}`");
-            eprintln!("  = help: run `nivra help` to list available D6 commands");
+            eprintln!("  = help: run `nivra help` to list available D7 commands");
             2
         }
     }
@@ -64,17 +64,17 @@ COMMANDS:
     resolve <FILE> [--symbols] [--scopes]        Inspect semantic name resolution
                    [--all] [--json]
     typecheck <FILE> [--functions] [--types]     Inspect static types
-                     [--json]
-    explain <CODE>                               Explain a D6 diagnostic code
+                     [--nominals] [--json]
+    explain <CODE>                               Explain a D7 diagnostic code
     doctor                                       Show compiler-driver information
     version                                      Print the version
     help                                         Print this help
 
-D6 SCOPE:
-    Source management, diagnostics, lexing, lossless parsing, semantic resolution,
-    primitive and nominal types, function signatures, local inference, operators,
-    calls, conditions, assignments, arrays, and return checking are implemented.
-    Ownership checking, HIR/MIR, code generation, and execution arrive later.
+D7 SCOPE:
+    The full D6 pipeline plus record/struct bodies, enum variants, record
+    construction, field access, inherent and trait methods, Self substitution,
+    mutable receivers, and nominal diagnostics are implemented.
+    Ownership flow analysis, generics substitution, HIR/MIR, and code generation arrive later.
 "
     );
 }
@@ -109,7 +109,12 @@ fn doctor() -> i32 {
     println!("Local type inference: PASS");
     println!("Operator and call checker: PASS");
     println!("Return checker: PASS");
-    println!("D6 status: OPERATIONAL");
+    println!("Nominal type index: PASS");
+    println!("Record constructor checker: PASS");
+    println!("Field and method lookup: PASS");
+    println!("Enum variant typing: PASS");
+    println!("Mutable receiver validation: PASS");
+    println!("D7 status: OPERATIONAL");
     0
 }
 
@@ -152,12 +157,22 @@ fn explain(code: Option<&OsString>) -> i32 {
         "TYP008" => "A declared type is malformed, unknown, or not imported.",
         "TYP009" => "Array elements must have one compatible element type.",
         "TYP010" => "An immutable `let` binding cannot be assigned a new value.",
-        "CLI001" => "The requested D6 command does not exist.",
+        "NOM001" => "The requested field, method, or enum variant does not exist.",
+        "NOM002" => "Member access requires a concrete nominal value and explicit optional handling.",
+        "NOM003" => "A required record or struct field is missing from construction.",
+        "NOM004" => "A constructor initializer names a field that the type does not declare.",
+        "NOM005" => "A record or struct field is initialized more than once.",
+        "NOM006" => "A constructor field value does not match the declared field type.",
+        "NOM007" => "An enum variant payload does not match its declaration.",
+        "NOM008" => "A field assignment or method call requires a mutable receiver.",
+        "NOM009" => "Record construction targets an unknown nominal type.",
+        "NOM010" => "Record construction syntax cannot construct an enum.",
+        "CLI001" => "The requested D7 command does not exist.",
         "CLI002" => "A required command argument is missing or an option is invalid.",
         "DRV001" => "The compiler driver could not load the requested source file.",
         _ => {
             eprintln!("error[CLI003]: unknown diagnostic code `{code}`");
-            eprintln!("  = help: D6 codes use the LEX, PAR, SEM, TYP, CLI, and DRV prefixes");
+            eprintln!("  = help: D7 codes use the LEX, PAR, SEM, TYP, NOM, CLI, and DRV prefixes");
             return 2;
         }
     };
@@ -207,11 +222,12 @@ fn check_command(arguments: &[OsString]) -> i32 {
     let typed_bindings = typed.as_ref().map_or(0, |value| value.bindings.len());
     let typed_expressions = typed.as_ref().map_or(0, |value| value.expressions.len());
     let function_signatures = typed.as_ref().map_or(0, |value| value.functions.len());
+    let nominal_types = typed.as_ref().map_or(0, |value| value.nominals.len());
 
     if parsed.json {
         let rendered = Renderer::new().json_many(&diagnostics, &sources);
         println!(
-            "{{\"path\":{},\"nodes\":{},\"tokens\":{},\"lexical_diagnostics\":{},\"recoveries\":{},\"semantic_symbols\":{},\"semantic_scopes\":{},\"resolved_names\":{},\"function_signatures\":{},\"typed_bindings\":{},\"typed_expressions\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}}}",
+            "{{\"path\":{},\"nodes\":{},\"tokens\":{},\"lexical_diagnostics\":{},\"recoveries\":{},\"semantic_symbols\":{},\"semantic_scopes\":{},\"resolved_names\":{},\"function_signatures\":{},\"nominal_types\":{},\"typed_bindings\":{},\"typed_expressions\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}}}",
             json_string(&parsed.path.to_string_lossy()),
             nodes,
             tokens,
@@ -221,6 +237,7 @@ fn check_command(arguments: &[OsString]) -> i32 {
             semantic_scopes,
             resolved_names,
             function_signatures,
+            nominal_types,
             typed_bindings,
             typed_expressions,
             errors,
@@ -233,12 +250,12 @@ fn check_command(arguments: &[OsString]) -> i32 {
         }
         if errors == 0 {
             println!(
-                "Checked {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {typed_bindings} typed bindings, {warnings} warnings, 0 errors",
+                "Checked {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {nominal_types} nominal types, {typed_bindings} typed bindings, {warnings} warnings, 0 errors",
                 parsed.path.display()
             );
         } else {
             println!(
-                "Check failed for {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {typed_bindings} typed bindings, {warnings} warnings, {errors} errors",
+                "Check failed for {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {nominal_types} nominal types, {typed_bindings} typed bindings, {warnings} warnings, {errors} errors",
                 parsed.path.display()
             );
         }
@@ -409,7 +426,7 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
         Err(message) => {
             eprintln!("error[CLI002]: {message}");
             eprintln!(
-                "  = help: usage: `nivra typecheck <FILE> [--functions] [--types] [--json]`"
+                "  = help: usage: `nivra typecheck <FILE> [--functions] [--types] [--nominals] [--json]`"
             );
             return 2;
         }
@@ -464,6 +481,7 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
         println!("=================");
         println!("Path: {}", options.path.display());
         println!("Function signatures: {}", typed.functions.len());
+        println!("Nominal types: {}", typed.nominals.len());
         println!("Typed bindings: {}", typed.bindings.len());
         println!("Typed expressions: {}", typed.expressions.len());
         println!("Errors: {errors}");
@@ -480,6 +498,12 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
             println!("INFERRED AND DECLARED BINDINGS");
             println!("==============================");
             print!("{}", typed.binding_report());
+        }
+        if options.nominals {
+            println!();
+            println!("NOMINAL TYPES AND MEMBERS");
+            println!("=========================");
+            print!("{}", typed.nominal_report());
         }
         if !typed.diagnostics.is_empty() {
             eprint!("{}", Renderer::new().human_many(&typed.diagnostics, &sources));
@@ -599,6 +623,7 @@ struct TypecheckOptions {
     json: bool,
     functions: bool,
     types: bool,
+    nominals: bool,
 }
 
 fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, String> {
@@ -606,6 +631,7 @@ fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, S
     let mut json = false;
     let mut functions = false;
     let mut types = false;
+    let mut nominals = false;
 
     for argument in arguments {
         if argument.as_os_str() == OsStr::new("--json") {
@@ -614,6 +640,8 @@ fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, S
             functions = true;
         } else if argument.as_os_str() == OsStr::new("--types") {
             types = true;
+        } else if argument.as_os_str() == OsStr::new("--nominals") {
+            nominals = true;
         } else if argument.to_string_lossy().starts_with('-') {
             return Err(format!("unknown option `{}`", argument.to_string_lossy()));
         } else if path.replace(PathBuf::from(argument.as_os_str())).is_some() {
@@ -621,8 +649,11 @@ fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, S
         }
     }
 
-    if json && (functions || types) {
-        return Err("`--json` already includes functions and types; remove display flags".to_owned());
+    if json && (functions || types || nominals) {
+        return Err(
+            "`--json` already includes functions, bindings, and nominals; remove display flags"
+                .to_owned(),
+        );
     }
 
     Ok(TypecheckOptions {
@@ -630,6 +661,7 @@ fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, S
         json,
         functions,
         types,
+        nominals,
     })
 }
 
@@ -747,10 +779,20 @@ fn typecheck_json(
         if index > 0 {
             output.push(',');
         }
+        let owner = signature
+            .owner
+            .as_ref()
+            .map_or_else(|| "null".to_owned(), |value| json_string(value));
+        let trait_name = signature
+            .trait_name
+            .as_ref()
+            .map_or_else(|| "null".to_owned(), |value| json_string(value));
         let _ = write!(
             output,
-            "{{\"name\":{},\"return_type\":{},\"async\":{},\"extern\":{},\"parameters\":[",
+            "{{\"name\":{},\"owner\":{},\"trait\":{},\"return_type\":{},\"async\":{},\"extern\":{},\"parameters\":[",
             json_string(&signature.name),
+            owner,
+            trait_name,
             json_string(&signature.return_type.display_name()),
             signature.is_async,
             signature.is_extern
@@ -767,6 +809,87 @@ fn typecheck_json(
                 parameter.span.start(),
                 parameter.span.end()
             );
+        }
+        output.push_str("]}");
+    }
+    output.push_str("],\"nominals\":[");
+    for (index, nominal) in typed.nominals.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let _ = write!(
+            output,
+            "{{\"name\":{},\"kind\":{},\"generic_parameters\":[",
+            json_string(&nominal.name),
+            json_string(nominal.kind.name())
+        );
+        for (generic_index, generic) in nominal.generic_parameters.iter().enumerate() {
+            if generic_index > 0 {
+                output.push(',');
+            }
+            output.push_str(&json_string(generic));
+        }
+        output.push_str("],\"fields\":[");
+        for (field_index, field) in nominal.fields.iter().enumerate() {
+            if field_index > 0 {
+                output.push(',');
+            }
+            let _ = write!(
+                output,
+                "{{\"name\":{},\"type\":{},\"default\":{},\"public\":{}}}",
+                json_string(&field.name),
+                json_string(&field.ty.display_name()),
+                field.has_default,
+                field.public
+            );
+        }
+        output.push_str("],\"variants\":[");
+        for (variant_index, variant) in nominal.variants.iter().enumerate() {
+            if variant_index > 0 {
+                output.push(',');
+            }
+            let _ = write!(
+                output,
+                "{{\"name\":{},\"payload\":[",
+                json_string(&variant.name)
+            );
+            for (payload_index, payload) in variant.payload.iter().enumerate() {
+                if payload_index > 0 {
+                    output.push(',');
+                }
+                output.push_str(&json_string(&payload.display_name()));
+            }
+            output.push_str("]}");
+        }
+        output.push_str("],\"methods\":[");
+        for (method_index, method) in nominal.methods.iter().enumerate() {
+            if method_index > 0 {
+                output.push(',');
+            }
+            let trait_name = method
+                .trait_name
+                .as_ref()
+                .map_or_else(|| "null".to_owned(), |value| json_string(value));
+            let _ = write!(
+                output,
+                "{{\"name\":{},\"return_type\":{},\"mutable_receiver\":{},\"trait\":{},\"parameters\":[",
+                json_string(&method.name),
+                json_string(&method.return_type.display_name()),
+                method.mutable_receiver,
+                trait_name
+            );
+            for (parameter_index, parameter) in method.parameters.iter().enumerate() {
+                if parameter_index > 0 {
+                    output.push(',');
+                }
+                let _ = write!(
+                    output,
+                    "{{\"name\":{},\"type\":{}}}",
+                    json_string(&parameter.name),
+                    json_string(&parameter.ty.display_name())
+                );
+            }
+            output.push_str("]}");
         }
         output.push_str("]}");
     }

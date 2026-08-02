@@ -1,0 +1,22 @@
+module examples.d7.methods
+
+record Counter {
+    value: Int
+}
+
+impl Counter {
+    fn increment(self: &mut Self, amount: Int) -> Unit {
+        self.value = self.value + amount
+    }
+
+    fn current(self: &Self) -> Int {
+        self.value
+    }
+}
+
+fn main() -> Unit {
+    var counter = Counter { value: 1 }
+    counter.increment(2)
+    let result = counter.current()
+    print(result)
+}

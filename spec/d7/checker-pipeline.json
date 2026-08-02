@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "pipeline": [
+    "source",
+    "lexer",
+    "parser",
+    "semantic_resolution",
+    "signature_collection",
+    "nominal_index",
+    "member_and_constructor_checking",
+    "type_result"
+  ],
+  "record_expression_node": "record_expression",
+  "field_initializer_node": "record_field_initializer",
+  "cli": {
+    "command": "nivra typecheck",
+    "flag": "--nominals"
+  }
+}

@@ -17,8 +17,8 @@ trap 'rm -rf "$WORK"' EXIT
 printf 'D6 CLI SMOKE TESTS\n'
 printf '==================\n'
 
-"$BIN" --version | grep -F "0.6.0" >/dev/null
-"$BIN" doctor | grep -F "D6 status: OPERATIONAL" >/dev/null
+"$BIN" --version | grep -F "0.7.0" >/dev/null
+"$BIN" doctor | grep -F "D7 status: OPERATIONAL" >/dev/null
 printf 'CLI identity: PASS\n'
 
 for source in "$ROOT"/examples/d6/*.nva; do

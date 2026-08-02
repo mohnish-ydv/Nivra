@@ -1,6 +1,9 @@
-name: Verify D6 Type Checker
+name: Verify D7 Nominal Members
 
 on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -8,9 +11,9 @@ permissions:
 
 jobs:
   verify:
-    name: Specs, type tests, CLI, release
+    name: Specs, nominal tests, CLI, release
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
@@ -44,26 +47,27 @@ jobs:
       - name: Build release workspace
         run: cargo build --workspace --release --locked
 
-      - name: Run release type-checker smoke
+      - name: Run release nominal smoke
         env:
           NIVRA_BIN: ${{ github.workspace }}/target/release/nivra
-        run: bash scripts/d6-smoke.sh
+        run: bash scripts/d7-smoke.sh
 
-      - name: Generate D6 reports
+      - name: Generate D7 reports
         run: |
           python3 tools/d2_report.py > D2-ARCHITECTURE-REPORT.txt
           python3 tools/d3_report.py > D3-COMPILER-FOUNDATION-REPORT.txt
           python3 tools/d4_report.py > D4-PARSER-AST-REPORT.txt
           python3 tools/d5_report.py > D5-SEMANTIC-REPORT.txt
           python3 tools/d6_report.py > D6-TYPE-CHECKER-REPORT.txt
-          ./target/release/nivra doctor > D6-NIVRA-DOCTOR.txt
-          ./target/release/nivra typecheck examples/d6/05_complete_type_tour.nva --functions --types > D6-TYPE-REPORT.txt
-          ./target/release/nivra typecheck examples/d6/02_functions_and_calls.nva --json > D6-TYPE-GRAPH.json
+          python3 tools/d7_report.py > D7-NOMINAL-MEMBERS-REPORT.txt
+          ./target/release/nivra doctor > D7-NIVRA-DOCTOR.txt
+          ./target/release/nivra typecheck examples/d7/05_complete_nominal_tour.nva --functions --types --nominals > D7-NOMINAL-REPORT.txt
+          ./target/release/nivra typecheck examples/d7/05_complete_nominal_tour.nva --json > D7-NOMINAL-GRAPH.json
 
-      - name: Upload D6 Linux artifact and reports
+      - name: Upload D7 Linux artifact and reports
         uses: actions/upload-artifact@v4
         with:
-          name: nivra-d6-linux-x86_64
+          name: nivra-d7-linux-x86_64
           path: |
             target/release/nivra
             D2-ARCHITECTURE-REPORT.txt
@@ -71,9 +75,10 @@ jobs:
             D4-PARSER-AST-REPORT.txt
             D5-SEMANTIC-REPORT.txt
             D6-TYPE-CHECKER-REPORT.txt
-            D6-NIVRA-DOCTOR.txt
-            D6-TYPE-REPORT.txt
-            D6-TYPE-GRAPH.json
+            D7-NOMINAL-MEMBERS-REPORT.txt
+            D7-NIVRA-DOCTOR.txt
+            D7-NOMINAL-REPORT.txt
+            D7-NOMINAL-GRAPH.json
             MANUAL-VERIFICATION.md
           if-no-files-found: error
           retention-days: 14

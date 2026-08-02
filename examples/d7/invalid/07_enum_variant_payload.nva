@@ -1,0 +1,6 @@
+module examples.d7.invalid.variant_payload
+enum State { ready(String) }
+fn main() -> Unit {
+    let state = State.ready(42)
+    print(state)
+}

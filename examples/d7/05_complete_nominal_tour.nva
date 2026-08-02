@@ -1,0 +1,50 @@
+module examples.d7.complete_tour
+
+record Profile {
+    name: String
+    score: Int = 0
+    active: Bool = true
+}
+
+enum Status {
+    offline
+    online(Profile)
+    failed(String)
+}
+
+trait Summary {
+    fn summary(self: &Self) -> String
+}
+
+impl Summary for Profile {
+    fn summary(self: &Self) -> String {
+        self.name
+    }
+}
+
+impl Profile {
+    fn add_score(self: &mut Self, amount: Int) -> Unit {
+        self.score = self.score + amount
+    }
+
+    fn is_active(self: &Self) -> Bool {
+        self.active
+    }
+}
+
+fn main() -> Unit {
+    var profile = Profile {
+        name: "Developer",
+    }
+    profile.add_score(10)
+
+    let score = profile.score
+    let active = profile.is_active()
+    let summary = profile.summary()
+    let state = Status.online(profile)
+
+    print(score)
+    print(active)
+    print(summary)
+    print(state)
+}

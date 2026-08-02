@@ -1,0 +1,14 @@
+module examples.d7.records
+
+record User {
+    name: String
+    age: Int = 0
+}
+
+fn main() -> Unit {
+    let user = User {
+        name: "Mohnish",
+    }
+    print(user.name)
+    print(user.age)
+}

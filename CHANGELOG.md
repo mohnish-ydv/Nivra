@@ -1,5 +1,33 @@
 # Changelog
 
+## D7 — 2026-08-02
+
+### Added
+
+- lossless record-construction CST nodes
+- record, struct, and enum body indexing
+- field/default metadata and named construction
+- inherent and trait implementation methods
+- `Self` substitution and mutable receiver validation
+- enum unit and tuple-payload variant typing
+- NOM001–NOM010 diagnostics
+- `nivra typecheck --nominals`
+- human and JSON nominal reports
+- D7 fixtures, tests, smoke suite, reports, and CI
+
+### Changed
+
+- workspace version to 0.7.0
+- `nivra check` now includes nominal/member validation
+- D6 workflow moved to manual dispatch; D7 is the active push workflow
+
+### Fixed
+
+- protected the D6 parser dev-dependency and reserved-keyword regressions
+- added an ambiguity test so `if value {}` is not parsed as record construction
+- normalized function/method signature spans so method bodies cannot skip type checking
+- report unknown enum variants through NOM001 with nearest-name suggestions
+
 ## D6 Final Build Fix — 2026-08-02
 
 ### Fixed

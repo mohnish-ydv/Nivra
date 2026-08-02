@@ -1,27 +1,33 @@
-# D6 Build-Fix Acceptance Checklist
+# D7 Acceptance Checklist
 
-## Corrective automated checks
+## Automated
 
-- [x] Uploaded Actions failure was traced to Rust `E0432` in `nivra-types` tests.
-- [x] `nivra-parser` is declared under `nivra-types` dev-dependencies.
-- [x] `Cargo.lock` contains the matching `nivra-types -> nivra-parser` edge.
-- [x] All eight manifests use only local path dependencies.
-- [x] Local Rust imports are checked against manifest dependency declarations.
-- [x] Cargo.lock local edges are checked against every manifest.
-- [x] CI runs dependency lint and `cargo metadata --locked` before Rust tests.
-- [x] D1–D6 structural regressions remain enabled.
-- [x] Ten unique `TYP` diagnostics and all D6 fixtures remain present.
-- [x] Fixed `/tmp` output paths remain forbidden.
+- [x] D1–D6 structural regressions remain valid.
+- [x] Workspace and lockfile use version 0.7.0.
+- [x] No registry dependency is introduced.
+- [x] Record construction has dedicated lossless CST nodes.
+- [x] Nominal type, field, variant, and method models exist.
+- [x] `Self` substitution and mutable receiver checks exist.
+- [x] NOM001–NOM010 are implemented and explained.
+- [x] Five valid and ten invalid D7 fixtures are included.
+- [x] At least 96 cumulative Rust tests are present.
+- [x] GitHub Actions compiles all targets before running all tests.
+- [x] CLI smoke tests cover valid programs, every nominal diagnostic, reports, and JSON.
+- [x] D6 dependency and reserved-keyword regressions are permanently guarded.
 
-## Required acceptance checks
+## Manual
 
-- [ ] Corrected GitHub Actions `Verify D6 Type Checker` is green.
-- [ ] Termux verifier prints `★★★★★ D6 GOLDEN BUILD`.
-- [ ] Valid complete tour reports zero errors.
-- [ ] Type/function reports are readable.
-- [ ] `TYP001`, `TYP003`, `TYP007`, and `TYP010` return exit code 1.
-- [ ] Typecheck JSON parses through `python3 -m json.tool`.
-- [ ] User reports `GG D6 Passed`.
+- [ ] `Verify D7 Nominal Members` is green.
+- [ ] `bash scripts/termux-verify.sh` prints the D7 golden marker.
+- [ ] Complete nominal tour returns zero errors.
+- [ ] `--nominals` lists fields, variants, and methods.
+- [ ] NOM001, NOM003, NOM007, and NOM008 are manually observed.
+- [ ] Nominal JSON passes `python3 -m json.tool`.
 
-- [x] Primitive Bool inference fixture uses a non-reserved identifier.
-- [x] CI compiles all targets before running the no-fail-fast workspace suite.
+## Gate
+
+D8 begins only after the user reports:
+
+```text
+GG D7 Passed
+```

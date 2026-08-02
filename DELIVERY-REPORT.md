@@ -1,46 +1,51 @@
-# D6 Build-Fix Delivery Report
+# D7 Delivery Report
 
-## Delivery
+## Delivery identity
 
-- Delivery: D6 corrective release
-- Builds on: user-verified D1–D5 and failed D6 Actions evidence
-- Version: 0.6.0
-- Edition: 2026
-- Status before corrected user verification: BUILD-FIX CANDIDATE
+- Delivery: D7
+- Version: 0.7.0
+- Title: Nominal Types and Member Checking
+- Builds on: verified D1–D6
 - Workspace crates: 8
-- Third-party Rust runtime dependencies: 0
+- Third-party Rust dependencies: 0
+- Minimum Rust: 1.74
+- Status before user verification: RELEASE CANDIDATE
 
-## Failure reproduced from logs
+## Implemented
 
-GitHub Actions reached `nivra-types` and failed in its test target with Rust
-`E0432`: `use nivra_parser::parse` referenced a crate that was not declared in
-`nivra-types` dev-dependencies.
+1. Lossless record-construction parsing.
+2. Record, struct, and enum body indexing.
+3. Field types, defaults, and visibility metadata.
+4. Unit and tuple-payload enum variant typing.
+5. Inherent and trait implementation method collection.
+6. `Self` substitution in method signatures.
+7. Field and method lookup on nominal values.
+8. Mutable receiver and member-assignment validation.
+9. Constructor missing/unknown/duplicate/type checks.
+10. NOM001–NOM010 diagnostics.
+11. `nivra typecheck --nominals`.
+12. Nominal data in JSON output.
+13. Cumulative D1–D7 CI and Termux verification.
 
-## Corrections
+## Regression protections
 
-1. added `nivra-parser` as a path-only `dev-dependency` of `nivra-types`
-2. synchronized the `nivra-types` dependency set in `Cargo.lock`
-3. added a generic eight-crate manifest/import/lock dependency validator
-4. made CI run dependency validation and `cargo metadata --locked` before tests
-5. added the same dependency validation to the cumulative Termux verifier
-6. added permanent regression assertions for the exact missing edge
-7. documented the failure, fix, push flow, and manual acceptance procedure
+D7 retains permanent guards for both D6 failures:
 
-## D6 feature scope retained
+- `nivra-types` declares its parser test dependency.
+- reserved keyword `ok` is never used as a normal binding in the primitive test.
 
-The corrected archive retains static type representation, signature collection,
-local inference, operator/call/condition/array/assignment/return validation,
-`TYP001`–`TYP010`, `nivra typecheck`, five valid fixtures, ten invalid fixtures,
-and 75 cumulative Rust tests.
+D7 also adds a parser ambiguity test proving that `if enabled { ... }` is not
+misclassified as a record constructor.
 
-## Verification truthfulness
+## Deliberate limitations
 
-The packaging environment could not install Rust/Cargo. Static whole-repository
-checks, manifest/lock consistency, TOML/JSON/Python/shell validation, fixture/test
-inventory, archive integrity, and fresh extraction verification are performed
-before release. GitHub Actions and Termux are the authoritative compilation and
-runtime-test verdicts. D6 is not accepted until both are green.
+- Generic nominal constructors use recovery types; complete substitution is D8.
+- Cross-module visibility checks are deferred.
+- Trait selection and overlapping implementation analysis are deferred.
+- Record-payload enum variants are not field-typed yet.
+- No ownership-flow checker or code generation is claimed.
 
-## Final follow-up correction
+## Acceptance
 
-The dependency graph fix compiled successfully. A single unit test then failed because it used reserved keyword `ok` as a variable name. The fixture and assertion now use `enabled`, and CI runs all workspace tests with `--no-fail-fast`. See `D6-FINAL-BUILD-FIX-REPORT.md`.
+The delivery passes only after GitHub Actions is green and the manual Termux
+verification ends with `★★★★★ D7 GOLDEN BUILD`.

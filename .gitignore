@@ -10,3 +10,8 @@ D4-PARSER-AST-REPORT.txt
 D4-NIVRA-DOCTOR.txt
 D4-CST-TREE.txt
 .nivra-verify/
+NIVRA-D7-REPORT.txt
+D7-NIVRA-DOCTOR.txt
+D7-NOMINAL-REPORT.txt
+D7-TYPECHECK.json
+.nivra-d7-smoke/

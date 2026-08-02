@@ -1,39 +1,45 @@
-# D6 Final Build-Fix Termux and GitHub Commands
+# D7 Exact Termux and GitHub Commands
 
-## 1. Extract the corrected archive
+## Extract
 
 ```bash
 cd ~/storage/downloads
-rm -rf Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready
-unzip Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready.zip
+rm -rf Nivra-D7-Nominal-Members-GitHub-Ready
+unzip Nivra-D7-Nominal-Members-GitHub-Ready.zip
 ```
 
-## 2. Preserve the Git history from the failed D6 folder
+## Preserve D6 Git history
 
 ```bash
-mv Nivra-D6-Type-Checker-Build-Fix-GitHub-Ready/.git \
-   Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready/.git
+mv Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready/.git \
+   Nivra-D7-Nominal-Members-GitHub-Ready/.git
 ```
 
-## 3. Commit and push the correction
+## Commit and push
 
 ```bash
-cd ~/storage/downloads/Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready
+cd ~/storage/downloads/Nivra-D7-Nominal-Members-GitHub-Ready
+
 git config --global --add safe.directory "$PWD"
+
 git add -A
-git commit -m "fix: finalize D6 tests and CI validation"
+git commit -m "feat: implement Nivra D7 nominal types and members"
 git push
 ```
 
-The corrected workflow first checks the local Cargo dependency graph and lockfile,
-then runs all Rust tests, cumulative verification, release build, and CLI smoke.
+Open:
 
-## 4. Verify after Actions turns green
+```text
+GitHub → Nivra → Actions → Verify D7 Nominal Members
+```
+
+## Green Action ke baad
 
 ```bash
 pkg update -y
 pkg install rust python git unzip -y
-cd ~/storage/downloads/Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready
+
+cd ~/storage/downloads/Nivra-D7-Nominal-Members-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 

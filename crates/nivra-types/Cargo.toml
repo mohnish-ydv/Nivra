@@ -5,7 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "Nivra Edition 2026 type representation, inference, and validation"
+description = "Nivra Edition 2026 type representation, nominal bodies, member lookup, inference, and validation"
 
 [dependencies]
 nivra-source = { path = "../nivra-source" }

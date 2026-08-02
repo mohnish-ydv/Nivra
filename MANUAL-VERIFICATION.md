@@ -1,15 +1,25 @@
-# D6 Build-Fix Manual Verification
+# D7 Manual Verification After GitHub Actions Is Green
 
-Run these checks only after the corrected GitHub Actions workflow is green.
-
-## 1. Run the Termux-safe cumulative verifier
+## 1. Install phone requirements
 
 ```bash
-cd ~/storage/downloads/Nivra-D6-Type-Checker-Final-Build-Fix-GitHub-Ready
+pkg update -y
+pkg install rust python git unzip -y
+```
+
+## 2. Run complete Termux-safe verification
+
+```bash
+cd ~/storage/downloads/Nivra-D7-Nominal-Members-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
-The project is copied to `~/nivra-d6-verification` before compilation.
+The project is copied to:
+
+```text
+~/nivra-d7-verification
+```
+
 Expected ending:
 
 ```text
@@ -18,91 +28,119 @@ D2 regression: PASS
 D3 regression: PASS
 D4 regression: PASS
 D5 regression: PASS
-D6 structure: PASS
-Cargo dependency graph: PASS
+D6 regression: PASS
+D7 structure: PASS
 Rust tests: PASS
-D6 CLI smoke tests: PASS
-★★★★★ D6 GOLDEN BUILD
+D7 CLI smoke tests: PASS
+★★★★★ D7 GOLDEN BUILD
 ```
 
-## 2. Confirm CLI identity
+## 3. Check CLI identity
 
 ```bash
-cd ~/nivra-d6-verification
+cd ~/nivra-d7-verification
 ./target/debug/nivra --version
 ./target/debug/nivra doctor
-```
-
-Expected identity:
-
-```text
-nivra 0.6.0 (static type-checker foundation D6)
-D6 status: OPERATIONAL
-```
-
-## 3. Check the complete valid program
-
-```bash
-./target/debug/nivra check examples/d6/05_complete_type_tour.nva
-```
-
-Expected ending contains `0 errors`.
-
-## 4. Inspect signatures and inferred bindings
-
-```bash
-./target/debug/nivra typecheck \
-  examples/d6/05_complete_type_tour.nva \
-  --functions --types | sed -n '1,240p'
-```
-
-Confirm readable types for `clamp`, `score`, `bounded`, `final_score`, `tags`,
-`contact`, and `attempts`.
-
-## 5. Check representative failures
-
-```bash
-./target/debug/nivra typecheck examples/d6/invalid/01_binding_mismatch.nva
-echo $?
-./target/debug/nivra typecheck examples/d6/invalid/03_wrong_arity.nva
-echo $?
-./target/debug/nivra typecheck examples/d6/invalid/07_non_bool_condition.nva
-echo $?
-./target/debug/nivra typecheck examples/d6/invalid/10_immutable_assignment.nva
-echo $?
-```
-
-Expected codes: `TYP001`, `TYP003`, `TYP007`, and `TYP010`. Every invalid command
-must exit with code `1`.
-
-## 6. Validate JSON output
-
-```bash
-./target/debug/nivra typecheck \
-  examples/d6/02_functions_and_calls.nva \
-  --json | python3 -m json.tool >/dev/null
-
-echo $?
-```
-
-Expected exit code: `0`.
-
-## Pass message
-
-```text
-GG D6 Passed
-```
-
-## Specific regression check
-
-After the green Action, confirm the corrected primitive-inference test directly:
-
-```bash
-cargo test -p nivra-types infers_primitive_bindings --locked
 ```
 
 Expected:
 
 ```text
-test tests::infers_primitive_bindings ... ok
+nivra 0.7.0 (nominal types and members D7)
+D7 status: OPERATIONAL
+```
+
+## 4. Check the complete valid tour
+
+```bash
+./target/debug/nivra check \
+  examples/d7/05_complete_nominal_tour.nva
+```
+
+Expected ending:
+
+```text
+0 errors
+```
+
+## 5. Inspect nominal types and members
+
+```bash
+./target/debug/nivra typecheck \
+  examples/d7/05_complete_nominal_tour.nva \
+  --functions --types --nominals
+```
+
+Confirm the report includes:
+
+```text
+record Profile
+field name: String
+field score: Int = <default>
+method add_score
+method is_active
+variant online(Profile)
+```
+
+## 6. Inspect lossless record-construction CST
+
+```bash
+./target/debug/nivra parse \
+  examples/d7/01_records_and_construction.nva \
+  --tree | grep -E 'record_expression|record_field_initializer'
+```
+
+Both node names must appear.
+
+## 7. Check representative diagnostics
+
+```bash
+./target/debug/nivra typecheck \
+  examples/d7/invalid/01_unknown_member.nva
+echo $?
+
+./target/debug/nivra typecheck \
+  examples/d7/invalid/03_missing_required_field.nva
+echo $?
+
+./target/debug/nivra typecheck \
+  examples/d7/invalid/07_enum_variant_payload.nva
+echo $?
+
+./target/debug/nivra typecheck \
+  examples/d7/invalid/08_immutable_member_mutation.nva
+echo $?
+```
+
+Expected codes and exit status:
+
+```text
+NOM001 → 1
+NOM003 → 1
+NOM007 → 1
+NOM008 → 1
+```
+
+## 8. Validate JSON nominal graph
+
+```bash
+./target/debug/nivra typecheck \
+  examples/d7/05_complete_nominal_tour.nva \
+  --json | python3 -m json.tool >/dev/null
+
+echo $?
+```
+
+Expected:
+
+```text
+0
+```
+
+## Pass message
+
+After all checks pass:
+
+```text
+GG D7 Passed
 ```

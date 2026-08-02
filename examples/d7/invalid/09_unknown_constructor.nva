@@ -1,0 +1,5 @@
+module examples.d7.invalid.unknown_constructor
+fn main() -> Unit {
+    let value = Missing { name: "x" }
+    print(value)
+}

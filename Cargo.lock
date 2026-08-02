@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "nivra-cli"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "nivra-diagnostics",
  "nivra-lexer",
@@ -17,14 +17,14 @@ dependencies = [
 
 [[package]]
 name = "nivra-diagnostics"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "nivra-source",
 ]
 
 [[package]]
 name = "nivra-lexer"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "nivra-diagnostics",
  "nivra-source",
@@ -32,7 +32,7 @@ dependencies = [
 
 [[package]]
 name = "nivra-parser"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "nivra-diagnostics",
  "nivra-lexer",
@@ -42,7 +42,7 @@ dependencies = [
 
 [[package]]
 name = "nivra-sema"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "nivra-diagnostics",
  "nivra-lexer",
@@ -53,11 +53,11 @@ dependencies = [
 
 [[package]]
 name = "nivra-source"
-version = "0.6.0"
+version = "0.7.0"
 
 [[package]]
 name = "nivra-syntax"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "nivra-lexer",
  "nivra-source",
@@ -65,7 +65,7 @@ dependencies = [
 
 [[package]]
 name = "nivra-types"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "nivra-diagnostics",
  "nivra-lexer",
