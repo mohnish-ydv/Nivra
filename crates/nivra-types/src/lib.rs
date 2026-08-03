@@ -1927,6 +1927,7 @@ impl<'a> Checker<'a> {
                 mutable: significant_text(node, self.source).starts_with("&mut"),
                 inner: Box::new(operand),
             },
+            TokenKind::Keyword(Keyword::Move) => operand,
             _ => {
                 self.diagnostics.push(
                     Diagnostic::error(
@@ -5108,6 +5109,18 @@ mod tests {
             "module test\ntrait Convert<T> { fn convert(self: &Self) -> T }\n",
         );
         assert!(result.diagnostics.iter().any(|diagnostic| diagnostic.code == "GEN006"));
+    }
+
+    #[test]
+    fn explicit_move_preserves_operand_static_type() {
+        let result = check_text(
+            "module test\nfn main() { let source = \"owned\"\n let target = move source\n }\n",
+        );
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert!(result
+            .bindings
+            .iter()
+            .any(|binding| binding.name == "target" && binding.ty == Type::String));
     }
 
 }

@@ -1,0 +1,10 @@
+{
+  "scope_exit_order": [
+    "defer actions in reverse registration order",
+    "owned non-Copy locals in reverse declaration order"
+  ],
+  "drop_flags": ["maybe moved value", "partially moved value"],
+  "fully_moved_values_are_dropped": false,
+  "copy_values_require_drop": false,
+  "lowering_status": "deterministic plan generated; executable lowering deferred"
+}

@@ -56,16 +56,16 @@ if pipeline.get("record_expression_node") != "record_expression":
 print("D7 metadata: PASS")
 
 workspace = tomllib.loads((ROOT / "Cargo.toml").read_text(encoding="utf-8"))
-if workspace["workspace"]["package"].get("version") != "0.8.0":
-    fail("cumulative workspace version is not 0.8.0")
+if workspace["workspace"]["package"].get("version") != "0.9.0":
+    fail("cumulative workspace version is not 0.9.0")
 if workspace["workspace"]["package"].get("rust-version") != "1.74":
     fail("Rust version policy changed")
 members = workspace["workspace"]["members"]
-if len(members) != 8:
-    fail(f"D7 should retain eight focused crates, found {len(members)}")
+if len(members) != 9:
+    fail(f"D7 should retain nine focused crates, found {len(members)}")
 lock = (ROOT / "Cargo.lock").read_text(encoding="utf-8")
-if lock.count('version = "0.8.0"') != 8:
-    fail("Cargo.lock does not contain eight 0.8.0 packages")
+if lock.count('version = "0.9.0"') != 9:
+    fail("Cargo.lock does not contain nine 0.9.0 packages")
 if "registry+" in lock or "checksum =" in lock:
     fail("D7 unexpectedly introduced registry dependencies")
 print("D7 Cargo workspace: PASS")
@@ -108,7 +108,7 @@ for anchor in [
     "--nominals",
     "NOMINAL TYPES AND MEMBERS",
     "Nominal types:",
-    "D8 status: OPERATIONAL",
+    "D9 status: OPERATIONAL",
 ]:
     if anchor not in cli:
         fail(f"D7 CLI anchor missing: {anchor}")

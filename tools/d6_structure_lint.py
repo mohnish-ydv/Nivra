@@ -80,13 +80,14 @@ required_members = {
     "crates/nivra-parser",
     "crates/nivra-sema",
     "crates/nivra-types",
+    "crates/nivra-ownership",
     "crates/nivra-cli",
 }
 if members != required_members:
     fail(f"D6 workspace members mismatch: {sorted(members ^ required_members)}")
 package = workspace["workspace"]["package"]
-if package.get("version") != "0.8.0":
-    fail("workspace version is not 0.8.0")
+if package.get("version") != "0.9.0":
+    fail("workspace version is not 0.9.0")
 if package.get("rust-version") != "1.74":
     fail("minimum Rust version changed unexpectedly")
 if workspace["workspace"]["lints"]["rust"].get("unsafe_code") != "forbid":
@@ -131,14 +132,15 @@ for package_name in [
     "nivra-parser",
     "nivra-sema",
     "nivra-types",
+    "nivra-ownership",
     "nivra-cli",
 ]:
     if f'name = "{package_name}"' not in lock:
         fail(f"Cargo.lock missing {package_name}")
-if lock.count('version = "0.8.0"') != 8:
-    fail("Cargo.lock does not contain eight 0.8.0 packages")
+if lock.count('version = "0.9.0"') != 9:
+    fail("Cargo.lock does not contain nine 0.9.0 packages")
 types_lock_match = re.search(
-    r'name = "nivra-types"\nversion = "0\.8\.0"\ndependencies = \[\n(?P<body>.*?)\n\]',
+    r'name = "nivra-types"\nversion = "0\.9\.0"\ndependencies = \[\n(?P<body>.*?)\n\]',
     lock,
     re.DOTALL,
 )

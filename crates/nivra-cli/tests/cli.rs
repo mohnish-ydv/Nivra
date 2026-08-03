@@ -17,7 +17,7 @@ fn temporary_source(name: &str, content: &str) -> PathBuf {
 }
 
 #[test]
-fn version_reports_d8_foundation() {
+fn version_reports_d9_foundation() {
     let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
         .arg("--version")
         .output()
@@ -25,8 +25,8 @@ fn version_reports_d8_foundation() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("nivra 0.8.0"));
-    assert!(stdout.contains("D8"));
+    assert!(stdout.contains("nivra 0.9.0"));
+    assert!(stdout.contains("D9"));
 }
 
 #[test]
@@ -667,4 +667,96 @@ fn check_rejects_generic_trait_declaration() {
 
     assert_eq!(output.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&output.stderr).contains("GEN006"));
+}
+
+
+#[test]
+fn ownership_command_reports_moves_borrows_and_drops() {
+    let path = temporary_source(
+        "ownership_valid.nva",
+        "module test\nfn main() { let text = \"hello\"\n let view = &text\n print(view)\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("ownership")
+        .arg(&path)
+        .args(["--bindings", "--events", "--drops"])
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("OWNERSHIP SUMMARY"));
+    assert!(stdout.contains("borrow_shared"));
+    assert!(stdout.contains("DEFER AND DROP PLAN"));
+}
+
+#[test]
+fn ownership_json_contains_machine_readable_flow_graph() {
+    let path = temporary_source(
+        "ownership_json.nva",
+        "module test\nfn consume(value: String) {}\nfn main() { let text = \"hello\"\n consume(text)\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("ownership")
+        .arg(&path)
+        .arg("--json")
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.starts_with('{'));
+    assert!(stdout.contains("\"bindings\":["));
+    assert!(stdout.contains("\"events\":["));
+    assert!(stdout.contains("\"exit_actions\":["));
+    assert!(stdout.contains("\"moves\":1"));
+}
+
+#[test]
+fn check_reports_use_after_move_from_ownership_phase() {
+    let path = temporary_source(
+        "use_after_move.nva",
+        "module test\nfn consume(value: String) {}\nfn main() { let text = \"hello\"\n consume(text)\n print(text)\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("OWN001"));
+}
+
+#[test]
+fn check_accepts_explicit_move_and_rejects_source_reuse() {
+    let path = temporary_source(
+        "explicit_move.nva",
+        "module test\nfn main() { let source = \"owned\"\n let target = move source\n print(target)\n print(source)\n }\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+        .arg("check")
+        .arg(&path)
+        .output()
+        .unwrap_or_else(|error| panic!("{error}"));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("OWN001"));
+}
+
+#[test]
+fn explain_supports_d9_ownership_and_borrow_diagnostics() {
+    for code in ["OWN001", "OWN007", "BOR001", "BOR006", "BOR009"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_nivra"))
+            .arg("explain")
+            .arg(code)
+            .output()
+            .unwrap_or_else(|error| panic!("{error}"));
+        assert!(output.status.success());
+        assert!(!output.stdout.is_empty());
+    }
 }

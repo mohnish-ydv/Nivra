@@ -1,0 +1,17 @@
+{
+  "pipeline": [
+    "source management",
+    "lossless lexing",
+    "error-recovering CST parsing",
+    "name resolution",
+    "static and nominal type checking",
+    "generic substitution and trait constraints",
+    "ownership class computation",
+    "move and partial-move flow",
+    "borrow-region and conflict analysis",
+    "deterministic defer/drop planning"
+  ],
+  "ownership_runs_after_successful_typecheck": true,
+  "cli_commands": ["check", "ownership"],
+  "reports": ["bindings", "events", "exit_actions", "diagnostics"]
+}

@@ -1,0 +1,18 @@
+{
+  "transfer_classes": ["copy", "move"],
+  "value_states": ["available", "moved", "maybe_moved"],
+  "copy_rules": [
+    "primitive scalar values are Copy",
+    "shared references, raw pointers, and function values are Copy",
+    "tuples and nominal values are Copy only when every stored component is Copy"
+  ],
+  "move_rules": [
+    "String and owning containers are move-only",
+    "mutable references are move-only",
+    "generic parameters are conservatively move-only until Copy is proven",
+    "explicit move expressions force consuming use"
+  ],
+  "partial_moves": true,
+  "reinitialization": true,
+  "control_flow_join": "conservative path-sensitive join"
+}

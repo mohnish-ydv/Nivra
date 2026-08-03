@@ -1,0 +1,7 @@
+module examples.d9.invalid.maybe_moved_branch
+fn consume(value: String) {}
+fn main(flag: Bool) {
+    let text = "owned"
+    if flag { consume(text) }
+    print(text)
+}

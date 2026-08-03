@@ -766,7 +766,9 @@ impl<'a> Parser<'a> {
             TokenKind::Keyword(Keyword::Spawn) => {
                 self.parse_prefix_keyword(SyntaxKind::SpawnExpression)
             }
-            TokenKind::Keyword(Keyword::Blocking) | TokenKind::Keyword(Keyword::Yield) => {
+            TokenKind::Keyword(Keyword::Blocking)
+            | TokenKind::Keyword(Keyword::Yield)
+            | TokenKind::Keyword(Keyword::Move) => {
                 self.parse_prefix_keyword(SyntaxKind::PrefixExpression)
             }
             TokenKind::Ampersand => {
@@ -1739,6 +1741,15 @@ mod tests {
             &result.root,
             SyntaxKind::GenericArgumentList
         ));
+    }
+
+    #[test]
+    fn parses_explicit_move_prefix_expression() {
+        let text = "fn main() { let source = \"owned\"\n let target = move source\n }\n";
+        let (source, result) = parse_text(text);
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        assert_eq!(result.root.lossless_text(&source), text);
+        assert!(contains_kind(&result.root, SyntaxKind::PrefixExpression));
     }
 
 }

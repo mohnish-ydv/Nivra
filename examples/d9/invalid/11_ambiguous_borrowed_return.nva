@@ -1,0 +1,4 @@
+module examples.d9.invalid.ambiguous_borrowed_return
+fn choose(left: &String, right: &String) -> &String {
+    left
+}

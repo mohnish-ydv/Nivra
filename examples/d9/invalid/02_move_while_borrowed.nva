@@ -1,0 +1,8 @@
+module examples.d9.invalid.move_while_borrowed
+fn consume(value: String) {}
+fn main() {
+    let text = "owned"
+    let view = &text
+    consume(text)
+    print(view)
+}

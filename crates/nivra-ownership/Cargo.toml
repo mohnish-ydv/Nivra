@@ -1,26 +1,22 @@
 [package]
-name = "nivra-cli"
+name = "nivra-ownership"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "Nivra compiler driver with ownership and borrow checking"
-default-run = "nivra"
+description = "Nivra ownership, move, borrow, and deterministic drop analysis"
 
 [dependencies]
 nivra-source = { path = "../nivra-source" }
 nivra-diagnostics = { path = "../nivra-diagnostics" }
 nivra-lexer = { path = "../nivra-lexer" }
 nivra-syntax = { path = "../nivra-syntax" }
+nivra-types = { path = "../nivra-types" }
+
+[dev-dependencies]
 nivra-parser = { path = "../nivra-parser" }
 nivra-sema = { path = "../nivra-sema" }
-nivra-types = { path = "../nivra-types" }
-nivra-ownership = { path = "../nivra-ownership" }
-
-[[bin]]
-name = "nivra"
-path = "src/main.rs"
 
 [lints]
 workspace = true

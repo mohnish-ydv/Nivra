@@ -1,0 +1,8 @@
+module examples.d9.invalid.borrow_across_await
+async fn pause() -> Int { 1 }
+async fn main() {
+    let text = "owned"
+    let view = &text
+    await pause()
+    print(view)
+}

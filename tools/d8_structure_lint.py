@@ -63,16 +63,16 @@ print("D8 metadata: PASS")
 
 workspace = tomllib.loads((ROOT / "Cargo.toml").read_text(encoding="utf-8"))
 package = workspace["workspace"]["package"]
-if package.get("version") != "0.8.0":
-    fail("workspace version is not 0.8.0")
+if package.get("version") != "0.9.0":
+    fail("workspace version is not 0.9.0")
 if package.get("rust-version") != "1.74":
     fail("Rust version policy changed")
 members = workspace["workspace"]["members"]
-if len(members) != 8:
-    fail(f"D8 should retain eight focused crates, found {len(members)}")
+if len(members) != 9:
+    fail(f"D8 cumulative workspace should contain nine focused crates, found {len(members)}")
 lock = (ROOT / "Cargo.lock").read_text(encoding="utf-8")
-if lock.count('version = "0.8.0"') != 8:
-    fail("Cargo.lock does not contain eight 0.8.0 workspace packages")
+if lock.count('version = "0.9.0"') != 9:
+    fail("Cargo.lock does not contain nine 0.9.0 workspace packages")
 if "registry+" in lock or "checksum =" in lock:
     fail("D8 unexpectedly introduced registry dependencies")
 print("D8 Cargo workspace: PASS")
@@ -117,7 +117,7 @@ for anchor in [
     "Generic substitution: PASS",
     "Trait constraint validation: PASS",
     "Implementation coherence: PASS",
-    "D8 status: OPERATIONAL",
+    "D9 status: OPERATIONAL",
 ]:
     if anchor not in cli:
         fail(f"D8 CLI anchor missing: {anchor}")
@@ -290,8 +290,8 @@ for anchor in [
     if anchor not in workflow:
         fail(f"D8 workflow gate missing: {anchor}")
 termux = (ROOT / "scripts/termux-verify.sh").read_text(encoding="utf-8")
-if "nivra-d8-verification" not in termux or "NIVRA_D8_TEST_DIR" not in termux:
-    fail("Termux verifier does not use a D8 internal-storage destination")
+if "nivra-d9-verification" not in termux or "NIVRA_D9_TEST_DIR" not in termux:
+    fail("Termux verifier does not use a D9 internal-storage destination")
 print("D8 workflow and Termux contract: PASS")
 
 print("D8 drafting markers: PASS")

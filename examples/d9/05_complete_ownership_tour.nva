@@ -1,0 +1,29 @@
+module examples.d9.complete_ownership_tour
+
+record Document {
+    title: String
+    revision: Int
+}
+
+fn consume_title(value: String) {
+    print(value)
+}
+
+fn main(flag: Bool) {
+    let copied_flag = flag
+    print(flag)
+    print(copied_flag)
+
+    var document = Document(title: "Nivra D9", revision: 9)
+    let title = move document.title
+    consume_title(title)
+    document.title = "Ownership Foundation"
+
+    let reader = &document
+    print(reader)
+    let writer = &mut document
+    print(writer)
+
+    defer print(document.revision)
+    print(document)
+}

@@ -1,0 +1,5 @@
+module examples.d9.invalid.return_local_borrow
+fn invalid(source: &String) -> &String {
+    let local = "temporary"
+    return &local
+}

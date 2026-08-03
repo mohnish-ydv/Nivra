@@ -1,0 +1,17 @@
+{
+  "codes": [
+    {"code": "OWN001", "meaning": "use or borrow after move"},
+    {"code": "OWN002", "meaning": "move while borrowed"},
+    {"code": "OWN006", "meaning": "use after partial move"},
+    {"code": "OWN007", "meaning": "maybe moved at control-flow join"},
+    {"code": "BOR001", "meaning": "mutable borrow conflicts with a live borrow"},
+    {"code": "BOR002", "meaning": "shared borrow conflicts with a live mutable borrow"},
+    {"code": "BOR003", "meaning": "mutable borrow requires var"},
+    {"code": "BOR004", "meaning": "assignment while borrowed"},
+    {"code": "BOR005", "meaning": "owner use during mutable borrow"},
+    {"code": "BOR006", "meaning": "borrowed nominal field"},
+    {"code": "BOR007", "meaning": "ambiguous borrowed return origin"},
+    {"code": "BOR008", "meaning": "local borrow escapes function"},
+    {"code": "BOR009", "meaning": "borrow crosses await"}
+  ]
+}

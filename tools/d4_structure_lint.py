@@ -73,8 +73,8 @@ required_members = {
 if not required_members.issubset(members):
     fail(f"workspace missing crates: {sorted(required_members - members)}")
 package = workspace.get("workspace", {}).get("package", {})
-if package.get("version") != "0.8.0":
-    fail("workspace version is not 0.8.0")
+if package.get("version") != "0.9.0":
+    fail("workspace version is not 0.9.0")
 if workspace.get("workspace", {}).get("lints", {}).get("rust", {}).get("unsafe_code") != "forbid":
     fail("workspace no longer forbids unsafe Rust")
 print("D4 Rust workspace: PASS")

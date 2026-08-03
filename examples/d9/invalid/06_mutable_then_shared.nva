@@ -1,0 +1,9 @@
+module examples.d9.invalid.mutable_then_shared
+record Note { text: String }
+fn main() {
+    var note = Note(text: "draft")
+    let writer = &mut note
+    let reader = &note
+    print(writer)
+    print(reader)
+}

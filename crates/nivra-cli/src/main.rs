@@ -6,6 +6,7 @@ use std::process;
 
 use nivra_diagnostics::{error_count, Renderer};
 use nivra_lexer::lex;
+use nivra_ownership::{analyze as analyze_ownership, OwnershipResult};
 use nivra_parser::parse;
 use nivra_sema::{analyze_parse, SemanticResult};
 use nivra_source::{SourceError, SourceManager};
@@ -31,7 +32,7 @@ fn run(arguments: Vec<OsString>) -> i32 {
             0
         }
         "version" | "--version" | "-V" => {
-            println!("nivra {VERSION} (generics and traits D8)");
+            println!("nivra {VERSION} (ownership and borrow checking D9)");
             0
         }
         "doctor" => doctor(),
@@ -41,9 +42,10 @@ fn run(arguments: Vec<OsString>) -> i32 {
         "parse" => parse_command(&arguments[1..]),
         "resolve" => resolve_command(&arguments[1..]),
         "typecheck" => typecheck_command(&arguments[1..]),
+        "ownership" => ownership_command(&arguments[1..]),
         unknown => {
             eprintln!("error[CLI001]: unknown command `{unknown}`");
-            eprintln!("  = help: run `nivra help` to list available D8 commands");
+            eprintln!("  = help: run `nivra help` to list available D9 commands");
             2
         }
     }
@@ -65,16 +67,18 @@ COMMANDS:
                    [--all] [--json]
     typecheck <FILE> [--functions] [--types]     Inspect static types
                      [--nominals] [--traits] [--json]
-    explain <CODE>                               Explain a D8 diagnostic code
+    ownership <FILE> [--bindings] [--events]     Inspect moves, borrows, and drops
+                     [--drops] [--json]
+    explain <CODE>                               Explain a D9 diagnostic code
     doctor                                       Show compiler-driver information
     version                                      Print the version
     help                                         Print this help
 
-D8 SCOPE:
-    The full D7 pipeline plus generic functions and nominal types, explicit and
-    inferred type arguments, trait bounds, implementation validation, generic
-    substitution, and deterministic method selection are implemented.
-    Ownership flow analysis, HIR/MIR, and code generation arrive later.
+D9 SCOPE:
+    The complete D8 pipeline plus structural Copy classification, move tracking,
+    use-after-move checks, shared/mutable borrow conflicts, last-use borrow regions,
+    conservative control-flow joins, and deterministic defer/drop plans are implemented.
+    HIR/MIR lowering, sendability, and executable code generation arrive later.
 "
     );
 }
@@ -118,7 +122,12 @@ fn doctor() -> i32 {
     println!("Trait constraint validation: PASS");
     println!("Implementation coherence: PASS");
     println!("Deterministic method selection: PASS");
-    println!("D8 status: OPERATIONAL");
+    println!("Copy/move classification: PASS");
+    println!("Use-after-move analysis: PASS");
+    println!("Shared/mutable borrow analysis: PASS");
+    println!("Last-use borrow regions: PASS");
+    println!("Deterministic drop planning: PASS");
+    println!("D9 status: OPERATIONAL");
     0
 }
 
@@ -185,12 +194,25 @@ fn explain(code: Option<&OsString>) -> i32 {
         "TRT004" => "An implemented method does not match the trait signature.",
         "TRT005" => "Method selection found more than one equally applicable candidate.",
         "TRT006" => "An implementation violates Nivra's package orphan rule.",
-        "CLI001" => "The requested D8 command does not exist.",
+        "OWN001" => "A value or place is used after ownership has moved elsewhere.",
+        "OWN002" => "A borrowed place cannot move until its active borrow ends.",
+        "OWN006" => "A field or complete value is used after a partial move.",
+        "OWN007" => "A value may have moved on one incoming control-flow path.",
+        "BOR001" => "A mutable borrow conflicts with another live borrow.",
+        "BOR002" => "A shared borrow conflicts with a live mutable borrow.",
+        "BOR003" => "Only a mutable `var` place can be borrowed through `&mut`.",
+        "BOR004" => "A borrowed place cannot be assigned while the borrow is live.",
+        "BOR005" => "The owner cannot be used directly during an exclusive borrow.",
+        "BOR006" => "Edition 2026 does not permit borrowed record or struct fields.",
+        "BOR007" => "A borrowed return needs one unambiguous borrowed input origin.",
+        "BOR008" => "A borrow of a local value cannot escape the function.",
+        "BOR009" => "A borrow cannot remain live across an `await` suspension point.",
+        "CLI001" => "The requested D9 command does not exist.",
         "CLI002" => "A required command argument is missing or an option is invalid.",
         "DRV001" => "The compiler driver could not load the requested source file.",
         _ => {
             eprintln!("error[CLI003]: unknown diagnostic code `{code}`");
-            eprintln!("  = help: D8 codes use the LEX, PAR, SEM, TYP, NOM, GEN, TRT, CLI, and DRV prefixes");
+            eprintln!("  = help: D9 codes use the LEX, PAR, SEM, TYP, NOM, GEN, TRT, OWN, BOR, CLI, and DRV prefixes");
             return 2;
         }
     };
@@ -223,12 +245,19 @@ fn check_command(arguments: &[OsString]) -> i32 {
         .as_ref()
         .filter(|semantic_result| !semantic_result.has_errors())
         .map(|semantic_result| check_types(source, &result.root, semantic_result));
+    let ownership = typed
+        .as_ref()
+        .filter(|type_result| !type_result.has_errors())
+        .map(|type_result| analyze_ownership(source, &result.root, type_result));
     let mut diagnostics = result.diagnostics.clone();
     if let Some(semantic_result) = &semantic {
         diagnostics.extend(semantic_result.diagnostics.iter().cloned());
     }
     if let Some(type_result) = &typed {
         diagnostics.extend(type_result.diagnostics.iter().cloned());
+    }
+    if let Some(ownership_result) = &ownership {
+        diagnostics.extend(ownership_result.diagnostics.iter().cloned());
     }
     let errors = error_count(&diagnostics);
     let warnings = diagnostics.len().saturating_sub(errors);
@@ -245,11 +274,15 @@ fn check_command(arguments: &[OsString]) -> i32 {
     let typed_expressions = typed.as_ref().map_or(0, |value| value.expressions.len());
     let function_signatures = typed.as_ref().map_or(0, |value| value.functions.len());
     let nominal_types = typed.as_ref().map_or(0, |value| value.nominals.len());
+    let ownership_bindings = ownership.as_ref().map_or(0, |value| value.bindings.len());
+    let ownership_moves = ownership.as_ref().map_or(0, OwnershipResult::move_count);
+    let ownership_borrows = ownership.as_ref().map_or(0, OwnershipResult::borrow_count);
+    let exit_actions = ownership.as_ref().map_or(0, |value| value.exit_actions.len());
 
     if parsed.json {
         let rendered = Renderer::new().json_many(&diagnostics, &sources);
         println!(
-            "{{\"path\":{},\"nodes\":{},\"tokens\":{},\"lexical_diagnostics\":{},\"recoveries\":{},\"semantic_symbols\":{},\"semantic_scopes\":{},\"resolved_names\":{},\"function_signatures\":{},\"nominal_types\":{},\"typed_bindings\":{},\"typed_expressions\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}}}",
+            "{{\"path\":{},\"nodes\":{},\"tokens\":{},\"lexical_diagnostics\":{},\"recoveries\":{},\"semantic_symbols\":{},\"semantic_scopes\":{},\"resolved_names\":{},\"function_signatures\":{},\"nominal_types\":{},\"typed_bindings\":{},\"typed_expressions\":{},\"ownership_bindings\":{},\"moves\":{},\"borrows\":{},\"exit_actions\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}}}",
             json_string(&parsed.path.to_string_lossy()),
             nodes,
             tokens,
@@ -262,6 +295,10 @@ fn check_command(arguments: &[OsString]) -> i32 {
             nominal_types,
             typed_bindings,
             typed_expressions,
+            ownership_bindings,
+            ownership_moves,
+            ownership_borrows,
+            exit_actions,
             errors,
             warnings,
             rendered
@@ -272,12 +309,12 @@ fn check_command(arguments: &[OsString]) -> i32 {
         }
         if errors == 0 {
             println!(
-                "Checked {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {nominal_types} nominal types, {typed_bindings} typed bindings, {warnings} warnings, 0 errors",
+                "Checked {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {nominal_types} nominal types, {typed_bindings} typed bindings, {ownership_moves} moves, {ownership_borrows} borrows, {exit_actions} exit actions, {warnings} warnings, 0 errors",
                 parsed.path.display()
             );
         } else {
             println!(
-                "Check failed for {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {nominal_types} nominal types, {typed_bindings} typed bindings, {warnings} warnings, {errors} errors",
+                "Check failed for {}: {nodes} nodes, {tokens} lossless tokens, {semantic_symbols} symbols, {resolved_names} resolved names, {function_signatures} signatures, {nominal_types} nominal types, {typed_bindings} typed bindings, {ownership_moves} moves, {ownership_borrows} borrows, {exit_actions} exit actions, {warnings} warnings, {errors} errors",
                 parsed.path.display()
             );
         }
@@ -558,6 +595,119 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
     }
 }
 
+
+fn ownership_command(arguments: &[OsString]) -> i32 {
+    let options = match parse_ownership_options(arguments) {
+        Ok(value) => value,
+        Err(message) => {
+            eprintln!("error[CLI002]: {message}");
+            eprintln!(
+                "  = help: usage: `nivra ownership <FILE> [--bindings] [--events] [--drops] [--json]`"
+            );
+            return 2;
+        }
+    };
+
+    let (sources, source_id) = match load_source(&options.path) {
+        Ok(value) => value,
+        Err(error) => return print_source_error(error, options.json),
+    };
+    let Some(source) = sources.get(source_id) else {
+        eprintln!("error[DRV999]: loaded source disappeared from the source manager");
+        return 2;
+    };
+    let parsed = parse(source);
+    if parsed.has_errors() {
+        if options.json {
+            println!(
+                "{{\"path\":{},\"phase\":\"parse\",\"diagnostics\":{}}}",
+                json_string(&options.path.to_string_lossy()),
+                Renderer::new().json_many(&parsed.diagnostics, &sources)
+            );
+        } else {
+            eprint!("{}", Renderer::new().human_many(&parsed.diagnostics, &sources));
+            eprintln!("Ownership analysis skipped because parsing failed.");
+        }
+        return 1;
+    }
+
+    let semantic = nivra_sema::analyze(source, &parsed.root);
+    if semantic.has_errors() {
+        if options.json {
+            println!(
+                "{{\"path\":{},\"phase\":\"semantic\",\"diagnostics\":{}}}",
+                json_string(&options.path.to_string_lossy()),
+                Renderer::new().json_many(&semantic.diagnostics, &sources)
+            );
+        } else {
+            eprint!("{}", Renderer::new().human_many(&semantic.diagnostics, &sources));
+            eprintln!("Ownership analysis skipped because name resolution failed.");
+        }
+        return 1;
+    }
+
+    let typed = check_types(source, &parsed.root, &semantic);
+    if typed.has_errors() {
+        if options.json {
+            println!(
+                "{{\"path\":{},\"phase\":\"typecheck\",\"diagnostics\":{}}}",
+                json_string(&options.path.to_string_lossy()),
+                Renderer::new().json_many(&typed.diagnostics, &sources)
+            );
+        } else {
+            eprint!("{}", Renderer::new().human_many(&typed.diagnostics, &sources));
+            eprintln!("Ownership analysis skipped because type checking failed.");
+        }
+        return 1;
+    }
+
+    let ownership = analyze_ownership(source, &parsed.root, &typed);
+    let errors = error_count(&ownership.diagnostics);
+    let warnings = ownership.diagnostics.len().saturating_sub(errors);
+
+    if options.json {
+        println!("{}", ownership_json(&options.path, &ownership, &sources));
+    } else {
+        println!("OWNERSHIP SUMMARY");
+        println!("=================");
+        println!("Path: {}", options.path.display());
+        println!("Bindings: {}", ownership.bindings.len());
+        println!("Events: {}", ownership.events.len());
+        println!("Moves: {}", ownership.move_count());
+        println!("Borrows: {}", ownership.borrow_count());
+        println!("Exit actions: {}", ownership.exit_actions.len());
+        println!("Errors: {errors}");
+        println!("Warnings: {warnings}");
+
+        if options.bindings {
+            println!();
+            println!("OWNERSHIP BINDINGS");
+            println!("==================");
+            print!("{}", ownership.binding_report());
+        }
+        if options.events {
+            println!();
+            println!("OWNERSHIP EVENTS");
+            println!("================");
+            print!("{}", ownership.event_report());
+        }
+        if options.drops {
+            println!();
+            println!("DEFER AND DROP PLAN");
+            println!("===================");
+            print!("{}", ownership.drop_report());
+        }
+        if !ownership.diagnostics.is_empty() {
+            eprint!(
+                "{}",
+                Renderer::new().human_many(&ownership.diagnostics, &sources)
+            );
+        }
+    }
+
+    if errors > 0 { 1 } else { 0 }
+}
+
 fn lex_command(arguments: &[OsString]) -> i32 {
     let parsed = match parse_file_options(arguments, OptionMode::Lex) {
         Ok(value) => value,
@@ -672,6 +822,54 @@ struct TypecheckOptions {
     types: bool,
     nominals: bool,
     traits: bool,
+}
+
+#[derive(Debug)]
+struct OwnershipOptions {
+    path: PathBuf,
+    json: bool,
+    bindings: bool,
+    events: bool,
+    drops: bool,
+}
+
+fn parse_ownership_options(arguments: &[OsString]) -> Result<OwnershipOptions, String> {
+    let mut path = None;
+    let mut json = false;
+    let mut bindings = false;
+    let mut events = false;
+    let mut drops = false;
+
+    for argument in arguments {
+        if argument.as_os_str() == OsStr::new("--json") {
+            json = true;
+        } else if argument.as_os_str() == OsStr::new("--bindings") {
+            bindings = true;
+        } else if argument.as_os_str() == OsStr::new("--events") {
+            events = true;
+        } else if argument.as_os_str() == OsStr::new("--drops") {
+            drops = true;
+        } else if argument.to_string_lossy().starts_with('-') {
+            return Err(format!("unknown option `{}`", argument.to_string_lossy()));
+        } else if path.replace(PathBuf::from(argument.as_os_str())).is_some() {
+            return Err("only one source file may be supplied".to_owned());
+        }
+    }
+
+    if json && (bindings || events || drops) {
+        return Err(
+            "`--json` already includes bindings, events, and exit actions; remove display flags"
+                .to_owned(),
+        );
+    }
+
+    Ok(OwnershipOptions {
+        path: path.ok_or_else(|| "a source file path is required".to_owned())?,
+        json,
+        bindings,
+        events,
+        drops,
+    })
 }
 
 fn parse_typecheck_options(arguments: &[OsString]) -> Result<TypecheckOptions, String> {
@@ -1052,6 +1250,92 @@ fn typecheck_json(path: &Path, typed: &TypeCheckResult, sources: &SourceManager)
         errors,
         warnings,
         Renderer::new().json_many(&typed.diagnostics, sources)
+    );
+    output.push('}');
+    output
+}
+
+fn ownership_json(path: &Path, ownership: &OwnershipResult, sources: &SourceManager) -> String {
+    let mut output = String::new();
+    output.push('{');
+    let _ = write!(
+        output,
+        "\"path\":{},\"bindings\":[",
+        json_string(&path.to_string_lossy())
+    );
+    for (index, binding) in ownership.bindings.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        output.push_str("{\"name\":");
+        output.push_str(&json_string(&binding.name));
+        output.push_str(",\"type\":");
+        output.push_str(&json_string(&binding.ty.display_name()));
+        output.push_str(",\"class\":");
+        output.push_str(&json_string(binding.class.as_str()));
+        output.push_str(",\"mutable\":");
+        output.push_str(if binding.mutable { "true" } else { "false" });
+        output.push_str(",\"state\":");
+        output.push_str(&json_string(binding.state.as_str()));
+        let _ = write!(
+            output,
+            ",\"scope\":{},\"start\":{},\"end\":{},\"partial_moves\":[",
+            binding.scope_id,
+            binding.declaration_span.start(),
+            binding.declaration_span.end()
+        );
+        for (partial_index, place) in binding.partial_moves.iter().enumerate() {
+            if partial_index > 0 {
+                output.push(',');
+            }
+            output.push_str(&json_string(place));
+        }
+        output.push_str("]}");
+    }
+    output.push_str("],\"events\":[");
+    for (index, event) in ownership.events.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let _ = write!(
+            output,
+            "{{\"kind\":{},\"place\":{},\"type\":{},\"scope\":{},\"start\":{},\"end\":{}}}",
+            json_string(event.kind.as_str()),
+            json_string(&event.place),
+            json_string(&event.ty.display_name()),
+            event.scope_id,
+            event.span.start(),
+            event.span.end()
+        );
+    }
+    output.push_str("],\"exit_actions\":[");
+    for (index, action) in ownership.exit_actions.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        let _ = write!(
+            output,
+            "{{\"scope\":{},\"order\":{},\"kind\":{},\"name\":{},\"type\":{},\"conditional\":{},\"start\":{},\"end\":{}}}",
+            action.scope_id,
+            action.order,
+            json_string(action.kind.as_str()),
+            json_string(&action.name),
+            json_string(&action.ty.display_name()),
+            action.conditional,
+            action.span.start(),
+            action.span.end()
+        );
+    }
+    let errors = error_count(&ownership.diagnostics);
+    let warnings = ownership.diagnostics.len().saturating_sub(errors);
+    let _ = write!(
+        output,
+        "],\"moves\":{},\"borrows\":{},\"errors\":{},\"warnings\":{},\"diagnostics\":{}",
+        ownership.move_count(),
+        ownership.borrow_count(),
+        errors,
+        warnings,
+        Renderer::new().json_many(&ownership.diagnostics, sources)
     );
     output.push('}');
     output

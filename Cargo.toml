@@ -8,17 +8,18 @@ members = [
     "crates/nivra-parser",
     "crates/nivra-sema",
     "crates/nivra-types",
+    "crates/nivra-ownership",
     "crates/nivra-cli",
 ]
 
 [workspace.package]
-version = "0.8.0"
+version = "0.9.0"
 edition = "2021"
 rust-version = "1.74"
 license = "Apache-2.0"
 authors = ["Mohnish Raj"]
 repository = "https://github.com/mohnish-ydv/Nivra"
-description = "Nivra programming language generics and trait constraints foundation"
+description = "Nivra programming language ownership and borrow-checking foundation"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -1,0 +1,12 @@
+module examples.d9.copy_and_move
+
+fn main() {
+    let count = 7
+    let count_copy = count
+    print(count)
+    print(count_copy)
+
+    let text = "Nivra"
+    let moved = move text
+    print(moved)
+}

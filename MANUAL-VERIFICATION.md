@@ -1,18 +1,17 @@
-# D8 Manual Verification
-
-Run these checks only after GitHub Actions shows a green result for
-`Verify D8 Generics and Traits`.
+# D9 Manual Verification
 
 ## Full Termux verification
 
 ```bash
-cd ~/storage/downloads/Nivra-D8-Generics-Traits-Final-Build-Fix-GitHub-Ready
+pkg update -y
+pkg install rust python git unzip -y
+cd ~/storage/downloads/Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready
 bash scripts/termux-verify.sh
 ```
 
-The project is copied to `~/nivra-d8-verification` before Cargo runs.
+The verifier copies the source into `~/nivra-d9-verification` so Cargo does not build on shared Android storage.
 
-Expected ending:
+Expected final lines after a fully successful executable run:
 
 ```text
 D1 regression: PASS
@@ -22,82 +21,89 @@ D4 regression: PASS
 D5 regression: PASS
 D6 regression: PASS
 D7 regression: PASS
-D8 structure: PASS
+D8 regression: PASS
+D9 structure: PASS
 Rust compilation: PASS
 Rust tests: PASS
-D8 CLI smoke tests: PASS
-★★★★★ D8 GOLDEN BUILD
+D9 ownership CLI smoke tests: PASS
+★★★★★ D9 GOLDEN BUILD
 ```
 
-
-## Uploaded-log regression checks
-
-```bash
-cargo test -p nivra-sema \
-  duplicate_generic_parameters_are_deferred_to_type_checker --locked
-cargo test -p nivra-types rejects_duplicate_generic_parameters --locked
-cargo test -p nivra-types rejects_unknown_enum_variant_with_suggestion --locked
-cargo test -p nivra-cli --test cli \
-  check_reports_gen005_for_duplicate_generic_parameters --locked
-cargo test -p nivra-cli --test cli \
-  check_reports_unknown_enum_variant_with_suggestion --locked
-```
-
-All five must report `ok`.
-
-## CLI identity
+## CLI identity and doctor
 
 ```bash
-cd ~/nivra-d8-verification
+cd ~/nivra-d9-verification
 ./target/debug/nivra --version
 ./target/debug/nivra doctor
 ```
 
-Expected version:
+Expected identity:
 
 ```text
-nivra 0.8.0 (generics and traits D8)
+nivra 0.9.0 (ownership and borrow checking D9)
 ```
 
-## Complete valid tour
+Doctor must include:
 
-```bash
-./target/debug/nivra check examples/d8/05_complete_generics_traits_tour.nva
+```text
+D9 status: OPERATIONAL
+Copy/move classification: PASS
 ```
 
-Expected ending: `0 errors`.
-
-## Generic and trait report
+## Valid ownership tour
 
 ```bash
-./target/debug/nivra typecheck \
-  examples/d8/05_complete_generics_traits_tour.nva \
-  --functions --types --nominals --traits | sed -n '1,260p'
+./target/debug/nivra check examples/d9/05_complete_ownership_tour.nva
+./target/debug/nivra ownership examples/d9/05_complete_ownership_tour.nva \
+  --bindings --events --drops
 ```
 
-Confirm that `identity<T>`, `Box<T>`, `Display`, and its implementations appear.
+The check command must exit 0. The ownership report must show binding classes/states, move/borrow events, and defer/drop actions.
 
-## Representative diagnostics
-
-```bash
-./target/debug/nivra check examples/d8/invalid/01_wrong_generic_arity.nva; echo $?
-./target/debug/nivra check examples/d8/invalid/04_unsatisfied_bound.nva; echo $?
-./target/debug/nivra check examples/d8/invalid/06_generic_trait_deferred.nva; echo $?
-./target/debug/nivra check examples/d8/invalid/09_missing_trait_method.nva; echo $?
-./target/debug/nivra check examples/d8/invalid/11_ambiguous_trait_method.nva; echo $?
-./target/debug/nivra check examples/d8/invalid/12_orphan_rule.nva; echo $?
-```
-
-Expected codes respectively: GEN001, GEN004, GEN006, TRT003, TRT005, TRT006.
-Each command must exit with code 1.
-
-## JSON graph
+## JSON ownership graph
 
 ```bash
-./target/debug/nivra typecheck \
-  examples/d8/05_complete_generics_traits_tour.nva \
-  --json | python3 -m json.tool >/dev/null
+./target/debug/nivra ownership \
+  examples/d9/05_complete_ownership_tour.nva --json \
+  | python3 -m json.tool >/dev/null
 echo $?
 ```
 
-Expected: `0`.
+Expected exit code: `0`.
+
+## Diagnostic fixture matrix
+
+```bash
+codes=(OWN001 OWN002 OWN006 OWN007 BOR001 BOR002 BOR003 BOR004 BOR005 BOR006 BOR007 BOR008 BOR009)
+i=0
+for file in examples/d9/invalid/*.nva; do
+  expected="${codes[$i]}"
+  echo "== $file -> $expected =="
+  output="$(./target/debug/nivra check "$file" 2>&1 || true)"
+  printf '%s\n' "$output" | grep -F "$expected"
+  i=$((i + 1))
+done
+```
+
+Every fixture must contain its expected code and the original `nivra check` invocation must exit 1.
+
+## Focused hardening regressions
+
+```bash
+cargo test -p nivra-ownership concrete_generic_copy_fields_make_the_nominal_copy --locked
+cargo test -p nivra-ownership deferred_borrow_keeps_owner_live_until_scope_exit --locked
+cargo test -p nivra-ownership mutable_reference_is_move_only_but_has_no_drop_action --locked
+cargo test -p nivra-ownership rejects_returning_a_local_borrow_through_an_alias --locked
+cargo test -p nivra-ownership rejects_tail_return_of_a_local_borrow_alias --locked
+cargo test -p nivra-ownership rejects_borrowed_enum_variant_payloads --locked
+```
+
+Each command must report one passed test and zero failed tests.
+
+## Fresh archive verification
+
+```bash
+bash scripts/fresh-extract-verify.sh
+```
+
+With Cargo available, this checks metadata, all targets, and the complete suite from a newly created and extracted archive. Without Cargo it explicitly reports that Rust execution was skipped rather than claiming success.

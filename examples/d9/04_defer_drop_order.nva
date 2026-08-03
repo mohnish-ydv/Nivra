@@ -1,0 +1,13 @@
+module examples.d9.defer_drop_order
+
+fn cleanup(value: &String) {
+    print(value)
+}
+
+fn main() {
+    let first = "first"
+    let second = "second"
+    defer cleanup(&first)
+    defer cleanup(&second)
+    print(second)
+}

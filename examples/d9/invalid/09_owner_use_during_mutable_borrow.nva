@@ -1,0 +1,8 @@
+module examples.d9.invalid.owner_use_during_mutable_borrow
+record Note { text: String }
+fn main() {
+    var note = Note(text: "draft")
+    let writer = &mut note
+    print(note)
+    print(writer)
+}

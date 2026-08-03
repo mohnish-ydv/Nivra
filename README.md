@@ -1,81 +1,65 @@
-# Nivra D8 — Generics and Trait Constraints
+# Nivra D9 — Ownership and Borrow Checker Foundation
 
-Nivra is a statically typed, compiled general-purpose language designed to offer
-native power without recurring developer pain.
+Nivra is a serious statically typed, compiled general-purpose language. D9 continues the verified D1–D8 compiler without redesigning earlier crates and adds a separate post-type-check ownership-flow pass.
 
-D8 extends the verified D7 pipeline with generic functions and nominal types,
-explicit and locally inferred type arguments, non-generic traits, inline and
-`where` bounds, implementation validation, default trait methods, an orphan rule,
-and deterministic method selection.
-
-## Current executable pipeline
+## Current compiler pipeline
 
 ```text
 UTF-8 source
   → lossless lexer
   → error-recovering CST parser
   → semantic name resolution
-  → static type checking
-  → nominal body/member checking
+  → static and nominal type checking
   → generic substitution and trait-constraint checking
+  → ownership, move, borrow, and deterministic drop analysis
 ```
 
-## D8 commands
+The reference backend remains C11 + Clang. Executable code generation is intentionally not part of D9.
+
+## D9 commands
 
 ```bash
 nivra check file.nva
-nivra typecheck file.nva
-nivra typecheck file.nva --functions --types --nominals --traits
-nivra typecheck file.nva --json
-nivra parse file.nva --tree
-nivra explain GEN004
-nivra explain TRT003
+nivra ownership file.nva --bindings --events --drops
+nivra ownership file.nva --json
+nivra explain OWN001
+nivra explain BOR009
 nivra doctor
 ```
 
-## D8 implementation highlights
+## D9 implementation highlights
 
-- generic functions, records, structs, enums, and implementation blocks
-- explicit generic arguments such as `identity<Int>(7)`
-- local inference such as `identity(7)`
-- nested generic type parsing, including `Box<List<Int>>`
-- recursive substitution through tuples, optionals, references, and function types
-- inline bounds and `where` clauses
-- required and default trait methods
-- `Self` substitution in trait implementations
-- implementation signature and required-method validation
-- exact-pattern coherence checks and package orphan rule
-- inherent-method priority and ambiguity diagnostics
-- `GEN001`–`GEN006` and `TRT001`–`TRT006`
-- human and JSON generic/trait reports
-- 8 zero-third-party-dependency Rust crates
-- pinned Rust 1.74 CI
-- Android + Termux verification
-- 138 cumulative Rust unit/integration tests
+- structural `Copy`/`Move` classification, including concrete generic substitution
+- explicit `move expression` syntax
+- whole-value and field-level moves
+- use-after-move, move-while-borrowed, partial-move, and maybe-moved diagnostics
+- `var` reinitialization after whole or partial moves
+- shared and mutable borrow conflict checking
+- last-use local borrow regions without user-written lifetime parameters
+- borrowed-return origin checks, including local-reference aliases
+- borrowed record fields and enum payloads rejected in Edition 2026
+- borrows crossing `await` rejected
+- deferred borrows retained until scope exit
+- deterministic reverse defer and reverse local-drop planning
+- drop actions separated from move classification, so references never receive drop glue
+- human-readable and JSON ownership reports
+- 9 local Rust crates and zero registry dependencies
+- pinned Rust 1.74 GitHub Actions and phone-only Termux verification
 
-
-## D8 build-fix status
-
-The uploaded Rust 1.74 run compiled every workspace target and passed every focused
-D8 gate. The full suite exposed two remaining behavior mismatches; both are fixed:
-`GEN005` now owns duplicate generic parameters, and unknown enum payload-variant
-calls emit `NOM001` with suggestions. Five direct regressions guard these paths.
-
-## Verify
+## Verification
 
 ```bash
 bash scripts/termux-verify.sh
 ```
 
-Expected final marker:
+A fully successful Rust run ends with:
 
 ```text
-★★★★★ D8 GOLDEN BUILD
+★★★★★ D9 GOLDEN BUILD
 ```
 
-## Deliberate boundaries
+The archive itself has passed structural, manifest, lockfile, JSON, Python, shell, fixture, workflow, and fresh-extraction checks. This artifact-building sandbox did not contain Rust/Cargo, so Rust compilation and test execution are deliberately not claimed here; GitHub Actions or Termux performs the authoritative executable gate.
 
-D8 does not silently pretend to support generic traits or generic trait methods;
-they emit `GEN006`. Specialization, full overlap solving, higher-kinded types,
-ownership-flow analysis, HIR/MIR, monomorphized code generation, and execution
-remain gated future work.
+## D9 boundary
+
+D9 produces compiler-verifiable ownership events and scope-exit plans. HIR/MIR, executable drop glue, closure capture lowering, interprocedural region summaries, sendability, monomorphization, C11 emission, LLVM emission, and runtime execution remain later milestones.

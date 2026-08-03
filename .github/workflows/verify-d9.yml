@@ -1,0 +1,197 @@
+name: Verify D9 Ownership and Borrow Foundation
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Compile, ownership, borrows, CLI, fresh extraction
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.74.0 --profile minimal --component rustfmt
+          rustup default 1.74.0
+          rustc --version
+          cargo --version
+          rustfmt --version
+
+      - name: Validate cumulative source structure
+        run: |
+          python3 tools/spec_lint.py
+          python3 tools/d2_spec_lint.py
+          python3 tools/d3_structure_lint.py
+          python3 tools/d4_structure_lint.py
+          python3 tools/d5_structure_lint.py
+          python3 tools/d6_structure_lint.py
+          python3 tools/d7_structure_lint.py
+          python3 tools/d8_structure_lint.py
+          python3 tools/d9_structure_lint.py
+          python3 tools/d6_dependency_lint.py
+          python3 -m compileall -q tools
+          for script in verify.sh scripts/*.sh; do bash -n "$script"; done
+
+      - name: Validate Cargo lock graph
+        run: cargo metadata --locked --format-version 1 --no-deps > /dev/null
+
+      - name: Normalize and verify Rust formatting
+        run: |
+          cargo fmt --all
+          cargo fmt --all -- --check
+
+      - name: Compile every workspace target
+        run: cargo check --workspace --all-targets --locked
+
+      - name: Run D7 build-fix regressions
+        run: |
+          cargo test -p nivra-parser does_not_confuse_if_blocks_with_record_construction --locked
+          cargo test -p nivra-parser parses_empty_record_construction_after_leading_trivia --locked
+          cargo test -p nivra-types rejects_unknown_enum_variant_with_suggestion --locked
+          cargo test -p nivra-types rejects_record_syntax_for_enum --locked
+          cargo test -p nivra-cli --test cli explain_supports_nominal_diagnostics --locked
+          cargo test -p nivra-cli --test cli check_rejects_enum_record_construction_syntax --locked
+          cargo test -p nivra-cli --test cli check_reports_unknown_enum_variant_with_suggestion --locked
+
+      - name: Run D8 build-fix regressions
+        run: |
+          cargo test -p nivra-parser parses_explicit_generic_call_arguments --locked
+          cargo test -p nivra-parser keeps_comparisons_out_of_generic_argument_parsing --locked
+          cargo test -p nivra-parser parses_nested_generic_arguments_with_shift_right_token --locked
+          cargo test -p nivra-sema duplicate_generic_parameters_are_deferred_to_type_checker --locked
+          cargo test -p nivra-types rejects_duplicate_generic_parameters --locked
+          cargo test -p nivra-types preserves_nested_explicit_generic_argument_types --locked
+          cargo test -p nivra-types infers_generic_function_arguments --locked
+          cargo test -p nivra-types accepts_default_trait_method_using_required_method --locked
+          cargo test -p nivra-types rejects_ambiguous_trait_method_selection --locked
+          cargo test -p nivra-types rejects_generic_traits_until_the_feature_is_defined --locked
+          cargo test -p nivra-cli --test cli check_reports_gen005_for_duplicate_generic_parameters --locked
+          cargo test -p nivra-cli --test cli check_accepts_nested_explicit_generic_argument --locked
+          cargo test -p nivra-cli --test cli check_accepts_concrete_default_trait_method --locked
+
+      - name: Run focused D9 parser and type regressions
+        run: |
+          cargo test -p nivra-parser parses_explicit_move_prefix_expression --locked
+          cargo test -p nivra-types explicit_move_preserves_operand_static_type --locked
+
+      - name: Run focused D9 ownership regressions
+        run: |
+          cargo test -p nivra-ownership rejects_use_after_move --locked
+          cargo test -p nivra-ownership accepts_copy_after_transfer --locked
+          cargo test -p nivra-ownership rejects_shared_then_mutable_borrow_conflict --locked
+          cargo test -p nivra-ownership last_use_ends_local_borrow_without_lifetime_syntax --locked
+          cargo test -p nivra-ownership moved_var_can_be_reinitialized --locked
+          cargo test -p nivra-ownership plans_defers_before_reverse_local_drops --locked
+          cargo test -p nivra-ownership rejects_borrow_across_await --locked
+          cargo test -p nivra-ownership explicit_move_invalidates_even_outside_a_consuming_call --locked
+          cargo test -p nivra-ownership both_moving_branches_join_as_moved_not_maybe_moved --locked
+          cargo test -p nivra-ownership move_on_only_one_branch_is_maybe_moved --locked
+          cargo test -p nivra-ownership inner_scope_borrow_of_outer_owner_ends_with_reference_scope --locked
+          cargo test -p nivra-ownership rejects_complete_use_after_partial_field_move --locked
+          cargo test -p nivra-ownership concrete_generic_copy_fields_make_the_nominal_copy --locked
+          cargo test -p nivra-ownership concrete_generic_move_fields_make_the_nominal_move --locked
+          cargo test -p nivra-ownership explicit_generic_call_still_consumes_move_arguments --locked
+          cargo test -p nivra-ownership mutable_reference_is_move_only_but_has_no_drop_action --locked
+          cargo test -p nivra-ownership deferred_borrow_keeps_owner_live_until_scope_exit --locked
+          cargo test -p nivra-ownership rejects_returning_a_local_borrow_through_an_alias --locked
+          cargo test -p nivra-ownership rejects_tail_return_of_a_local_borrow_alias --locked
+          cargo test -p nivra-ownership rejects_borrowed_enum_variant_payloads --locked
+
+      - name: Run focused D9 CLI regressions
+        run: |
+          cargo test -p nivra-cli --test cli version_reports_d9_foundation --locked
+          cargo test -p nivra-cli --test cli ownership_command_reports_moves_borrows_and_drops --locked
+          cargo test -p nivra-cli --test cli ownership_json_contains_machine_readable_flow_graph --locked
+          cargo test -p nivra-cli --test cli check_reports_use_after_move_from_ownership_phase --locked
+          cargo test -p nivra-cli --test cli check_accepts_explicit_move_and_rejects_source_reuse --locked
+          cargo test -p nivra-cli --test cli explain_supports_d9_ownership_and_borrow_diagnostics --locked
+
+      - name: Run complete Rust test suite
+        run: cargo test --workspace --all-targets --locked --no-fail-fast
+
+      - name: Run cumulative golden verifier
+        env:
+          NIVRA_SKIP_RUNNER_FORMAT: "1"
+        run: bash verify.sh
+
+      - name: Build release workspace
+        run: cargo build --workspace --release --locked
+
+      - name: Run release D9 smoke suite
+        env:
+          NIVRA_BIN: ${{ github.workspace }}/target/release/nivra
+        run: bash scripts/d9-smoke.sh
+
+      - name: Generate D9 reports
+        run: |
+          python3 tools/d2_report.py > D2-ARCHITECTURE-REPORT.txt
+          python3 tools/d3_report.py > D3-COMPILER-FOUNDATION-REPORT.txt
+          python3 tools/d4_report.py > D4-PARSER-AST-REPORT.txt
+          python3 tools/d5_report.py > D5-SEMANTIC-REPORT.txt
+          python3 tools/d6_report.py > D6-TYPE-CHECKER-REPORT.txt
+          python3 tools/d7_report.py > D7-NOMINAL-MEMBERS-REPORT.txt
+          python3 tools/d8_report.py > D8-GENERICS-TRAITS-REPORT.txt
+          python3 tools/d9_report.py > D9-OWNERSHIP-BORROW-REPORT.txt
+          ./target/release/nivra doctor > D9-NIVRA-DOCTOR.txt
+          ./target/release/nivra ownership examples/d9/05_complete_ownership_tour.nva --bindings --events --drops > D9-OWNERSHIP-REPORT.txt
+          ./target/release/nivra ownership examples/d9/05_complete_ownership_tour.nva --json > D9-OWNERSHIP-GRAPH.json
+          python3 -m json.tool D9-OWNERSHIP-GRAPH.json > /dev/null
+
+      - name: Build source release ZIP
+        run: |
+          rm -rf .release-staging
+          mkdir -p .release-staging/Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready
+          rsync -a --exclude target --exclude .git --exclude .release-staging ./ .release-staging/Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready/
+          cd .release-staging
+          zip -qr ../Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready
+          cd ..
+          sha256sum Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip > Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip.sha256
+
+      - name: Verify fresh-extract release
+        run: |
+          rm -rf fresh-extract
+          mkdir fresh-extract
+          unzip -q Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip -d fresh-extract
+          cd fresh-extract/Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready
+          python3 tools/d9_structure_lint.py
+          python3 tools/d6_dependency_lint.py
+          cargo metadata --locked --format-version 1 --no-deps > /dev/null
+          cargo fmt --all -- --check
+          cargo check --workspace --all-targets --locked
+          cargo test --workspace --all-targets --locked --no-fail-fast
+          cargo build --workspace --release --locked
+          NIVRA_BIN="$PWD/target/release/nivra" bash scripts/d9-smoke.sh
+
+      - name: Upload D9 release and reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: nivra-d9-linux-x86_64-and-source
+          path: |
+            target/release/nivra
+            Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip
+            Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip.sha256
+            D2-ARCHITECTURE-REPORT.txt
+            D3-COMPILER-FOUNDATION-REPORT.txt
+            D4-PARSER-AST-REPORT.txt
+            D5-SEMANTIC-REPORT.txt
+            D6-TYPE-CHECKER-REPORT.txt
+            D7-NOMINAL-MEMBERS-REPORT.txt
+            D8-GENERICS-TRAITS-REPORT.txt
+            D9-OWNERSHIP-BORROW-REPORT.txt
+            D9-NIVRA-DOCTOR.txt
+            D9-OWNERSHIP-REPORT.txt
+            D9-OWNERSHIP-GRAPH.json
+            D9-QA-REPORT.md
+            MANUAL-VERIFICATION.md
+          if-no-files-found: error
+          retention-days: 14

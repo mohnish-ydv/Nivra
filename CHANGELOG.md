@@ -1,5 +1,39 @@
 # Changelog
 
+## D9 — 2026-08-03
+
+### Added
+
+- `nivra-ownership` post-type-check ownership-flow crate
+- structural Copy/Move classification with concrete generic substitution
+- explicit `move` prefix expression through parser, type checker, and ownership pass
+- whole and partial move tracking, reinitialization, and conservative control-flow joins
+- last-use shared/mutable borrow inference without user-written lifetimes
+- ownership and borrow diagnostics OWN001, OWN002, OWN006, OWN007, and BOR001–BOR009
+- borrowed-return origin tracking, including aliases of local references
+- deterministic reverse defer and reverse drop planning
+- `nivra ownership` human and JSON reports
+- D9 fixtures, reports, documentation, smoke tests, Termux verifier, and GitHub Actions
+
+### Fixed and hardened
+
+- prevented pre-branch state from contaminating all-branches-moved joins
+- ended inner-scope reference loans when their reference scope exits
+- kept deferred borrows live until deferred execution at scope exit
+- rejected borrowed enum payloads in addition to record fields
+- separated move-only classification from drop necessity for mutable references
+- substituted concrete generic arguments when classifying nominal fields and field places
+- made call ownership analysis select the actual argument-list CST node defensively
+- preserved all focused D7 and D8 build-fix regressions in the active D9 workflow
+- added release ZIP fresh-extraction compile/test/build/smoke gates
+
+### Changed
+
+- workspace version to 0.9.0
+- workspace crate count to nine
+- `nivra check` now runs ownership analysis after a successful type check
+- active push workflow is `Verify D9 Ownership and Borrow Foundation`
+
 ## D8 Build Fix — 2026-08-02
 
 ### Fixed

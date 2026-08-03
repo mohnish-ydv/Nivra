@@ -72,8 +72,8 @@ expected_crates = [
 for crate in expected_crates:
     if f'"{crate}"' not in workspace:
         fail(f"workspace missing {crate}")
-if 'version = "0.8.0"' not in workspace:
-    fail("cumulative workspace version is not 0.8.0")
+if 'version = "0.9.0"' not in workspace:
+    fail("cumulative workspace version is not 0.9.0")
 if 'unsafe_code = "forbid"' not in workspace:
     fail("workspace must forbid unsafe Rust")
 print("Rust workspace: PASS")

@@ -1,0 +1,7 @@
+module examples.d9.invalid.use_after_move
+fn consume(value: String) {}
+fn main() {
+    let text = "owned"
+    consume(text)
+    print(text)
+}

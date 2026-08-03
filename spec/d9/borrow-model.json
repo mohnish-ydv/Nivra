@@ -1,0 +1,13 @@
+{
+  "borrow_kinds": ["shared", "mutable"],
+  "user_written_lifetimes": false,
+  "region_inference": "lexical owner scope plus last use of local reference binding",
+  "shared_rule": "multiple overlapping shared borrows are allowed",
+  "mutable_rule": "one exclusive mutable borrow, requiring a var owner",
+  "forbidden": [
+    "borrowed nominal fields",
+    "borrow crossing await",
+    "return of local borrow",
+    "ambiguous borrowed return origin"
+  ]
+}

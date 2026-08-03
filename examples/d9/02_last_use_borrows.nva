@@ -1,0 +1,17 @@
+module examples.d9.last_use_borrows
+
+record Note {
+    text: String
+}
+
+fn main() {
+    var note = Note(text: "draft")
+    let view = &note
+    print(view)
+
+    let editor = &mut note
+    print(editor)
+
+    note.text = "published"
+    print(note)
+}

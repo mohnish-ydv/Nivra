@@ -1,0 +1,2 @@
+module examples.d9.invalid.borrowed_field
+record View { text: &String }
