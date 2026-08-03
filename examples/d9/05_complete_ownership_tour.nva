@@ -14,7 +14,7 @@ fn main(flag: Bool) {
     print(flag)
     print(copied_flag)
 
-    var document = Document(title: "Nivra D9", revision: 9)
+    var document = Document { title: "Nivra D9", revision: 9 }
     let title = move document.title
     consume_title(title)
     document.title = "Ownership Foundation"

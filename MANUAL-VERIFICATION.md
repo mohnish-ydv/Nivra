@@ -106,4 +106,4 @@ Each command must report one passed test and zero failed tests.
 bash scripts/fresh-extract-verify.sh
 ```
 
-With Cargo available, this checks metadata, all targets, and the complete suite from a newly created and extracted archive. Without Cargo it explicitly reports that Rust execution was skipped rather than claiming success.
+With Cargo available, this checks metadata, all targets, and the complete suite from a newly created and extracted archive. Without Cargo it reports that Rust execution was skipped and only labels the static fresh-extraction checks as PASS; it does not print the golden executable marker.

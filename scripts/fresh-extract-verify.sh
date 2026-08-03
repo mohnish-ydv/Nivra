@@ -14,14 +14,19 @@ import sys
 import zipfile
 root = Path(sys.argv[1]).resolve()
 archive = Path(sys.argv[2]).resolve()
-excluded = {"target", ".git", "__pycache__"}
+excluded = {"target", ".git", "__pycache__", ".release-staging", "fresh-extract"}
 with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as output:
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root)
         if any(part in excluded for part in relative.parts):
             continue
-        if path.is_file() and path.resolve() != archive:
-            output.write(path, Path(root.name) / relative)
+        if not path.is_file() or path.resolve() == archive:
+            continue
+        if path.suffix in {".zip", ".pyc"}:
+            continue
+        if path.name.startswith(".nivra-"):
+            continue
+        output.write(path, Path(root.name) / relative)
 print(archive)
 PY
 
@@ -34,9 +39,13 @@ for script in verify.sh scripts/*.sh; do
   bash -n "$script"
 done
 if command -v cargo >/dev/null 2>&1; then
+  export RUSTFLAGS="${RUSTFLAGS:--D warnings}"
   cargo metadata --locked --format-version 1 --no-deps >/dev/null
+  cargo fmt --all -- --check
   cargo check --workspace --all-targets --locked
   cargo test --workspace --all-targets --locked --no-fail-fast
+  cargo build --workspace --release --locked
+  NIVRA_BIN="$PWD/target/release/nivra" bash scripts/d9-smoke.sh
 else
   echo "Rust execution skipped: cargo is unavailable."
 fi

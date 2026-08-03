@@ -562,7 +562,6 @@ fn check_accepts_explicit_generic_function_call() {
     assert!(String::from_utf8_lossy(&output.stdout).contains("0 errors"));
 }
 
-
 #[test]
 fn check_rejects_invalid_generic_constraint_parameter() {
     let path = temporary_source(
@@ -668,7 +667,6 @@ fn check_rejects_generic_trait_declaration() {
     assert_eq!(output.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&output.stderr).contains("GEN006"));
 }
-
 
 #[test]
 fn ownership_command_reports_moves_borrows_and_drops() {

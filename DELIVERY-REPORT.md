@@ -37,9 +37,15 @@
 - Covered enum payload borrow storage and returned reference aliases.
 - Retained every focused D7/D8 root-cause regression in D9 CI.
 - Added release ZIP construction followed by fresh extraction, compile, tests, release build, and smoke tests.
+- Corrected all D9-only call-style record fixtures that stopped type checking before borrow analysis.
+- Removed the two warnings and Node-action deprecation reported by the supplied CI run.
+- Made warnings fatal, made formatting non-mutating, and eliminated the missing-rustfmt false-golden path.
+- Runs the complete `--no-fail-fast` suite before 48 audited focused regression filters.
+- Keeps D5–D8 workflows manual-only and D9 as the single automatic cumulative gate.
+- Prevents workflow-generated Python bytecode, caches, build output, staging trees, nested ZIPs, and temporary smoke files from leaking into source releases.
 
 ## Verification evidence
 
-The delivery environment executed all D1–D9 Python structure linters, Cargo graph static checks, JSON/TOML parsing, Python compilation, shell syntax checks, Rust lexical/delimiter preflight, workflow-test-name checks, release-content inspection, and fresh-extraction static verification. These passed.
+The delivery environment executed all D1–D9 Python structure linters, Cargo graph static checks, JSON/TOML parsing, Python compilation, shell syntax checks, Rust lexical/delimiter preflight, 48-filter workflow-test-name checks, release-content inspection, and fresh-extraction static verification. These passed.
 
 The environment did not provide `rustc`, `cargo`, or `rustfmt`. An isolated GitHub verification branch could not be created because the connected integration returned HTTP 403. Therefore this report does **not** claim that Rust compilation or tests executed successfully. Run the included workflow or `bash scripts/termux-verify.sh` for that final gate.

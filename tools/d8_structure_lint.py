@@ -281,14 +281,21 @@ print("D8 root-cause regression guards: PASS")
 
 workflow = (ROOT / ".github/workflows/verify-d8.yml").read_text(encoding="utf-8")
 for anchor in [
-    "cargo fmt --all",
+    'RUSTFLAGS: "-D warnings"',
+    "cargo fmt --all -- --check",
     "cargo check --workspace --all-targets --locked",
     "cargo test --workspace --all-targets --locked --no-fail-fast",
     "cargo build --workspace --release --locked",
     "bash scripts/d8-smoke.sh",
+    "actions/checkout@v6",
+    "actions/upload-artifact@v7",
 ]:
     if anchor not in workflow:
         fail(f"D8 workflow gate missing: {anchor}")
+if "  push:" in workflow or "  pull_request:" in workflow:
+    fail("superseded D8 workflow must remain manual-only after D9")
+if workflow.index("Run complete Rust test suite") > workflow.index("Run focused D8 parser regressions"):
+    fail("D8 complete no-fail-fast suite must run before focused filters")
 termux = (ROOT / "scripts/termux-verify.sh").read_text(encoding="utf-8")
 if "nivra-d9-verification" not in termux or "NIVRA_D9_TEST_DIR" not in termux:
     fail("Termux verifier does not use a D9 internal-storage destination")

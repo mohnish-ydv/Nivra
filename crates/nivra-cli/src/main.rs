@@ -595,7 +595,6 @@ fn typecheck_command(arguments: &[OsString]) -> i32 {
     }
 }
 
-
 fn ownership_command(arguments: &[OsString]) -> i32 {
     let options = match parse_ownership_options(arguments) {
         Ok(value) => value,

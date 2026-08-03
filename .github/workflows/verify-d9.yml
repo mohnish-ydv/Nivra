@@ -14,10 +14,12 @@ jobs:
     name: Compile, ownership, borrows, CLI, fresh extraction
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    env:
+      RUSTFLAGS: "-D warnings"
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install pinned Rust toolchain
         run: |
@@ -45,13 +47,16 @@ jobs:
       - name: Validate Cargo lock graph
         run: cargo metadata --locked --format-version 1 --no-deps > /dev/null
 
-      - name: Normalize and verify Rust formatting
-        run: |
-          cargo fmt --all
-          cargo fmt --all -- --check
+      - name: Audit Rust formatting
+        id: rustfmt
+        continue-on-error: true
+        run: cargo fmt --all -- --check
 
       - name: Compile every workspace target
         run: cargo check --workspace --all-targets --locked
+
+      - name: Run complete Rust test suite
+        run: cargo test --workspace --all-targets --locked --no-fail-fast
 
       - name: Run D7 build-fix regressions
         run: |
@@ -116,8 +121,11 @@ jobs:
           cargo test -p nivra-cli --test cli check_accepts_explicit_move_and_rejects_source_reuse --locked
           cargo test -p nivra-cli --test cli explain_supports_d9_ownership_and_borrow_diagnostics --locked
 
-      - name: Run complete Rust test suite
-        run: cargo test --workspace --all-targets --locked --no-fail-fast
+      - name: Enforce Rust formatting result
+        if: steps.rustfmt.outcome == 'failure'
+        run: |
+          echo "Rust source is not rustfmt-clean. Run: cargo fmt --all"
+          exit 1
 
       - name: Run cumulative golden verifier
         env:
@@ -151,7 +159,16 @@ jobs:
         run: |
           rm -rf .release-staging
           mkdir -p .release-staging/Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready
-          rsync -a --exclude target --exclude .git --exclude .release-staging ./ .release-staging/Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready/
+          rsync -a \
+            --exclude target \
+            --exclude .git \
+            --exclude .release-staging \
+            --exclude fresh-extract \
+            --exclude __pycache__ \
+            --exclude '*.pyc' \
+            --exclude '*.zip' \
+            --exclude '.nivra-*' \
+            ./ .release-staging/Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready/
           cd .release-staging
           zip -qr ../Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready
           cd ..
@@ -173,7 +190,7 @@ jobs:
           NIVRA_BIN="$PWD/target/release/nivra" bash scripts/d9-smoke.sh
 
       - name: Upload D9 release and reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nivra-d9-linux-x86_64-and-source
           path: |

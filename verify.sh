@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 export CARGO_TERM_COLOR=never
+export RUSTFLAGS="${RUSTFLAGS:--D warnings}"
 
 printf 'NIVRA D9 CUMULATIVE VERIFICATION\n'
 printf '================================\n\n'
@@ -73,15 +74,13 @@ cargo metadata --locked --format-version 1 --no-deps >/dev/null
 printf 'Cargo metadata: PASS\n\n'
 
 printf '[13/17] Rust formatting\n'
-if [[ "${NIVRA_SKIP_RUNNER_FORMAT:-0}" == "1" ]]; then
-  cargo fmt --all -- --check
-elif cargo fmt --version >/dev/null 2>&1; then
-  cargo fmt --all
-  cargo fmt --all -- --check
-else
-  echo 'Rust formatting: SKIPPED (rustfmt unavailable in this Termux package)'
+if ! cargo fmt --version >/dev/null 2>&1; then
+  echo 'FAIL: rustfmt is required for a D9 golden build.'
+  echo 'Install a Rust toolchain that includes rustfmt, then rerun verification.'
+  exit 1
 fi
-printf 'Rust formatting gate: PASS or explicitly unavailable\n\n'
+cargo fmt --all -- --check
+printf 'Rust formatting: PASS\n\n'
 
 printf '[14/17] Compile every workspace target\n'
 cargo check --workspace --all-targets --locked

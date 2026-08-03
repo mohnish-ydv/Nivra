@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import sys
 import tomllib
 from pathlib import Path
@@ -40,6 +41,7 @@ required = [
     "docs/61-D9-TO-D10-GATE.md",
     "D9-IMPLEMENTATION-REPORT.md",
     "D9-QA-REPORT.md",
+    "D9-BUILD-FIX-REPORT.md",
     "RELEASE-NOTES-D9.md",
     "scripts/d9-smoke.sh",
     "tools/d9_report.py",
@@ -49,6 +51,27 @@ missing = [item for item in required if not (ROOT / item).is_file()]
 if missing:
     fail("missing D9 files: " + ", ".join(missing))
 print("D9 required files: PASS")
+
+
+# Release archives must be source-only. `python -m compileall` runs before the
+# GitHub packaging step, so this guard prevents bytecode/cache leakage into a
+# supposedly clean cumulative source release.
+forbidden_directories = {
+    ".git",
+    ".release-staging",
+    "__pycache__",
+    "fresh-extract",
+    "target",
+}
+for path in sorted(ROOT.rglob("*")):
+    relative = path.relative_to(ROOT)
+    if any(part in forbidden_directories for part in relative.parts):
+        fail(f"forbidden release directory present: {relative}")
+    if not path.is_file():
+        continue
+    if path.suffix in {".pyc", ".zip"} or path.name.startswith(".nivra-"):
+        fail(f"forbidden generated release file present: {relative}")
+print("D9 release-tree hygiene: PASS")
 
 delivery = load_json("spec/d9/delivery.json")
 ownership_model = load_json("spec/d9/ownership-model.json")
@@ -160,6 +183,48 @@ for path in valid + invalid:
     if not text.startswith("module "):
         fail(f"fixture lacks module declaration: {path.relative_to(ROOT)}")
 print("D9 fixtures: PASS")
+
+smoke = (ROOT / "scripts/d9-smoke.sh").read_text(encoding="utf-8")
+smoke_codes_match = re.search(r"(?m)^codes=\(([^)]*)\)$", smoke)
+if smoke_codes_match is None:
+    fail("D9 smoke diagnostic list is missing")
+smoke_codes = shlex.split(smoke_codes_match.group(1))
+if smoke_codes != expected:
+    fail(f"D9 smoke diagnostic order differs from the specification: {smoke_codes}")
+print("D9 smoke diagnostic matrix: PASS")
+
+
+def reject_call_style_record_construction(path: Path, text: str) -> None:
+    # D7 established brace construction (`Type { field: value }`). A D9 CI
+    # failure regressed several fixtures to call syntax (`Type(field: value)`),
+    # causing type checking to stop before ownership diagnostics could run.
+    declared_records = set(
+        re.findall(
+            r"(?m)^\s*(?:record|struct)\s+([A-Za-z_][A-Za-z0-9_]*)",
+            text,
+        )
+    )
+    for name in sorted(declared_records):
+        bad = re.search(
+            rf"\b{re.escape(name)}\s*\([^()\n]*\b[A-Za-z_][A-Za-z0-9_]*\s*:",
+            text,
+        )
+        if bad is not None:
+            line = text.count("\n", 0, bad.start()) + 1
+            fail(
+                "call-style record construction returned in "
+                f"{path.relative_to(ROOT)}:{line}; use `{name} {{ field: value }}`"
+            )
+
+
+for fixture_path in valid + invalid:
+    reject_call_style_record_construction(
+        fixture_path, fixture_path.read_text(encoding="utf-8")
+    )
+reject_call_style_record_construction(
+    ROOT / "crates/nivra-ownership/src/lib.rs", ownership
+)
+print("D9 record-construction syntax regression: PASS")
 
 all_rust_paths = sorted((ROOT / "crates").rglob("*.rs"))
 all_rust = "\n".join(path.read_text(encoding="utf-8") for path in all_rust_paths)
@@ -280,18 +345,81 @@ print("D9 root-cause regression guards: PASS")
 
 workflow = (ROOT / ".github/workflows/verify-d9.yml").read_text(encoding="utf-8")
 for anchor in [
+    'RUSTFLAGS: "-D warnings"',
+    "id: rustfmt",
+    "continue-on-error: true",
     "cargo fmt --all -- --check",
+    "if: steps.rustfmt.outcome == 'failure'",
     "cargo check --workspace --all-targets --locked",
     "cargo test --workspace --all-targets --locked --no-fail-fast",
     "cargo build --workspace --release --locked",
     "bash scripts/d9-smoke.sh",
     "fresh-extract",
+    "actions/checkout@v6",
+    "actions/upload-artifact@v7",
+    "--exclude __pycache__",
+    "--exclude '*.pyc'",
+    "--exclude '*.zip'",
+    "--exclude '.nivra-*'",
 ]:
     if anchor not in workflow:
         fail(f"D9 workflow gate missing: {anchor}")
+if workflow.index("Run complete Rust test suite") > workflow.index("Run D7 build-fix regressions"):
+    fail("complete no-fail-fast suite must run before focused regression filters")
+if workflow.index("Build source release ZIP") > workflow.index("Verify fresh-extract release"):
+    fail("source ZIP must be built before fresh-extraction verification")
+if "python3 -m compileall -q tools" in workflow and "--exclude __pycache__" not in workflow:
+    fail("workflow compileall output can leak into the source release")
+workflow_paths = sorted((ROOT / ".github/workflows").glob("*.yml"))
+for workflow_path in workflow_paths:
+    workflow_source = workflow_path.read_text(encoding="utf-8")
+    for obsolete_action in ["actions/checkout@v4", "actions/upload-artifact@v4"]:
+        if obsolete_action in workflow_source:
+            fail(
+                f"obsolete GitHub action returned in {workflow_path.name}: "
+                f"{obsolete_action}"
+            )
+for superseded in ["verify-d5.yml", "verify-d6.yml", "verify-d7.yml", "verify-d8.yml"]:
+    superseded_text = (ROOT / ".github/workflows" / superseded).read_text(
+        encoding="utf-8"
+    )
+    if "  push:" in superseded_text or "  pull_request:" in superseded_text:
+        fail(f"superseded workflow must remain manual-only: {superseded}")
+
+focused_filters: list[str] = []
+for line in workflow.splitlines():
+    stripped = line.strip()
+    if not stripped.startswith("cargo test ") or "--workspace" in stripped:
+        continue
+    words = shlex.split(stripped)
+    try:
+        locked_index = words.index("--locked")
+    except ValueError:
+        fail(f"focused cargo test is not lockfile-pinned: {stripped}")
+    if locked_index == 0:
+        fail(f"cannot determine focused test filter: {stripped}")
+    test_filter = words[locked_index - 1]
+    if test_filter.startswith("-"):
+        fail(f"focused cargo test has no explicit test name: {stripped}")
+    focused_filters.append(test_filter)
+    if re.search(rf"(?m)^\s*fn\s+{re.escape(test_filter)}\s*\(", all_rust) is None:
+        fail(f"workflow references a missing Rust test: {test_filter}")
+if len(focused_filters) < 45:
+    fail(f"expected at least 45 focused workflow filters, found {len(focused_filters)}")
+if len(focused_filters) != len(set(focused_filters)):
+    fail("D9 workflow repeats one or more focused Rust test filters")
+print(f"D9 focused workflow test filters: PASS ({len(focused_filters)})")
+
 termux = (ROOT / "scripts/termux-verify.sh").read_text(encoding="utf-8")
 if "nivra-d9-verification" not in termux or "NIVRA_D9_TEST_DIR" not in termux:
     fail("Termux verifier does not use a D9 internal-storage destination")
+if 'RUSTFLAGS="${RUSTFLAGS:--D warnings}"' not in termux:
+    fail("Termux verifier does not reject Rust warnings")
+verifier = (ROOT / "verify.sh").read_text(encoding="utf-8")
+if "FAIL: rustfmt is required for a D9 golden build." not in verifier:
+    fail("golden verifier may still skip rustfmt")
+if "Rust formatting gate: PASS or explicitly unavailable" in verifier:
+    fail("golden verifier still contains the obsolete formatting skip marker")
 print("D9 workflow and Termux contract: PASS")
 
 print("D9 STRUCTURE: PASS")

@@ -5,7 +5,7 @@
 ```bash
 cd ~/storage/downloads
 rm -rf Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready
-unzip Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip
+unzip Nivra-D9-Ownership-Borrow-Foundation-Final-Build-Fix-GitHub-Ready.zip
 ```
 
 ## Preserve existing repository history

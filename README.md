@@ -58,7 +58,7 @@ A fully successful Rust run ends with:
 ★★★★★ D9 GOLDEN BUILD
 ```
 
-The archive itself has passed structural, manifest, lockfile, JSON, Python, shell, fixture, workflow, and fresh-extraction checks. This artifact-building sandbox did not contain Rust/Cargo, so Rust compilation and test execution are deliberately not claimed here; GitHub Actions or Termux performs the authoritative executable gate.
+The build-fix archive has passed structural, manifest, lockfile, JSON, Python, shell, fixture, workflow, release-hygiene, and fresh-extraction checks. The supplied earlier CI run proved full-target compilation and cumulative regressions up to the fixture failure; `D9-BUILD-FIX-REPORT.md` documents the root cause and corrections. This artifact-building sandbox does not contain Rust/Cargo, so the corrected archive's full executable result is deliberately not claimed here; GitHub Actions or Termux performs the authoritative warning-free gate.
 
 ## D9 boundary
 

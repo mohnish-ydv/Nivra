@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST="${NIVRA_D9_TEST_DIR:-$HOME/nivra-d9-verification}"
+export RUSTFLAGS="${RUSTFLAGS:--D warnings}"
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "FAIL: Python is missing."

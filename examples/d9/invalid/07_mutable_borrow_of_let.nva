@@ -1,7 +1,7 @@
 module examples.d9.invalid.mutable_borrow_of_let
 record Note { text: String }
 fn main() {
-    let note = Note(text: "draft")
+    let note = Note { text: "draft" }
     let writer = &mut note
     print(writer)
 }

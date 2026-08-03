@@ -2,7 +2,7 @@ module examples.d9.invalid.partial_move_use
 record User { name: String, age: Int }
 fn consume(value: String) {}
 fn main() {
-    let user = User(name: "Nivra", age: 9)
+    let user = User { name: "Nivra", age: 9 }
     consume(user.name)
     print(user)
 }

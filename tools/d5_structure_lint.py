@@ -187,7 +187,7 @@ for anchor in [
     "rustup toolchain install 1.74.0",
     "cargo build --workspace --release --locked",
     "bash scripts/d5-smoke.sh",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v7",
 ]:
     if anchor not in workflow:
         fail(f"D5 workflow missing {anchor!r}")

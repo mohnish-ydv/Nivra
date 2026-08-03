@@ -3538,31 +3538,6 @@ fn erase_generic_parameters(ty: Type, generics: &HashSet<String>) -> Type {
     }
 }
 
-fn type_contains_generic(ty: &Type, generics: &HashSet<String>) -> bool {
-    match ty {
-        Type::Parameter(name) => generics.contains(name),
-        Type::Named(name, arguments) => {
-            (generics.contains(name) && arguments.is_empty())
-                || arguments
-                    .iter()
-                    .any(|argument| type_contains_generic(argument, generics))
-        }
-        Type::Optional(inner) | Type::Reference { inner, .. } | Type::Pointer { inner, .. } => {
-            type_contains_generic(inner, generics)
-        }
-        Type::Tuple(items) => items
-            .iter()
-            .any(|item| type_contains_generic(item, generics)),
-        Type::Function(parameters, result) => {
-            parameters
-                .iter()
-                .any(|parameter| type_contains_generic(parameter, generics))
-                || type_contains_generic(result, generics)
-        }
-        _ => false,
-    }
-}
-
 fn mark_generic_parameters(ty: Type, generics: &HashSet<String>) -> Type {
     match ty {
         Type::Named(name, arguments) if generics.contains(&name) && arguments.is_empty() => {
@@ -3789,7 +3764,6 @@ fn infer_type_substitutions(
     }
     None
 }
-
 
 fn builtin_generic_arity(name: &str) -> Option<usize> {
     match name {

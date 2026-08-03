@@ -1,8 +1,8 @@
 module examples.d9.invalid.assign_while_borrowed
 record Note { text: String }
 fn main() {
-    var note = Note(text: "draft")
+    var note = Note { text: "draft" }
     let reader = &note
-    note = Note(text: "replaced")
+    note = Note { text: "replaced" }
     print(reader)
 }

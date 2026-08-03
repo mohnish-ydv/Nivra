@@ -11,7 +11,7 @@ use std::fmt::{self, Write as _};
 use nivra_diagnostics::Diagnostic;
 use nivra_lexer::{Keyword, TokenKind};
 use nivra_source::{SourceFile, Span};
-use nivra_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use nivra_syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 use nivra_types::{FunctionSignature, Type, TypeCheckResult};
 
 /// Whether an assignment or argument transfer copies or moves a value.
@@ -694,7 +694,9 @@ impl<'a> Analyzer<'a> {
     fn eval_expression(&mut self, node: &SyntaxNode, mode: UseMode, loan_end: usize) -> Type {
         self.expire_loans(node.span().start());
         match node.kind() {
-            SyntaxKind::NameExpression | SyntaxKind::MemberExpression | SyntaxKind::IndexExpression => {
+            SyntaxKind::NameExpression
+            | SyntaxKind::MemberExpression
+            | SyntaxKind::IndexExpression => {
                 if let Some(place) = place_text(node, self.source) {
                     self.use_place(&place, node.span(), mode);
                 } else {
@@ -965,9 +967,12 @@ impl<'a> Analyzer<'a> {
         }
         if self.has_active_mutable_loan(place) {
             self.diagnostics.push(
-                Diagnostic::error("BOR005", format!("cannot use `{place}` while it is mutably borrowed"))
-                    .with_primary(span, "owner use conflicts with an active exclusive borrow")
-                    .with_help("finish using the mutable reference before accessing the owner"),
+                Diagnostic::error(
+                    "BOR005",
+                    format!("cannot use `{place}` while it is mutably borrowed"),
+                )
+                .with_primary(span, "owner use conflicts with an active exclusive borrow")
+                .with_help("finish using the mutable reference before accessing the owner"),
             );
             return;
         }
@@ -988,10 +993,16 @@ impl<'a> Analyzer<'a> {
             UseMode::Consume => {
                 if let Some(loan) = self.active_overlapping_loan(place).cloned() {
                     self.diagnostics.push(
-                        Diagnostic::error("OWN002", format!("cannot move `{place}` while it is borrowed"))
-                            .with_primary(span, "ownership transfer occurs here")
-                            .with_secondary(loan.span, format!("{} borrow starts here", loan.kind.as_str()))
-                            .with_help("finish using the borrow before moving the value"),
+                        Diagnostic::error(
+                            "OWN002",
+                            format!("cannot move `{place}` while it is borrowed"),
+                        )
+                        .with_primary(span, "ownership transfer occurs here")
+                        .with_secondary(
+                            loan.span,
+                            format!("{} borrow starts here", loan.kind.as_str()),
+                        )
+                        .with_help("finish using the borrow before moving the value"),
                     );
                     return;
                 }
@@ -1030,13 +1041,16 @@ impl<'a> Analyzer<'a> {
         }
         if kind == BorrowKind::Mutable && !self.bindings[binding_id].mutable {
             self.diagnostics.push(
-                Diagnostic::error("BOR003", format!("cannot mutably borrow immutable binding `{place}`"))
-                    .with_primary(span, "exclusive mutation was requested here")
-                    .with_secondary(
-                        self.bindings[binding_id].declaration_span,
-                        "binding declared immutable here",
-                    )
-                    .with_help("declare the owner with `var` or use a shared `&` borrow"),
+                Diagnostic::error(
+                    "BOR003",
+                    format!("cannot mutably borrow immutable binding `{place}`"),
+                )
+                .with_primary(span, "exclusive mutation was requested here")
+                .with_secondary(
+                    self.bindings[binding_id].declaration_span,
+                    "binding declared immutable here",
+                )
+                .with_help("declare the owner with `var` or use a shared `&` borrow"),
             );
             return;
         }
@@ -1107,10 +1121,13 @@ impl<'a> Analyzer<'a> {
         };
         if let Some(loan) = self.active_overlapping_loan(place).cloned() {
             self.diagnostics.push(
-                Diagnostic::error("BOR004", format!("cannot assign to `{place}` while it is borrowed"))
-                    .with_primary(span, "write occurs here")
-                    .with_secondary(loan.span, "active borrow starts here")
-                    .with_help("finish using the reference before assigning to its owner"),
+                Diagnostic::error(
+                    "BOR004",
+                    format!("cannot assign to `{place}` while it is borrowed"),
+                )
+                .with_primary(span, "write occurs here")
+                .with_secondary(loan.span, "active borrow starts here")
+                .with_help("finish using the reference before assigning to its owner"),
             );
             return;
         }
@@ -1897,7 +1914,7 @@ mod tests {
     #[test]
     fn rejects_shared_then_mutable_borrow_conflict() {
         let result = ownership(
-            "module demo\nrecord Note { text: String }\nfn main() { var note = Note(text: \"a\")\n let first = &note\n let second = &mut note\n print(first)\n }\n",
+            "module demo\nrecord Note { text: String }\nfn main() { var note = Note { text: \"a\" }\n let first = &note\n let second = &mut note\n print(first)\n }\n",
         );
         assert!(result
             .diagnostics
@@ -1908,7 +1925,7 @@ mod tests {
     #[test]
     fn last_use_ends_local_borrow_without_lifetime_syntax() {
         let result = ownership(
-            "module demo\nrecord Note { text: String }\nfn consume(value: Note) {}\nfn main() { var note = Note(text: \"a\")\n let view = &note\n print(view)\n consume(note)\n }\n",
+            "module demo\nrecord Note { text: String }\nfn consume(value: Note) {}\nfn main() { var note = Note { text: \"a\" }\n let view = &note\n print(view)\n consume(note)\n }\n",
         );
         assert!(!result
             .diagnostics
@@ -1919,7 +1936,7 @@ mod tests {
     #[test]
     fn mutable_borrow_requires_var() {
         let result = ownership(
-            "module demo\nrecord Note { text: String }\nfn main() { let note = Note(text: \"a\")\n let view = &mut note\n print(view)\n }\n",
+            "module demo\nrecord Note { text: String }\nfn main() { let note = Note { text: \"a\" }\n let view = &mut note\n print(view)\n }\n",
         );
         assert!(result
             .diagnostics
@@ -1946,7 +1963,9 @@ mod tests {
         let function_actions = result
             .exit_actions
             .iter()
-            .filter(|action| action.kind == ExitActionKind::Defer || action.kind == ExitActionKind::Drop)
+            .filter(|action| {
+                action.kind == ExitActionKind::Defer || action.kind == ExitActionKind::Drop
+            })
             .collect::<Vec<_>>();
         assert!(function_actions.iter().any(|action| action.kind == ExitActionKind::Defer));
         let drop_names = function_actions
@@ -2007,7 +2026,7 @@ mod tests {
     #[test]
     fn inner_scope_borrow_of_outer_owner_ends_with_reference_scope() {
         let result = ownership(
-            "module demo\nrecord Note { text: String }\nfn consume(value: Note) {}\nfn main() { let note = Note(text: \"a\")\n { let view = &note\n print(view) }\n consume(note)\n }\n",
+            "module demo\nrecord Note { text: String }\nfn consume(value: Note) {}\nfn main() { let note = Note { text: \"a\" }\n { let view = &note\n print(view) }\n consume(note)\n }\n",
         );
         assert!(!result.has_errors(), "{:?}", result.diagnostics);
     }
@@ -2015,14 +2034,13 @@ mod tests {
     #[test]
     fn rejects_complete_use_after_partial_field_move() {
         let result = ownership(
-            "module demo\nrecord User { name: String, age: Int }\nfn consume(value: String) {}\nfn main() { let user = User(name: \"Nivra\", age: 1)\n consume(user.name)\n print(user)\n }\n",
+            "module demo\nrecord User { name: String, age: Int }\nfn consume(value: String) {}\nfn main() { let user = User { name: \"Nivra\", age: 1 }\n consume(user.name)\n print(user)\n }\n",
         );
         assert!(result
             .diagnostics
             .iter()
             .any(|diagnostic| diagnostic.code == "OWN006"));
     }
-
 
     #[test]
     fn concrete_generic_copy_fields_make_the_nominal_copy() {
@@ -2100,7 +2118,6 @@ mod tests {
             .iter()
             .any(|diagnostic| diagnostic.code == "BOR006"));
     }
-
 
     #[test]
     fn rejects_tail_return_of_a_local_borrow_alias() {

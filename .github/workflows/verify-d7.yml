@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install pinned Rust toolchain
         run: |
@@ -74,7 +74,7 @@ jobs:
           ./target/release/nivra typecheck examples/d7/05_complete_nominal_tour.nva --json > D7-NOMINAL-GRAPH.json
 
       - name: Upload D7 Linux artifact and reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nivra-d7-linux-x86_64
           path: |

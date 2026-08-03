@@ -20,6 +20,10 @@ For each scope, deferred actions execute in reverse registration order, followed
 
 The language remains Edition 2026, source extension `.nva`, CLI `nivra`, manifest `nivra.toml`, lockfile `nivra.lock`, and reference backend C11 + Clang. The workspace has no third-party Rust dependencies and remains pinned to Rust 1.74.
 
+## D9 build-fix revision
+
+The first uploaded D9 GitHub Actions run compiled the workspace and passed cumulative D7/D8 plus initial D9 regressions, then exposed call-style record construction in several D9-only fixtures. Those fixtures now use the established D7 brace syntax. The two warnings and workflow deprecations reported by that run are removed, warnings are fatal, formatting is non-mutating, missing `rustfmt` cannot produce a golden result, and the complete `--no-fail-fast` suite runs before focused filters. The active workflow records formatting drift, continues through executable tests for complete diagnostics, and enforces the formatting result before packaging. Superseded D5–D8 workflows remain manually runnable but cannot duplicate every push/PR; D9 audits every focused test filter against an actual Rust test. Source packaging also excludes and statically rejects Python bytecode caches, build outputs, staging trees, nested ZIPs, and temporary smoke files, including caches created by the workflow’s own `compileall` gate. See `D9-BUILD-FIX-REPORT.md`.
+
 ## Verification status
 
-All non-Rust artifact checks and fresh-extraction static checks pass in the delivery environment. Rust/Cargo was unavailable there, so compilation and test success are not represented as completed. The included GitHub Actions and Termux scripts are the authoritative executable verification path.
+All non-Rust artifact checks and fresh-extraction static checks pass in the delivery environment. Rust/Cargo is unavailable there, so the corrected archive's compilation and test success are not represented as completed. The included GitHub Actions and Termux scripts are the authoritative executable verification path.

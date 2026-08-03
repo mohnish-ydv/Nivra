@@ -6,7 +6,7 @@ record User {
 }
 
 fn main() {
-    var user = User(name: "Mohnish", age: 13)
+    var user = User { name: "Mohnish", age: 13 }
     let extracted_name = move user.name
     print(extracted_name)
 

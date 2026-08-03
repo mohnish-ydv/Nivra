@@ -278,7 +278,7 @@ workflow_text = workflow.read_text(encoding="utf-8")
 for required in [
     "bash verify.sh",
     "cargo build --workspace --release",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v7",
 ]:
     if required not in workflow_text:
         fail(f"workflow missing {required!r}")

@@ -363,7 +363,7 @@ for anchor in [
     "cargo test --workspace --all-targets --locked --no-fail-fast",
     "cargo build --workspace --release --locked",
     "bash scripts/d6-smoke.sh",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v7",
 ]:
     if anchor not in workflow:
         fail(f"D6 workflow missing {anchor!r}")

@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install pinned Rust toolchain
         run: |
@@ -61,7 +61,7 @@ jobs:
           ./target/release/nivra typecheck examples/d6/02_functions_and_calls.nva --json > D6-TYPE-GRAPH.json
 
       - name: Upload D6 Linux artifact and reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nivra-d6-linux-x86_64
           path: |

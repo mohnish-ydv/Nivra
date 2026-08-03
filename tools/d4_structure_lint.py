@@ -175,7 +175,7 @@ workflow = (ROOT / ".github/workflows/verify-d5.yml").read_text(encoding="utf-8"
 for anchor in [
     "bash verify.sh",
     "cargo build --workspace --release --locked",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v7",
 ]:
     if anchor not in workflow:
         fail(f"D4 workflow missing {anchor!r}")

@@ -5,7 +5,7 @@ record Note {
 }
 
 fn main() {
-    var note = Note(text: "draft")
+    var note = Note { text: "draft" }
     let view = &note
     print(view)
 
