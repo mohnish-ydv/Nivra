@@ -56,6 +56,7 @@ python3 tools/d6_dependency_lint.py
 printf 'Cargo dependency graph: PASS\n\n'
 
 printf '[11/17] Script and metadata preflight\n'
+python3 tools/d9_hygiene_regression.py
 python3 -m compileall -q tools
 for script in verify.sh scripts/*.sh; do
   bash -n "$script"

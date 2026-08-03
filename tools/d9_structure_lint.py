@@ -45,6 +45,8 @@ required = [
     "RELEASE-NOTES-D9.md",
     "scripts/d9-smoke.sh",
     "tools/d9_report.py",
+    "tools/release_tree_lint.py",
+    "tools/d9_hygiene_regression.py",
     ".github/workflows/verify-d9.yml",
 ]
 missing = [item for item in required if not (ROOT / item).is_file()]
@@ -53,25 +55,20 @@ if missing:
 print("D9 required files: PASS")
 
 
-# Release archives must be source-only. `python -m compileall` runs before the
-# GitHub packaging step, so this guard prevents bytecode/cache leakage into a
-# supposedly clean cumulative source release.
-forbidden_directories = {
-    ".git",
-    ".release-staging",
-    "__pycache__",
-    "fresh-extract",
-    "target",
-}
-for path in sorted(ROOT.rglob("*")):
-    relative = path.relative_to(ROOT)
-    if any(part in forbidden_directories for part in relative.parts):
-        fail(f"forbidden release directory present: {relative}")
-    if not path.is_file():
-        continue
-    if path.suffix in {".pyc", ".zip"} or path.name.startswith(".nivra-"):
-        fail(f"forbidden generated release file present: {relative}")
-print("D9 release-tree hygiene: PASS")
+# Repository checkouts legitimately contain `.git`, and local verification may
+# legitimately leave `target` or Python caches behind. Release-only hygiene is
+# enforced by `tools/release_tree_lint.py` against the freshly extracted ZIP.
+print("D9 repository-tree hygiene separation: PASS")
+
+executable_paths = [ROOT / "verify.sh"]
+executable_paths.extend(sorted((ROOT / "scripts").glob("*.sh")))
+executable_paths.extend(
+    [ROOT / "tools/release_tree_lint.py", ROOT / "tools/d9_hygiene_regression.py"]
+)
+for executable in executable_paths:
+    if executable.stat().st_mode & 0o100 == 0:
+        fail(f"required executable bit is missing: {executable.relative_to(ROOT)}")
+print(f"D9 executable permissions: PASS ({len(executable_paths)})")
 
 delivery = load_json("spec/d9/delivery.json")
 ownership_model = load_json("spec/d9/ownership-model.json")
@@ -355,6 +352,8 @@ for anchor in [
     "cargo build --workspace --release --locked",
     "bash scripts/d9-smoke.sh",
     "fresh-extract",
+    "python3 tools/release_tree_lint.py",
+    "python3 tools/d9_hygiene_regression.py",
     "actions/checkout@v6",
     "actions/upload-artifact@v7",
     "--exclude __pycache__",
@@ -370,6 +369,13 @@ if workflow.index("Build source release ZIP") > workflow.index("Verify fresh-ext
     fail("source ZIP must be built before fresh-extraction verification")
 if "python3 -m compileall -q tools" in workflow and "--exclude __pycache__" not in workflow:
     fail("workflow compileall output can leak into the source release")
+if workflow.index("python3 tools/release_tree_lint.py") < workflow.index("Verify fresh-extract release"):
+    fail("release-tree lint must run only against the extracted source archive")
+if workflow.index("python3 tools/d9_hygiene_regression.py") > workflow.index("Build source release ZIP"):
+    fail("repository/release hygiene regression must run before packaging")
+legacy_release_scan = "forbidden_" + "directories = {"
+if legacy_release_scan in Path(__file__).read_text(encoding="utf-8"):
+    fail("D9 structure lint still conflates a live Git checkout with a release tree")
 workflow_paths = sorted((ROOT / ".github/workflows").glob("*.yml"))
 for workflow_path in workflow_paths:
     workflow_source = workflow_path.read_text(encoding="utf-8")

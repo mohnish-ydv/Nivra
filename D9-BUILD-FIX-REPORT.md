@@ -1,3 +1,24 @@
+# D9 Build-Fix Report — Repository/Release Hygiene Separation
+
+## Round-two CI failure
+
+The uploaded GitHub Actions log failed before Cargo compilation because
+`tools/d9_structure_lint.py` scanned the live repository checkout and rejected
+GitHub's required root `.git` directory as though it had leaked into a release
+archive. That made every real Actions checkout fail deterministically.
+
+## Corrective action
+
+- Removed release-archive hygiene scanning from the live source-structure lint.
+- Added `tools/release_tree_lint.py` for freshly extracted source releases only.
+- Wired the dedicated release lint after ZIP extraction in GitHub Actions and
+  `scripts/fresh-extract-verify.sh`.
+- Added structural guards that reject any future attempt to run release hygiene
+  against the live checkout.
+- Added a synthetic Git-checkout regression during final QA.
+
+---
+
 # Nivra D9 Build-Fix Report
 
 ## Supplied CI failure

@@ -33,7 +33,17 @@ PY
 unzip -q "$ARCHIVE" -d "$TEMP_ROOT"
 EXTRACTED="$TEMP_ROOT/$(basename "$ROOT")"
 cd "$EXTRACTED"
+python3 tools/release_tree_lint.py
+python3 tools/spec_lint.py
+python3 tools/d2_spec_lint.py
+python3 tools/d3_structure_lint.py
+python3 tools/d4_structure_lint.py
+python3 tools/d5_structure_lint.py
+python3 tools/d6_structure_lint.py
+python3 tools/d7_structure_lint.py
+python3 tools/d8_structure_lint.py
 python3 tools/d9_structure_lint.py
+python3 tools/d9_hygiene_regression.py
 python3 tools/d6_dependency_lint.py
 for script in verify.sh scripts/*.sh; do
   bash -n "$script"

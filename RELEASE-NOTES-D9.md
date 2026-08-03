@@ -27,3 +27,10 @@ The first uploaded D9 GitHub Actions run compiled the workspace and passed cumul
 ## Verification status
 
 All non-Rust artifact checks and fresh-extraction static checks pass in the delivery environment. Rust/Cargo is unavailable there, so the corrected archive's compilation and test success are not represented as completed. The included GitHub Actions and Termux scripts are the authoritative executable verification path.
+
+## Final CI hygiene correction
+
+- Fixed a deterministic GitHub Actions failure where the live checkout's `.git`
+  directory was incorrectly treated as release-archive contamination.
+- Added separate repository and release-tree validators.
+- Added an automated positive/negative hygiene regression harness.

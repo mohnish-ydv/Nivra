@@ -107,3 +107,9 @@ bash scripts/fresh-extract-verify.sh
 ```
 
 With Cargo available, this checks metadata, all targets, and the complete suite from a newly created and extracted archive. Without Cargo it reports that Rust execution was skipped and only labels the static fresh-extraction checks as PASS; it does not print the golden executable marker.
+
+## Checkout versus release hygiene
+
+Run `python3 tools/d9_hygiene_regression.py`. The command must report
+`D9 repository/release hygiene regression: PASS`. A normal Git checkout may
+contain `.git` and local build caches; a freshly extracted source release may not.

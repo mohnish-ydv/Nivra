@@ -51,3 +51,12 @@ The uploaded failing run provides real executable evidence for the pre-fix archi
 ## Verification truthfulness
 
 `rustc`, `cargo`, and `rustfmt` are unavailable in the artifact-building sandbox, and network installation is unavailable. Therefore the corrected archive's compilation, full test suite, release build, and executable smoke suite are not claimed as PASS here. The included GitHub Actions and Termux verifier are strengthened to run the authoritative warning-free executable gates and to expose the complete test result before focused filters.
+
+## Repository-checkout hygiene regression (final build-fix)
+
+The GitHub Actions checkout contains a required root `.git` directory. D9 now
+separates live repository structure validation from source-release hygiene.
+`tools/d9_hygiene_regression.py` proves that a checkout containing `.git`,
+`target`, and Python cache directories passes structural validation, while
+`tools/release_tree_lint.py` rejects the same generated content from a freshly
+extracted release archive.

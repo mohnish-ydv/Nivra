@@ -40,6 +40,7 @@ jobs:
           python3 tools/d7_structure_lint.py
           python3 tools/d8_structure_lint.py
           python3 tools/d9_structure_lint.py
+          python3 tools/d9_hygiene_regression.py
           python3 tools/d6_dependency_lint.py
           python3 -m compileall -q tools
           for script in verify.sh scripts/*.sh; do bash -n "$script"; done
@@ -180,7 +181,17 @@ jobs:
           mkdir fresh-extract
           unzip -q Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready.zip -d fresh-extract
           cd fresh-extract/Nivra-D9-Ownership-Borrow-Foundation-GitHub-Ready
+          python3 tools/release_tree_lint.py
+          python3 tools/spec_lint.py
+          python3 tools/d2_spec_lint.py
+          python3 tools/d3_structure_lint.py
+          python3 tools/d4_structure_lint.py
+          python3 tools/d5_structure_lint.py
+          python3 tools/d6_structure_lint.py
+          python3 tools/d7_structure_lint.py
+          python3 tools/d8_structure_lint.py
           python3 tools/d9_structure_lint.py
+          python3 tools/d9_hygiene_regression.py
           python3 tools/d6_dependency_lint.py
           cargo metadata --locked --format-version 1 --no-deps > /dev/null
           cargo fmt --all -- --check
